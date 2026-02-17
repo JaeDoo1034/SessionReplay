@@ -24,6 +24,7 @@ const LLMGraphState = Annotation.Root({
   prompt: Annotation(),
   llmOutput: Annotation(),
   result: Annotation(),
+  customerResultKo: Annotation(),
   customerSummaryKo: Annotation(),
   customerSummaryRaw: Annotation()
 });
@@ -53,9 +54,17 @@ const llmGraph = new StateGraph(LLMGraphState)
     const summaryPrompt = buildCustomerSummaryPrompt(state.result, state.summary);
     const response = await llm.invoke(summaryPrompt);
     const raw = normalizeLLMContent(response.content);
+    const parsed = parseLLMJson(raw);
+
+    const summaryText =
+      parsed && typeof parsed.session_summary_ko === "string"
+        ? parsed.session_summary_ko
+        : sanitizeSingleLine(raw);
+
     return {
       customerSummaryRaw: raw,
-      customerSummaryKo: sanitizeSingleLine(raw)
+      customerResultKo: parsed,
+      customerSummaryKo: summaryText
     };
   })
   .addEdge("__start__", "build_prompt")
@@ -98,6 +107,7 @@ app.post("/api/llm-analyze", async (req, res) => {
       ok: true,
       result: result.result,
       raw: result.llmOutput,
+      customerResultKo: result.customerResultKo,
       customerSummaryKo: result.customerSummaryKo,
       customerSummaryRaw: result.customerSummaryRaw
     });
@@ -166,17 +176,45 @@ function parseLLMJson(raw) {
 
 function buildCustomerSummaryPrompt(analysisResult, sessionSummary) {
   return [
-    "당신은 UX 행동 분석 결과를 고객 유형으로 요약하는 분석가다.",
-    "아래 1차 LLM 분석 결과와 세션 요약을 바탕으로, 고객 유형을 한국어 한 문단으로 요약하라.",
-    "조건:",
-    "- 2~3문장",
-    "- 고객 유형명 1개를 첫 문장에 명시",
-    "- 근거가 되는 행동 특징 2~3개 포함",
-    "- 제품팀이 이해하기 쉬운 한국어",
-    "- 마크다운/코드블록/번호 목록 없이 평문만 출력",
-    "1차 분석 결과:",
+    "You are a UX behavior analyst.",
+    "",
+    "Task:",
+    "1) First, translate and present the previously generated classification result in Korean (same meaning, natural Korean).",
+    "2) Then, add a short Korean summary of the session behavior (1–3 sentences).",
+    "3) Then, output the final structured JSON only (Korean values) using the schema below.",
+    "",
+    "Important:",
+    "- The final answer MUST be valid JSON only (no markdown, no extra text).",
+    "- Put steps (1) and (2) inside JSON fields so the output remains JSON-only.",
+    "- Keep recommendations actionable and specific.",
+    "",
+    "Schema (JSON-only):",
+    "{",
+    '  "previous_result_ko": {',
+    '    "primary_type": "...",',
+    '    "secondary_types": ["..."],',
+    '    "confidence": 0-1,',
+    '    "evidence": ["..."],',
+    '    "recommendations": ["..."]',
+    "  },",
+    '  "session_summary_ko": "...",',
+    '  "final_result_ko": {',
+    '    "primary_type": "...",',
+    '    "secondary_types": ["..."],',
+    '    "confidence": 0-1,',
+    '    "evidence": ["..."],',
+    '    "recommendations": ["..."]',
+    "  }",
+    "}",
+    "",
+    "Inputs:",
+    "- previous_result (the model's earlier output, in English JSON)",
+    "- session_summary (raw telemetry JSON)",
+    "",
+    "previous_result:",
     JSON.stringify(analysisResult ?? {}, null, 2),
-    "세션 요약:",
+    "",
+    "session_summary:",
     JSON.stringify(sessionSummary ?? {}, null, 2)
   ].join("\n");
 }

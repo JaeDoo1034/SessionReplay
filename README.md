@@ -65,6 +65,7 @@ npm start
 4. `Copy LLM Prompt`를 눌러 분석용 프롬프트를 LLM에 붙여 넣습니다.
 5. `Analyze with LLM`을 눌러 OpenAI 모델 분석 결과를 화면에서 바로 확인합니다.
 6. 결과 상단의 `고객 유형 요약(KR)`에서 2차 체인 요약 문장을 확인합니다.
+7. 2차 체인은 `previous_result_ko`, `session_summary_ko`, `final_result_ko` 구조의 한국어 JSON으로 반환합니다.
 
 ## 구현 범위
 - DOM 변화 기록: `MutationObserver`
