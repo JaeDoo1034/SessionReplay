@@ -1,5 +1,6 @@
 import { SessionRecorder } from "./recorder.js";
 import { SessionReplayer } from "./replayer.js";
+import { analyzeBehavior } from "./behavior-analyzer.js";
 
 const statusEl = document.getElementById("status");
 const replayStatusEl = document.getElementById("replay-status");
@@ -13,6 +14,11 @@ const replayPlayBtn = document.getElementById("replay-play-btn");
 const replayStopBtn = document.getElementById("replay-stop-btn");
 const replaySpeedSelect = document.getElementById("replay-speed");
 const replayFrame = document.getElementById("replay-frame");
+const analyzeBtn = document.getElementById("analyze-btn");
+const llmAnalyzeBtn = document.getElementById("llm-analyze-btn");
+const copyPromptBtn = document.getElementById("copy-prompt-btn");
+const analysisStatusEl = document.getElementById("analysis-status");
+const llmAnalysisStatusEl = document.getElementById("llm-analysis-status");
 
 const formEl = document.getElementById("sample-form");
 const addItemBtn = document.getElementById("add-item-btn");
@@ -31,6 +37,9 @@ const replayer = new SessionReplayer({
 });
 
 let lastPayload = null;
+let loadedPayload = null;
+let lastAnalysisPrompt = "";
+let lastSummary = null;
 
 tabButtons.forEach((button) => {
   button.addEventListener("click", () => {
@@ -54,6 +63,8 @@ startBtn.addEventListener("click", () => {
 stopBtn.addEventListener("click", () => {
   recorder.stop();
   lastPayload = recorder.getPayload();
+  loadedPayload = lastPayload;
+  resetAnalysis();
 
   startBtn.disabled = false;
   stopBtn.disabled = true;
@@ -98,6 +109,8 @@ replayFileInput.addEventListener("change", async () => {
   try {
     const text = await file.text();
     const payload = JSON.parse(text);
+    loadedPayload = payload;
+    resetAnalysis();
     replayer.load(payload);
     replayPlayBtn.disabled = false;
     replayStopBtn.disabled = false;
@@ -120,6 +133,93 @@ replayStopBtn.addEventListener("click", () => {
   replayer.stop();
 });
 
+analyzeBtn.addEventListener("click", () => {
+  if (!loadedPayload) {
+    setAnalysisStatus("분석할 payload가 없습니다. 녹화 후 Stop 하거나 Replay JSON을 먼저 로드하세요.");
+    return;
+  }
+
+  try {
+    const result = analyzeBehavior(loadedPayload);
+    lastAnalysisPrompt = result.prompt;
+    lastSummary = result.summary;
+    copyPromptBtn.disabled = false;
+    setAnalysisStatus(
+      [
+        "Behavior Analysis Result",
+        JSON.stringify(result.summary, null, 2),
+        "",
+        "LLM Prompt Preview (first 400 chars)",
+        result.prompt.slice(0, 400) + (result.prompt.length > 400 ? "..." : "")
+      ].join("\n")
+    );
+  } catch (error) {
+    setAnalysisStatus(`분석 실패: ${error.message}`);
+  }
+});
+
+llmAnalyzeBtn.addEventListener("click", async () => {
+  if (!loadedPayload) {
+    setLLMAnalysisStatus("분석할 payload가 없습니다. 녹화 후 Stop 하거나 Replay JSON을 먼저 로드하세요.");
+    return;
+  }
+
+  try {
+    if (!lastSummary || !lastAnalysisPrompt) {
+      const local = analyzeBehavior(loadedPayload);
+      lastSummary = local.summary;
+      lastAnalysisPrompt = local.prompt;
+      copyPromptBtn.disabled = false;
+    }
+
+    setLLMAnalysisStatus("LLM 분석 요청 중...");
+
+    const response = await fetch("/api/llm-analyze", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        summary: lastSummary,
+        prompt: lastAnalysisPrompt
+      })
+    });
+
+    const json = await response.json();
+    if (!response.ok) {
+      throw new Error(json.error || "LLM 분석 API 호출 실패");
+    }
+
+    setLLMAnalysisStatus(
+      [
+        "LLM Analysis Result",
+        `고객 유형 요약(KR): ${json.customerSummaryKo || "요약 없음"}`,
+        "",
+        JSON.stringify(json.result, null, 2),
+        "",
+        "Raw Model Output",
+        json.raw
+      ].join("\n")
+    );
+  } catch (error) {
+    setLLMAnalysisStatus(`LLM 분석 실패: ${error.message}`);
+  }
+});
+
+copyPromptBtn.addEventListener("click", async () => {
+  if (!lastAnalysisPrompt) {
+    setAnalysisStatus("복사할 프롬프트가 없습니다. 먼저 Analyze Behavior를 실행하세요.");
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(lastAnalysisPrompt);
+    setAnalysisStatus("LLM 프롬프트를 클립보드에 복사했습니다.");
+  } catch (error) {
+    setAnalysisStatus(`클립보드 복사 실패: ${error.message}`);
+  }
+});
+
 formEl.addEventListener("submit", (event) => {
   event.preventDefault();
   setStatus("폼 submit 이벤트가 발생했습니다.");
@@ -137,6 +237,14 @@ function setStatus(message) {
 
 function setReplayStatus(message) {
   replayStatusEl.textContent = message;
+}
+
+function setAnalysisStatus(message) {
+  analysisStatusEl.textContent = message;
+}
+
+function setLLMAnalysisStatus(message) {
+  llmAnalysisStatusEl.textContent = message;
 }
 
 function formatDate(date) {
@@ -162,4 +270,12 @@ function activateTab(tabName) {
   tabPanels.forEach((panel) => {
     panel.hidden = panel.dataset.tabPanel !== tabName;
   });
+}
+
+function resetAnalysis() {
+  lastAnalysisPrompt = "";
+  lastSummary = null;
+  copyPromptBtn.disabled = true;
+  setAnalysisStatus("Behavior analysis idle");
+  setLLMAnalysisStatus("LLM analysis idle");
 }

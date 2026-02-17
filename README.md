@@ -27,17 +27,22 @@ npm -v
 권장 버전: Node.js LTS (v20 이상)
 
 ## 2) 실행 방법
-빌드 없이 정적 파일로 동작하므로 아래 둘 중 하나를 사용하면 됩니다.
+LLM 분석(OpenAI + LangChain/LangGraph)을 사용하려면 Node 서버로 실행해야 합니다.
 
-### 빠르게 실행 (Python 내장 서버)
+### 의존성 설치
 ```bash
-python3 -m http.server 4173
+npm install
 ```
-브라우저에서 `http://localhost:4173` 접속
 
-### Node로 실행하고 싶다면
+### 환경 변수 설정
 ```bash
-npx serve . -l 4173
+cp .env.example .env
+```
+`.env`의 `OPENAI_API_KEY`를 실제 키로 변경합니다.
+
+### 서버 실행
+```bash
+npm start
 ```
 브라우저에서 `http://localhost:4173` 접속
 
@@ -52,6 +57,14 @@ npx serve . -l 4173
 2. 속도(`0.5x/1x/2x/4x`) 선택
 3. `Play Replay` 클릭
 4. `Stop Replay`로 중단 가능
+
+## 5) LLM 행동 유형 분석
+1. 녹화를 종료하거나(`Stop Recording`) Replay JSON을 로드합니다.
+2. `Analyze Behavior`를 클릭합니다.
+3. 하단 로그에서 행동 요약(`labels`, `signals`, 이벤트 통계)을 확인합니다.
+4. `Copy LLM Prompt`를 눌러 분석용 프롬프트를 LLM에 붙여 넣습니다.
+5. `Analyze with LLM`을 눌러 OpenAI 모델 분석 결과를 화면에서 바로 확인합니다.
+6. 결과 상단의 `고객 유형 요약(KR)`에서 2차 체인 요약 문장을 확인합니다.
 
 ## 구현 범위
 - DOM 변화 기록: `MutationObserver`
@@ -87,6 +100,10 @@ npx serve . -l 4173
 - `src/recorder.js`: 기록 로직
 - `src/replayer.js`: 재생 로직
 - `src/main.js`: UI 이벤트 연결, JSON 입출력
+- `src/behavior-analyzer.js`: 행동 피처 추출 + LLM 프롬프트 생성
+- `server.js`: Express API + LangChain/LangGraph + OpenAI 연동
+  - 1차 체인: 세션 행동 분석 JSON 생성
+  - 2차 체인: 1차 결과를 입력으로 한국어 고객 유형 요약 생성
 
 ## 동작 플로우 (Mermaid)
 

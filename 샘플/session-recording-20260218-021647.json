@@ -1,0 +1,6060 @@
+{
+  "version": 1,
+  "createdAt": "2026-02-17T17:16:46.722Z",
+  "page": {
+    "href": "http://localhost:4173/",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"
+  },
+  "eventCount": 311,
+  "events": [
+    {
+      "id": 1,
+      "type": "snapshot",
+      "at": 4226.5999999996275,
+      "timeOffsetMs": 0.3,
+      "data": {
+        "url": "http://localhost:4173/",
+        "viewport": {
+          "width": 2240,
+          "height": 1058
+        },
+        "html": "<html lang=\"ko\"><head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Session Replay MVP</title>\n    <style>\n      :root {\n        --bg: #f3f6fb;\n        --surface: #ffffff;\n        --text: #1f2937;\n        --muted: #64748b;\n        --primary: #0f766e;\n        --primary-2: #0ea5a4;\n        --danger: #be123c;\n        --line: #d2dce8;\n      }\n\n      * {\n        box-sizing: border-box;\n      }\n\n      body {\n        margin: 0;\n        min-height: 100vh;\n        font-family: \"Segoe UI\", \"Apple SD Gothic Neo\", sans-serif;\n        color: var(--text);\n        background: radial-gradient(circle at top right, #dff4f1, var(--bg));\n      }\n\n      .app {\n        width: min(1440px, 100vw);\n        margin: 0 auto;\n        padding: 16px clamp(12px, 2vw, 28px) 20px;\n      }\n\n      .card {\n        background: var(--surface);\n        border-radius: 14px;\n        padding: 18px;\n        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);\n      }\n\n      h1 {\n        margin: 0 0 8px;\n        font-size: 1.35rem;\n      }\n\n      h2 {\n        margin: 0 0 8px;\n      }\n\n      p {\n        margin: 0;\n        color: var(--muted);\n      }\n\n      .tabs-shell {\n        margin-top: 12px;\n      }\n\n      .tabs {\n        display: flex;\n        gap: 8px;\n        margin-bottom: 12px;\n      }\n\n      .tab-btn {\n        border: 1px solid #b8c4d7;\n        background: #f7fafc;\n        color: #0f172a;\n        border-radius: 999px;\n        padding: 10px 14px;\n        font-weight: 700;\n        cursor: pointer;\n      }\n\n      .tab-btn.active {\n        background: var(--primary);\n        border-color: var(--primary);\n        color: #fff;\n      }\n\n      .tab-stage {\n        min-height: calc(100vh - 164px);\n      }\n\n      .tab-panel[hidden] {\n        display: none;\n      }\n\n      .panel-grid {\n        display: grid;\n        grid-template-columns: 1fr;\n        gap: 16px;\n        min-height: inherit;\n      }\n\n      @media (min-width: 920px) {\n        .panel-grid.split {\n          grid-template-columns: 1fr 1fr;\n        }\n      }\n\n      .controls {\n        display: flex;\n        gap: 8px;\n        flex-wrap: wrap;\n        margin-top: 16px;\n      }\n\n      .controls label {\n        min-width: 160px;\n        flex: 1 1 180px;\n      }\n\n      button {\n        border: none;\n        border-radius: 10px;\n        padding: 10px 14px;\n        color: white;\n        background: var(--primary);\n        cursor: pointer;\n        font-weight: 600;\n      }\n\n      button.secondary {\n        background: var(--primary-2);\n      }\n\n      button.danger {\n        background: var(--danger);\n      }\n\n      button:disabled {\n        opacity: 0.45;\n        cursor: not-allowed;\n      }\n\n      label {\n        font-size: 0.92rem;\n        font-weight: 600;\n      }\n\n      input,\n      textarea,\n      select {\n        width: 100%;\n        margin-top: 6px;\n        padding: 10px;\n        border-radius: 10px;\n        border: 1px solid #cbd5e1;\n        font: inherit;\n      }\n\n      .scroll-area {\n        margin-top: 12px;\n        border: 1px dashed #94a3b8;\n        border-radius: 10px;\n        height: clamp(240px, 35vh, 420px);\n        overflow: auto;\n        padding: 10px;\n        background: #f8fafc;\n      }\n\n      .log {\n        margin-top: 12px;\n        background: #0b1220;\n        color: #d6e2ff;\n        border-radius: 10px;\n        padding: 12px;\n        min-height: 96px;\n        white-space: pre-wrap;\n        font-size: 0.85rem;\n      }\n\n      .replay-shell {\n        margin-top: 12px;\n        border: 1px solid var(--line);\n        border-radius: 10px;\n        overflow: hidden;\n        height: clamp(520px, calc(100vh - 260px), 900px);\n      }\n\n      .analysis-shell {\n        margin-top: 12px;\n        display: grid;\n        grid-template-columns: 1fr;\n        gap: 12px;\n      }\n\n      iframe {\n        width: 100%;\n        height: 100%;\n        border: 0;\n        background: white;\n      }\n\n      ul {\n        margin: 8px 0 0;\n        padding-left: 18px;\n      }\n\n      @media (max-width: 760px) {\n        .tab-stage {\n          min-height: auto;\n        }\n\n        .replay-shell {\n          height: 62vh;\n          min-height: 420px;\n        }\n      }\n    </style>\n  </head>\n  <body>\n    <main class=\"app\">\n      <section class=\"card\">\n        <h1>Session Replay Recorder &amp; Replayer</h1>\n        <p>탭 전환으로 설정화면과 시연화면을 동일한 폭/높이 기준에서 확인합니다.</p>\n      </section>\n\n      <section class=\"tabs-shell\">\n        <div class=\"tabs\" role=\"tablist\" aria-label=\"Session Replay Workspace Tabs\">\n          <button class=\"tab-btn active\" id=\"tab-settings\" data-tab=\"settings\" role=\"tab\" aria-selected=\"true\" aria-controls=\"panel-settings\">\n            설정화면\n          </button>\n          <button class=\"tab-btn\" id=\"tab-demo\" data-tab=\"demo\" role=\"tab\" aria-selected=\"false\" aria-controls=\"panel-demo\">\n            시연화면\n          </button>\n        </div>\n\n        <section class=\"tab-stage\">\n          <div id=\"panel-settings\" data-tab-panel=\"settings\" role=\"tabpanel\" aria-labelledby=\"tab-settings\">\n            <div class=\"panel-grid\">\n              <section class=\"card\">\n                <h2>Recorder Controls</h2>\n                <p>이벤트를 생성하고 로컬 JSON으로 저장합니다.</p>\n                <div class=\"controls\">\n                  <button id=\"start-btn\">Start Recording</button>\n                  <button id=\"stop-btn\" class=\"danger\" disabled=\"\">Stop Recording</button>\n                  <button id=\"download-btn\" class=\"secondary\" disabled=\"\">Download JSON</button>\n                </div>\n                <div id=\"status\" class=\"log\">Idle</div>\n              </section>\n\n              <section class=\"panel-grid split\">\n                <article class=\"card\" id=\"interaction-zone\">\n                  <h2>Interaction Zone</h2>\n                  <form id=\"sample-form\">\n                    <label>\n                      Name\n                      <input id=\"name-input\" name=\"name\" placeholder=\"type here\">\n                    </label>\n                    <label>\n                      Role\n                      <select id=\"role-select\" name=\"role\">\n                        <option value=\"frontend\">Frontend</option>\n                        <option value=\"backend\">Backend</option>\n                        <option value=\"product\">Product</option>\n                      </select>\n                    </label>\n                    <label>\n                      Note\n                      <textarea id=\"note-input\" name=\"note\" rows=\"3\"></textarea>\n                    </label>\n                    <div class=\"controls\">\n                      <button type=\"submit\">Submit Form</button>\n                      <button type=\"button\" id=\"add-item-btn\" class=\"secondary\">Append Item</button>\n                    </div>\n                  </form>\n                </article>\n\n                <article class=\"card\">\n                  <h2>Scrollable &amp; Mutable Area</h2>\n                  <p>스크롤/DOM 변화 기록 테스트 영역입니다.</p>\n                  <div class=\"scroll-area\" id=\"scroll-area\">\n                    <ul id=\"item-list\">\n                      <li>seed item 1</li>\n                      <li>seed item 2</li>\n                      <li>seed item 3</li>\n                      <li>seed item 4</li>\n                      <li>seed item 5</li>\n                      <li>seed item 6</li>\n                      <li>seed item 7</li>\n                      <li>seed item 8</li>\n                      <li>seed item 9</li>\n                      <li>seed item 10</li>\n                    </ul>\n                  </div>\n                </article>\n              </section>\n            </div>\n          </div>\n\n          <div id=\"panel-demo\" data-tab-panel=\"demo\" role=\"tabpanel\" aria-labelledby=\"tab-demo\" hidden=\"\">\n            <div class=\"panel-grid\">\n              <section class=\"card\">\n                <h2>Replay Controls</h2>\n                <p>저장한 JSON을 불러와 동일한 크기 뷰에서 재생합니다.</p>\n                <div class=\"controls\">\n                  <label>\n                    Replay JSON\n                    <input id=\"replay-file\" type=\"file\" accept=\"application/json\">\n                  </label>\n                  <label>\n                    Speed\n                    <select id=\"replay-speed\">\n                      <option value=\"0.5\">0.5x</option>\n                      <option value=\"1\" selected=\"\">1x</option>\n                      <option value=\"2\">2x</option>\n                      <option value=\"4\">4x</option>\n                    </select>\n                  </label>\n                  <button id=\"replay-play-btn\" class=\"secondary\" disabled=\"\">Play Replay</button>\n                  <button id=\"replay-stop-btn\" class=\"danger\" disabled=\"\">Stop Replay</button>\n                </div>\n                <div id=\"replay-status\" class=\"log\">Replay idle</div>\n                <div class=\"replay-shell\">\n                  <iframe id=\"replay-frame\" sandbox=\"allow-same-origin\"></iframe>\n                </div>\n                <div class=\"analysis-shell\">\n                  <div class=\"controls\">\n                    <button id=\"analyze-btn\">Analyze Behavior</button>\n                    <button id=\"llm-analyze-btn\" class=\"secondary\">Analyze with LLM</button>\n                    <button id=\"copy-prompt-btn\" class=\"secondary\" disabled=\"\">Copy LLM Prompt</button>\n                  </div>\n                  <div id=\"analysis-status\" class=\"log\">Behavior analysis idle</div>\n                  <div id=\"llm-analysis-status\" class=\"log\">LLM analysis idle</div>\n                </div>\n              </section>\n            </div>\n          </div>\n        </section>\n      </section>\n    </main>\n\n    <script type=\"module\" src=\"./src/main.js\"></script>\n  \n\n</body></html>"
+      }
+    },
+    {
+      "id": 2,
+      "type": "mutation",
+      "at": 4227.39999999851,
+      "timeOffsetMs": 1.1,
+      "data": {
+        "mutationType": "attributes",
+        "target": "#start-btn",
+        "attributeName": "disabled",
+        "oldValue": null,
+        "newValue": "",
+        "targetInnerHTML": null,
+        "addedNodes": [],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "mutation",
+      "at": 4227.39999999851,
+      "timeOffsetMs": 1.1,
+      "data": {
+        "mutationType": "attributes",
+        "target": "#stop-btn",
+        "attributeName": "disabled",
+        "oldValue": "",
+        "newValue": null,
+        "targetInnerHTML": null,
+        "addedNodes": [],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "mutation",
+      "at": 4227.39999999851,
+      "timeOffsetMs": 1.1,
+      "data": {
+        "mutationType": "attributes",
+        "target": "#download-btn",
+        "attributeName": "disabled",
+        "oldValue": "",
+        "newValue": "",
+        "targetInnerHTML": null,
+        "addedNodes": [],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "mutation",
+      "at": 4227.5999999996275,
+      "timeOffsetMs": 1.3,
+      "data": {
+        "mutationType": "childList",
+        "target": "#status",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "Recording started. 상호작용 후 Stop 버튼을 누르세요.",
+        "addedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "Recording started. 상호작용 후 Stop 버튼을 누르세요."
+          }
+        ],
+        "removedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "Idle"
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "type": "event",
+      "at": 4356.299999998882,
+      "timeOffsetMs": 130,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#start-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 538,
+        "y": 284,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 99.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 127.9921875,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 7,
+      "type": "event",
+      "at": 4375.299999998882,
+      "timeOffsetMs": 149,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#start-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 538,
+        "y": 286,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 99.5,
+        "targetOffsetY": 28.5,
+        "targetWidth": 127.9921875,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 8,
+      "type": "event",
+      "at": 4407.799999998882,
+      "timeOffsetMs": 181.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#start-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 541,
+        "y": 291,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 102.5,
+        "targetOffsetY": 33.5,
+        "targetWidth": 127.9921875,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 9,
+      "type": "event",
+      "at": 4425.5,
+      "timeOffsetMs": 199.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 545,
+        "y": 295,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 124.5,
+        "targetOffsetY": 127.5,
+        "targetWidth": 1384,
+        "targetHeight": 251.5
+      }
+    },
+    {
+      "id": 10,
+      "type": "event",
+      "at": 4441.799999998882,
+      "timeOffsetMs": 215.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 548,
+        "y": 299,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 127.5,
+        "targetOffsetY": 131.5,
+        "targetWidth": 1384,
+        "targetHeight": 251.5
+      }
+    },
+    {
+      "id": 11,
+      "type": "event",
+      "at": 4458.0999999996275,
+      "timeOffsetMs": 231.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 560,
+        "y": 309,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 121.5,
+        "targetOffsetY": 4,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 12,
+      "type": "event",
+      "at": 4474.699999999255,
+      "timeOffsetMs": 248.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 578,
+        "y": 324,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 139.5,
+        "targetOffsetY": 19,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 13,
+      "type": "event",
+      "at": 4491.299999998882,
+      "timeOffsetMs": 265,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 598,
+        "y": 341,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 159.5,
+        "targetOffsetY": 36,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 14,
+      "type": "event",
+      "at": 4508.89999999851,
+      "timeOffsetMs": 282.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 626,
+        "y": 360,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 187.5,
+        "targetOffsetY": 55,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 15,
+      "type": "event",
+      "at": 4541.5999999996275,
+      "timeOffsetMs": 315.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 639,
+        "y": 375,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 200.5,
+        "targetOffsetY": 70,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 16,
+      "type": "event",
+      "at": 4558.699999999255,
+      "timeOffsetMs": 332.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 640,
+        "y": 380,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 201.5,
+        "targetOffsetY": 75,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 17,
+      "type": "event",
+      "at": 4591.5,
+      "timeOffsetMs": 365.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 641,
+        "y": 391,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 202.5,
+        "targetOffsetY": 86,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 18,
+      "type": "event",
+      "at": 4608.299999998882,
+      "timeOffsetMs": 382,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 641,
+        "y": 397,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 202.5,
+        "targetOffsetY": 92,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 19,
+      "type": "event",
+      "at": 4624.89999999851,
+      "timeOffsetMs": 398.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 641,
+        "y": 407,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 220.5,
+        "targetOffsetY": 239.5,
+        "targetWidth": 1384,
+        "targetHeight": 251.5
+      }
+    },
+    {
+      "id": 20,
+      "type": "event",
+      "at": 4641.5,
+      "timeOffsetMs": 415.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 641,
+        "y": 423,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 220.5,
+        "targetOffsetY": 255.5,
+        "targetWidth": 1384,
+        "targetHeight": 741.796875
+      }
+    },
+    {
+      "id": 21,
+      "type": "event",
+      "at": 4658.0999999996275,
+      "timeOffsetMs": 431.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 641,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 220.5,
+        "targetOffsetY": 16,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 22,
+      "type": "event",
+      "at": 4674.89999999851,
+      "timeOffsetMs": 448.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 640,
+        "y": 489,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 201.5,
+        "targetOffsetY": -0.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 23,
+      "type": "event",
+      "at": 4691.5999999996275,
+      "timeOffsetMs": 465.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 633,
+        "y": 539,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 194.5,
+        "targetOffsetY": 24,
+        "targetWidth": 648,
+        "targetHeight": 39.5
+      }
+    },
+    {
+      "id": 24,
+      "type": "event",
+      "at": 4708,
+      "timeOffsetMs": 481.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 628,
+        "y": 562,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 189.5,
+        "targetOffsetY": 72.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 25,
+      "type": "event",
+      "at": 4724.5999999996275,
+      "timeOffsetMs": 498.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 623,
+        "y": 579,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 184.5,
+        "targetOffsetY": 89.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 26,
+      "type": "event",
+      "at": 4741.89999999851,
+      "timeOffsetMs": 515.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 619,
+        "y": 593,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 180.5,
+        "targetOffsetY": 13,
+        "targetWidth": 648,
+        "targetHeight": 41.5
+      }
+    },
+    {
+      "id": 27,
+      "type": "event",
+      "at": 4757.89999999851,
+      "timeOffsetMs": 531.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 614,
+        "y": 602,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 175.5,
+        "targetOffsetY": 22,
+        "targetWidth": 648,
+        "targetHeight": 41.5
+      }
+    },
+    {
+      "id": 28,
+      "type": "event",
+      "at": 4774.699999999255,
+      "timeOffsetMs": 548.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 610,
+        "y": 607,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 171.5,
+        "targetOffsetY": 27,
+        "targetWidth": 648,
+        "targetHeight": 41.5
+      }
+    },
+    {
+      "id": 29,
+      "type": "event",
+      "at": 4791.39999999851,
+      "timeOffsetMs": 565.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 607,
+        "y": 607,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 168.5,
+        "targetOffsetY": 27,
+        "targetWidth": 648,
+        "targetHeight": 41.5
+      }
+    },
+    {
+      "id": 30,
+      "type": "event",
+      "at": 4808,
+      "timeOffsetMs": 581.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 601,
+        "y": 607,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 162.5,
+        "targetOffsetY": 27,
+        "targetWidth": 648,
+        "targetHeight": 41.5
+      }
+    },
+    {
+      "id": 31,
+      "type": "event",
+      "at": 4824.5999999996275,
+      "timeOffsetMs": 598.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 595,
+        "y": 607,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 156.5,
+        "targetOffsetY": 27,
+        "targetWidth": 648,
+        "targetHeight": 41.5
+      }
+    },
+    {
+      "id": 32,
+      "type": "event",
+      "at": 4841.299999998882,
+      "timeOffsetMs": 615,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 585,
+        "y": 604,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 146.5,
+        "targetOffsetY": 24,
+        "targetWidth": 648,
+        "targetHeight": 41.5
+      }
+    },
+    {
+      "id": 33,
+      "type": "event",
+      "at": 4858.799999998882,
+      "timeOffsetMs": 632.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 568,
+        "y": 595,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 129.5,
+        "targetOffsetY": 15,
+        "targetWidth": 648,
+        "targetHeight": 41.5
+      }
+    },
+    {
+      "id": 34,
+      "type": "event",
+      "at": 4891.5,
+      "timeOffsetMs": 665.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 541,
+        "y": 577,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 102.5,
+        "targetOffsetY": 87.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 35,
+      "type": "event",
+      "at": 4924.699999999255,
+      "timeOffsetMs": 698.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 527,
+        "y": 566,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 88.5,
+        "targetOffsetY": 76.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 36,
+      "type": "event",
+      "at": 4941.299999998882,
+      "timeOffsetMs": 715,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 525,
+        "y": 562,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 86.5,
+        "targetOffsetY": 72.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 37,
+      "type": "event",
+      "at": 4958,
+      "timeOffsetMs": 731.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 524,
+        "y": 559,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 85.5,
+        "targetOffsetY": 69.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 38,
+      "type": "event",
+      "at": 4974.5,
+      "timeOffsetMs": 748.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 524,
+        "y": 556,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 85.5,
+        "targetOffsetY": 66.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 39,
+      "type": "event",
+      "at": 4991.199999999255,
+      "timeOffsetMs": 764.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 523,
+        "y": 554,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 84.5,
+        "targetOffsetY": 64.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 40,
+      "type": "event",
+      "at": 5007.89999999851,
+      "timeOffsetMs": 781.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 523,
+        "y": 553,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 84.5,
+        "targetOffsetY": 38,
+        "targetWidth": 648,
+        "targetHeight": 39.5
+      }
+    },
+    {
+      "id": 41,
+      "type": "event",
+      "at": 5024.5999999996275,
+      "timeOffsetMs": 798.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 523,
+        "y": 551,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 84.5,
+        "targetOffsetY": 36,
+        "targetWidth": 648,
+        "targetHeight": 39.5
+      }
+    },
+    {
+      "id": 42,
+      "type": "event",
+      "at": 5041.299999998882,
+      "timeOffsetMs": 815,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 524,
+        "y": 548,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 85.5,
+        "targetOffsetY": 33,
+        "targetWidth": 648,
+        "targetHeight": 39.5
+      }
+    },
+    {
+      "id": 43,
+      "type": "event",
+      "at": 5057.699999999255,
+      "timeOffsetMs": 831.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 524,
+        "y": 547,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 85.5,
+        "targetOffsetY": 32,
+        "targetWidth": 648,
+        "targetHeight": 39.5
+      }
+    },
+    {
+      "id": 44,
+      "type": "event",
+      "at": 5074.299999998882,
+      "timeOffsetMs": 848,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 525,
+        "y": 546,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 86.5,
+        "targetOffsetY": 31,
+        "targetWidth": 648,
+        "targetHeight": 39.5
+      }
+    },
+    {
+      "id": 45,
+      "type": "event",
+      "at": 5091.39999999851,
+      "timeOffsetMs": 865.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 525,
+        "y": 546,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 86.5,
+        "targetOffsetY": 31,
+        "targetWidth": 648,
+        "targetHeight": 39.5
+      }
+    },
+    {
+      "id": 46,
+      "type": "event",
+      "at": 5108.0999999996275,
+      "timeOffsetMs": 881.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 526,
+        "y": 544,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 87.5,
+        "targetOffsetY": 29,
+        "targetWidth": 648,
+        "targetHeight": 39.5
+      }
+    },
+    {
+      "id": 47,
+      "type": "event",
+      "at": 5124.5,
+      "timeOffsetMs": 898.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 527,
+        "y": 543,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 88.5,
+        "targetOffsetY": 28,
+        "targetWidth": 648,
+        "targetHeight": 39.5
+      }
+    },
+    {
+      "id": 48,
+      "type": "event",
+      "at": 5142.199999999255,
+      "timeOffsetMs": 915.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 528,
+        "y": 542,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 89.5,
+        "targetOffsetY": 27,
+        "targetWidth": 648,
+        "targetHeight": 39.5
+      }
+    },
+    {
+      "id": 49,
+      "type": "event",
+      "at": 5174.5,
+      "timeOffsetMs": 948.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 529,
+        "y": 542,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 90.5,
+        "targetOffsetY": 27,
+        "targetWidth": 648,
+        "targetHeight": 39.5
+      }
+    },
+    {
+      "id": 50,
+      "type": "event",
+      "at": 5203.799999998882,
+      "timeOffsetMs": 977.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 529,
+        "y": 541,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 90.5,
+        "targetOffsetY": 26,
+        "targetWidth": 648,
+        "targetHeight": 39.5
+      }
+    },
+    {
+      "id": 51,
+      "type": "event",
+      "at": 5351.0999999996275,
+      "timeOffsetMs": 1124.8,
+      "data": {
+        "eventType": "click",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 529,
+        "y": 541,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 90.5,
+        "targetOffsetY": 26,
+        "targetWidth": 648,
+        "targetHeight": 39.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 52,
+      "type": "event",
+      "at": 5552.5,
+      "timeOffsetMs": 1326.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 529,
+        "y": 542,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 90.5,
+        "targetOffsetY": 27,
+        "targetWidth": 648,
+        "targetHeight": 39.5
+      }
+    },
+    {
+      "id": 53,
+      "type": "event",
+      "at": 5574.699999999255,
+      "timeOffsetMs": 1348.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 531,
+        "y": 547,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 92.5,
+        "targetOffsetY": 32,
+        "targetWidth": 648,
+        "targetHeight": 39.5
+      }
+    },
+    {
+      "id": 54,
+      "type": "event",
+      "at": 5592.0999999996275,
+      "timeOffsetMs": 1365.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 535,
+        "y": 553,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 96.5,
+        "targetOffsetY": 38,
+        "targetWidth": 648,
+        "targetHeight": 39.5
+      }
+    },
+    {
+      "id": 55,
+      "type": "event",
+      "at": 5608.199999999255,
+      "timeOffsetMs": 1381.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 537,
+        "y": 557,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 98.5,
+        "targetOffsetY": 67.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 56,
+      "type": "event",
+      "at": 5624.5,
+      "timeOffsetMs": 1398.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 545,
+        "y": 570,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 106.5,
+        "targetOffsetY": 80.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 57,
+      "type": "event",
+      "at": 5642.39999999851,
+      "timeOffsetMs": 1416.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 552,
+        "y": 583,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 113.5,
+        "targetOffsetY": 3,
+        "targetWidth": 648,
+        "targetHeight": 41.5
+      }
+    },
+    {
+      "id": 58,
+      "type": "event",
+      "at": 5674.699999999255,
+      "timeOffsetMs": 1448.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 567,
+        "y": 604,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 128.5,
+        "targetOffsetY": 24,
+        "targetWidth": 648,
+        "targetHeight": 41.5
+      }
+    },
+    {
+      "id": 59,
+      "type": "event",
+      "at": 5691.5,
+      "timeOffsetMs": 1465.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 571,
+        "y": 608,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 132.5,
+        "targetOffsetY": 28,
+        "targetWidth": 648,
+        "targetHeight": 41.5
+      }
+    },
+    {
+      "id": 60,
+      "type": "event",
+      "at": 5707.89999999851,
+      "timeOffsetMs": 1481.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 571,
+        "y": 608,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 132.5,
+        "targetOffsetY": 28,
+        "targetWidth": 648,
+        "targetHeight": 41.5
+      }
+    },
+    {
+      "id": 61,
+      "type": "event",
+      "at": 5739.799999998882,
+      "timeOffsetMs": 1513.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 571,
+        "y": 608,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 132.5,
+        "targetOffsetY": 28,
+        "targetWidth": 648,
+        "targetHeight": 41.5
+      }
+    },
+    {
+      "id": 62,
+      "type": "event",
+      "at": 5757.799999998882,
+      "timeOffsetMs": 1531.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 572,
+        "y": 608,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 133.5,
+        "targetOffsetY": 28,
+        "targetWidth": 648,
+        "targetHeight": 41.5
+      }
+    },
+    {
+      "id": 63,
+      "type": "event",
+      "at": 5775.5999999996275,
+      "timeOffsetMs": 1549.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 573,
+        "y": 606,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 134.5,
+        "targetOffsetY": 26,
+        "targetWidth": 648,
+        "targetHeight": 41.5
+      }
+    },
+    {
+      "id": 64,
+      "type": "event",
+      "at": 5808.199999999255,
+      "timeOffsetMs": 1581.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 569,
+        "y": 574,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 130.5,
+        "targetOffsetY": 84.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 65,
+      "type": "event",
+      "at": 5824.5,
+      "timeOffsetMs": 1598.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 565,
+        "y": 558,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 126.5,
+        "targetOffsetY": 68.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 66,
+      "type": "event",
+      "at": 5841.5,
+      "timeOffsetMs": 1615.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 564,
+        "y": 557,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 125.5,
+        "targetOffsetY": 67.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 67,
+      "type": "event",
+      "at": 6300.199999999255,
+      "timeOffsetMs": 2073.9,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "r"
+      }
+    },
+    {
+      "id": 68,
+      "type": "event",
+      "at": 6799.39999999851,
+      "timeOffsetMs": 2573.1,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": ""
+      }
+    },
+    {
+      "id": 69,
+      "type": "event",
+      "at": 7304.5,
+      "timeOffsetMs": 3078.2,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "ㄱ"
+      }
+    },
+    {
+      "id": 70,
+      "type": "event",
+      "at": 7372.299999998882,
+      "timeOffsetMs": 3146,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가"
+      }
+    },
+    {
+      "id": 71,
+      "type": "event",
+      "at": 7460.199999999255,
+      "timeOffsetMs": 3233.9,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "간"
+      }
+    },
+    {
+      "id": 72,
+      "type": "event",
+      "at": 7544.199999999255,
+      "timeOffsetMs": 3317.9,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가"
+      }
+    },
+    {
+      "id": 73,
+      "type": "event",
+      "at": 7545,
+      "timeOffsetMs": 3318.7,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나"
+      }
+    },
+    {
+      "id": 74,
+      "type": "event",
+      "at": 7622.199999999255,
+      "timeOffsetMs": 3395.9,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가낟"
+      }
+    },
+    {
+      "id": 75,
+      "type": "event",
+      "at": 7694.39999999851,
+      "timeOffsetMs": 3468.1,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나"
+      }
+    },
+    {
+      "id": 76,
+      "type": "event",
+      "at": 7695.0999999996275,
+      "timeOffsetMs": 3468.8,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나다"
+      }
+    },
+    {
+      "id": 77,
+      "type": "event",
+      "at": 8397.5,
+      "timeOffsetMs": 4171.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 566,
+        "y": 558,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 127.5,
+        "targetOffsetY": 68.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 78,
+      "type": "event",
+      "at": 8425.299999998882,
+      "timeOffsetMs": 4199,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 566,
+        "y": 567,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 127.5,
+        "targetOffsetY": 77.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 79,
+      "type": "event",
+      "at": 8441.599999999627,
+      "timeOffsetMs": 4215.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 561,
+        "y": 592,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 122.5,
+        "targetOffsetY": 12,
+        "targetWidth": 648,
+        "targetHeight": 41.5
+      }
+    },
+    {
+      "id": 80,
+      "type": "event",
+      "at": 8457.89999999851,
+      "timeOffsetMs": 4231.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 557,
+        "y": 614,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 118.5,
+        "targetOffsetY": 34,
+        "targetWidth": 648,
+        "targetHeight": 41.5
+      }
+    },
+    {
+      "id": 81,
+      "type": "event",
+      "at": 8474.89999999851,
+      "timeOffsetMs": 4248.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 553,
+        "y": 631,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 114.5,
+        "targetOffsetY": 141.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 82,
+      "type": "event",
+      "at": 8491.299999998882,
+      "timeOffsetMs": 4265,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 548,
+        "y": 647,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 109.5,
+        "targetOffsetY": 0,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 83,
+      "type": "event",
+      "at": 8507.699999999255,
+      "timeOffsetMs": 4281.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 544,
+        "y": 660,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 105.5,
+        "targetOffsetY": 13,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 84,
+      "type": "event",
+      "at": 8525.39999999851,
+      "timeOffsetMs": 4299.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 541,
+        "y": 667,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 102.5,
+        "targetOffsetY": 20,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 85,
+      "type": "event",
+      "at": 8557.89999999851,
+      "timeOffsetMs": 4331.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 536,
+        "y": 672,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 97.5,
+        "targetOffsetY": 25,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 86,
+      "type": "event",
+      "at": 8574.5,
+      "timeOffsetMs": 4348.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 533,
+        "y": 674,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 94.5,
+        "targetOffsetY": 27,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 87,
+      "type": "event",
+      "at": 8591.299999998882,
+      "timeOffsetMs": 4365,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 532,
+        "y": 676,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 93.5,
+        "targetOffsetY": 29,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 88,
+      "type": "event",
+      "at": 8608.699999999255,
+      "timeOffsetMs": 4382.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 531,
+        "y": 676,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 92.5,
+        "targetOffsetY": 29,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 89,
+      "type": "event",
+      "at": 8641.099999999627,
+      "timeOffsetMs": 4414.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 528,
+        "y": 679,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 89.5,
+        "targetOffsetY": 32,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 90,
+      "type": "event",
+      "at": 8657.89999999851,
+      "timeOffsetMs": 4431.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 527,
+        "y": 679,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 88.5,
+        "targetOffsetY": 32,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 91,
+      "type": "event",
+      "at": 8709.599999999627,
+      "timeOffsetMs": 4483.3,
+      "data": {
+        "eventType": "change",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나다"
+      }
+    },
+    {
+      "id": 92,
+      "type": "event",
+      "at": 8779.39999999851,
+      "timeOffsetMs": 4553.1,
+      "data": {
+        "eventType": "click",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 527,
+        "y": 679,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 88.5,
+        "targetOffsetY": 32,
+        "targetWidth": 648,
+        "targetHeight": 74.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 93,
+      "type": "event",
+      "at": 8803.099999999627,
+      "timeOffsetMs": 4576.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 527,
+        "y": 680,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 88.5,
+        "targetOffsetY": 33,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 94,
+      "type": "event",
+      "at": 8824.099999999627,
+      "timeOffsetMs": 4597.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 529,
+        "y": 683,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 90.5,
+        "targetOffsetY": 36,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 95,
+      "type": "event",
+      "at": 8840.89999999851,
+      "timeOffsetMs": 4614.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 533,
+        "y": 687,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 94.5,
+        "targetOffsetY": 40,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 96,
+      "type": "event",
+      "at": 8857.699999999255,
+      "timeOffsetMs": 4631.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 536,
+        "y": 693,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 97.5,
+        "targetOffsetY": 46,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 97,
+      "type": "event",
+      "at": 8859,
+      "timeOffsetMs": 4632.7,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "1"
+      }
+    },
+    {
+      "id": 98,
+      "type": "event",
+      "at": 8874.599999999627,
+      "timeOffsetMs": 4648.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 545,
+        "y": 709,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 106.5,
+        "targetOffsetY": 62,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 99,
+      "type": "event",
+      "at": 8891.39999999851,
+      "timeOffsetMs": 4665.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > label:nth-of-type(3)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 552,
+        "y": 723,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 113.5,
+        "targetOffsetY": 100,
+        "targetWidth": 648,
+        "targetHeight": 103
+      }
+    },
+    {
+      "id": 100,
+      "type": "event",
+      "at": 8907.5,
+      "timeOffsetMs": 4681.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 560,
+        "y": 738,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 121.5,
+        "targetOffsetY": 248.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 101,
+      "type": "event",
+      "at": 8925.199999999255,
+      "timeOffsetMs": 4698.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 569,
+        "y": 749,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 12.296875,
+        "targetOffsetY": 6.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 102,
+      "type": "event",
+      "at": 8957.699999999255,
+      "timeOffsetMs": 4731.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 583,
+        "y": 764,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 26.296875,
+        "targetOffsetY": 21.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 103,
+      "type": "event",
+      "at": 8974.39999999851,
+      "timeOffsetMs": 4748.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 584,
+        "y": 765,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 27.296875,
+        "targetOffsetY": 22.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 104,
+      "type": "event",
+      "at": 9059.89999999851,
+      "timeOffsetMs": 4833.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 584,
+        "y": 765,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 27.296875,
+        "targetOffsetY": 22.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 105,
+      "type": "event",
+      "at": 9090.89999999851,
+      "timeOffsetMs": 4864.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 587,
+        "y": 766,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 30.296875,
+        "targetOffsetY": 23.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 106,
+      "type": "event",
+      "at": 9107.699999999255,
+      "timeOffsetMs": 4881.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 588,
+        "y": 766,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 31.296875,
+        "targetOffsetY": 23.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 107,
+      "type": "event",
+      "at": 9124.299999998882,
+      "timeOffsetMs": 4898,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 591,
+        "y": 766,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 34.296875,
+        "targetOffsetY": 23.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 108,
+      "type": "event",
+      "at": 9141,
+      "timeOffsetMs": 4914.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 592,
+        "y": 766,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 35.296875,
+        "targetOffsetY": 23.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 109,
+      "type": "event",
+      "at": 9158.599999999627,
+      "timeOffsetMs": 4932.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 593,
+        "y": 766,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 36.296875,
+        "targetOffsetY": 23.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 110,
+      "type": "event",
+      "at": 9190.89999999851,
+      "timeOffsetMs": 4964.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 596,
+        "y": 766,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 39.296875,
+        "targetOffsetY": 23.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 111,
+      "type": "event",
+      "at": 9207.39999999851,
+      "timeOffsetMs": 4981.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 596,
+        "y": 766,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 39.296875,
+        "targetOffsetY": 23.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 112,
+      "type": "event",
+      "at": 9233.89999999851,
+      "timeOffsetMs": 5007.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 596,
+        "y": 766,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 39.296875,
+        "targetOffsetY": 23.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 113,
+      "type": "event",
+      "at": 9251.599999999627,
+      "timeOffsetMs": 5025.3,
+      "data": {
+        "eventType": "change",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "1"
+      }
+    },
+    {
+      "id": 114,
+      "type": "event",
+      "at": 9341.39999999851,
+      "timeOffsetMs": 5115.1,
+      "data": {
+        "eventType": "click",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 596,
+        "y": 766,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 39.296875,
+        "targetOffsetY": 23.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 115,
+      "type": "mutation",
+      "at": 9357.599999999627,
+      "timeOffsetMs": 5131.3,
+      "data": {
+        "mutationType": "childList",
+        "target": "#item-list",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "\n                      <li>seed item 1</li>\n                      <li>seed item 2</li>\n                      <li>seed item 3</li>\n                      <li>seed item 4</li>\n                      <li>seed item 5</li>\n                      <li>seed item 6</li>\n                      <li>seed item 7</li>\n                      <li>seed item 8</li>\n                      <li>seed item 9</li>\n                      <li>seed item 10</li>\n                    <li>appended at 오전 2:16:36</li>",
+        "addedNodes": [
+          {
+            "nodeType": "element",
+            "tagName": "LI",
+            "path": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > div:nth-of-type(1) > ul:nth-of-type(1) > li:nth-of-type(11)",
+            "outerHTML": "<li>appended at 오전 2:16:36</li>"
+          }
+        ],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 116,
+      "type": "event",
+      "at": 9374,
+      "timeOffsetMs": 5147.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 597,
+        "y": 766,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 40.296875,
+        "targetOffsetY": 23.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 117,
+      "type": "event",
+      "at": 9390.799999998882,
+      "timeOffsetMs": 5164.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 597,
+        "y": 765,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 40.296875,
+        "targetOffsetY": 22.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 118,
+      "type": "event",
+      "at": 9407.599999999627,
+      "timeOffsetMs": 5181.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 597,
+        "y": 763,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 40.296875,
+        "targetOffsetY": 20.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 119,
+      "type": "event",
+      "at": 9424.199999999255,
+      "timeOffsetMs": 5197.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 596,
+        "y": 760,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 39.296875,
+        "targetOffsetY": 17.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 120,
+      "type": "event",
+      "at": 9440.89999999851,
+      "timeOffsetMs": 5214.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 596,
+        "y": 757,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 39.296875,
+        "targetOffsetY": 14.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 121,
+      "type": "event",
+      "at": 9457.699999999255,
+      "timeOffsetMs": 5231.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 593,
+        "y": 751,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 36.296875,
+        "targetOffsetY": 8.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 122,
+      "type": "event",
+      "at": 9474.299999998882,
+      "timeOffsetMs": 5248,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 586,
+        "y": 733,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 147.5,
+        "targetOffsetY": 243.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 123,
+      "type": "event",
+      "at": 9491.099999999627,
+      "timeOffsetMs": 5264.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 580,
+        "y": 720,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 141.5,
+        "targetOffsetY": 73,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 124,
+      "type": "event",
+      "at": 9507.799999998882,
+      "timeOffsetMs": 5281.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 573,
+        "y": 708,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 134.5,
+        "targetOffsetY": 61,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 125,
+      "type": "event",
+      "at": 9524.299999998882,
+      "timeOffsetMs": 5298,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 566,
+        "y": 697,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 127.5,
+        "targetOffsetY": 50,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 126,
+      "type": "event",
+      "at": 9541,
+      "timeOffsetMs": 5314.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 561,
+        "y": 691,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 122.5,
+        "targetOffsetY": 44,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 127,
+      "type": "event",
+      "at": 9557.599999999627,
+      "timeOffsetMs": 5331.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 559,
+        "y": 687,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 120.5,
+        "targetOffsetY": 40,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 128,
+      "type": "event",
+      "at": 9574,
+      "timeOffsetMs": 5347.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 558,
+        "y": 685,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 119.5,
+        "targetOffsetY": 38,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 129,
+      "type": "event",
+      "at": 9590.599999999627,
+      "timeOffsetMs": 5364.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 557,
+        "y": 684,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 118.5,
+        "targetOffsetY": 37,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 130,
+      "type": "event",
+      "at": 9795.39999999851,
+      "timeOffsetMs": 5569.1,
+      "data": {
+        "eventType": "click",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 557,
+        "y": 684,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 118.5,
+        "targetOffsetY": 37,
+        "targetWidth": 648,
+        "targetHeight": 74.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 131,
+      "type": "event",
+      "at": 10047.89999999851,
+      "timeOffsetMs": 5821.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 557,
+        "y": 683,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 118.5,
+        "targetOffsetY": 36,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 132,
+      "type": "event",
+      "at": 10075,
+      "timeOffsetMs": 5848.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 557,
+        "y": 682,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 118.5,
+        "targetOffsetY": 35,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 133,
+      "type": "event",
+      "at": 10091,
+      "timeOffsetMs": 5864.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 557,
+        "y": 681,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 118.5,
+        "targetOffsetY": 34,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 134,
+      "type": "event",
+      "at": 10108.5,
+      "timeOffsetMs": 5882.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 557,
+        "y": 680,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 118.5,
+        "targetOffsetY": 33,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 135,
+      "type": "event",
+      "at": 10604.099999999627,
+      "timeOffsetMs": 6377.8,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": ""
+      }
+    },
+    {
+      "id": 136,
+      "type": "event",
+      "at": 10800.699999999255,
+      "timeOffsetMs": 6574.4,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "2"
+      }
+    },
+    {
+      "id": 137,
+      "type": "event",
+      "at": 11324.5,
+      "timeOffsetMs": 7098.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 557,
+        "y": 681,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 118.5,
+        "targetOffsetY": 34,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 138,
+      "type": "event",
+      "at": 11341.299999998882,
+      "timeOffsetMs": 7115,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 559,
+        "y": 683,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 120.5,
+        "targetOffsetY": 36,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 139,
+      "type": "event",
+      "at": 11357.5,
+      "timeOffsetMs": 7131.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 564,
+        "y": 694,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 125.5,
+        "targetOffsetY": 47,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 140,
+      "type": "event",
+      "at": 11374.699999999255,
+      "timeOffsetMs": 7148.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 578,
+        "y": 729,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 139.5,
+        "targetOffsetY": 239.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 141,
+      "type": "event",
+      "at": 11391.299999998882,
+      "timeOffsetMs": 7165,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 589,
+        "y": 753,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 32.296875,
+        "targetOffsetY": 10.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 142,
+      "type": "event",
+      "at": 11407.89999999851,
+      "timeOffsetMs": 7181.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 596,
+        "y": 770,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 39.296875,
+        "targetOffsetY": 27.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 143,
+      "type": "event",
+      "at": 11425.39999999851,
+      "timeOffsetMs": 7199.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 601,
+        "y": 780,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 180.5,
+        "targetOffsetY": 345,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 144,
+      "type": "event",
+      "at": 11458.699999999255,
+      "timeOffsetMs": 7232.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 605,
+        "y": 785,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 184.5,
+        "targetOffsetY": 350,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 145,
+      "type": "event",
+      "at": 11491.299999998882,
+      "timeOffsetMs": 7265,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 605,
+        "y": 786,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 184.5,
+        "targetOffsetY": 351,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 146,
+      "type": "event",
+      "at": 11507.699999999255,
+      "timeOffsetMs": 7281.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 606,
+        "y": 786,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 185.5,
+        "targetOffsetY": 351,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 147,
+      "type": "event",
+      "at": 11579.099999999627,
+      "timeOffsetMs": 7352.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 606,
+        "y": 786,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 185.5,
+        "targetOffsetY": 351,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 148,
+      "type": "event",
+      "at": 11608.599999999627,
+      "timeOffsetMs": 7382.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 609,
+        "y": 786,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 188.5,
+        "targetOffsetY": 351,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 149,
+      "type": "event",
+      "at": 11641.199999999255,
+      "timeOffsetMs": 7414.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 612,
+        "y": 786,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 191.5,
+        "targetOffsetY": 351,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 150,
+      "type": "event",
+      "at": 11657.89999999851,
+      "timeOffsetMs": 7431.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 616,
+        "y": 783,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 195.5,
+        "targetOffsetY": 348,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 151,
+      "type": "event",
+      "at": 11674.5,
+      "timeOffsetMs": 7448.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 618,
+        "y": 780,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 197.5,
+        "targetOffsetY": 345,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 152,
+      "type": "event",
+      "at": 11691,
+      "timeOffsetMs": 7464.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 620,
+        "y": 776,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 63.296875,
+        "targetOffsetY": 33.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 153,
+      "type": "event",
+      "at": 11707.89999999851,
+      "timeOffsetMs": 7481.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 621,
+        "y": 773,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 64.296875,
+        "targetOffsetY": 30.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 154,
+      "type": "event",
+      "at": 11725.299999998882,
+      "timeOffsetMs": 7499,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 622,
+        "y": 771,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 65.296875,
+        "targetOffsetY": 28.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 155,
+      "type": "event",
+      "at": 11758,
+      "timeOffsetMs": 7531.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 623,
+        "y": 768,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 66.296875,
+        "targetOffsetY": 25.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 156,
+      "type": "event",
+      "at": 11796.5,
+      "timeOffsetMs": 7570.2,
+      "data": {
+        "eventType": "change",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "2"
+      }
+    },
+    {
+      "id": 157,
+      "type": "event",
+      "at": 11876.699999999255,
+      "timeOffsetMs": 7650.4,
+      "data": {
+        "eventType": "click",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 623,
+        "y": 768,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 66.296875,
+        "targetOffsetY": 25.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 158,
+      "type": "mutation",
+      "at": 11877,
+      "timeOffsetMs": 7650.7,
+      "data": {
+        "mutationType": "childList",
+        "target": "#item-list",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "\n                      <li>seed item 1</li>\n                      <li>seed item 2</li>\n                      <li>seed item 3</li>\n                      <li>seed item 4</li>\n                      <li>seed item 5</li>\n                      <li>seed item 6</li>\n                      <li>seed item 7</li>\n                      <li>seed item 8</li>\n                      <li>seed item 9</li>\n                      <li>seed item 10</li>\n                    <li>appended at 오전 2:16:36</li><li>appended at 오전 2:16:38</li>",
+        "addedNodes": [
+          {
+            "nodeType": "element",
+            "tagName": "LI",
+            "path": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > div:nth-of-type(1) > ul:nth-of-type(1) > li:nth-of-type(12)",
+            "outerHTML": "<li>appended at 오전 2:16:38</li>"
+          }
+        ],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 159,
+      "type": "event",
+      "at": 11891.299999998882,
+      "timeOffsetMs": 7665,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 623,
+        "y": 768,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 66.296875,
+        "targetOffsetY": 25.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 160,
+      "type": "event",
+      "at": 11907.699999999255,
+      "timeOffsetMs": 7681.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 620,
+        "y": 764,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 63.296875,
+        "targetOffsetY": 21.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 161,
+      "type": "event",
+      "at": 11924.5,
+      "timeOffsetMs": 7698.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 618,
+        "y": 760,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 61.296875,
+        "targetOffsetY": 17.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 162,
+      "type": "event",
+      "at": 11941.099999999627,
+      "timeOffsetMs": 7714.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 611,
+        "y": 750,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 54.296875,
+        "targetOffsetY": 7.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 163,
+      "type": "event",
+      "at": 11958,
+      "timeOffsetMs": 7731.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 601,
+        "y": 734,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 162.5,
+        "targetOffsetY": 244.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 164,
+      "type": "event",
+      "at": 11974.599999999627,
+      "timeOffsetMs": 7748.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 589,
+        "y": 715,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 150.5,
+        "targetOffsetY": 68,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 165,
+      "type": "event",
+      "at": 11991.099999999627,
+      "timeOffsetMs": 7764.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 575,
+        "y": 698,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 136.5,
+        "targetOffsetY": 51,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 166,
+      "type": "event",
+      "at": 12007.799999998882,
+      "timeOffsetMs": 7781.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 562,
+        "y": 683,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 123.5,
+        "targetOffsetY": 36,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 167,
+      "type": "event",
+      "at": 12024.299999998882,
+      "timeOffsetMs": 7798,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 555,
+        "y": 672,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 116.5,
+        "targetOffsetY": 25,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 168,
+      "type": "event",
+      "at": 12040.799999998882,
+      "timeOffsetMs": 7814.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 552,
+        "y": 668,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 113.5,
+        "targetOffsetY": 21,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 169,
+      "type": "event",
+      "at": 12057.5,
+      "timeOffsetMs": 7831.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 552,
+        "y": 667,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 113.5,
+        "targetOffsetY": 20,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 170,
+      "type": "event",
+      "at": 12195.39999999851,
+      "timeOffsetMs": 7969.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 552,
+        "y": 667,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 113.5,
+        "targetOffsetY": 20,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 171,
+      "type": "event",
+      "at": 12210.5,
+      "timeOffsetMs": 7984.2,
+      "data": {
+        "eventType": "click",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 552,
+        "y": 667,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 113.5,
+        "targetOffsetY": 20,
+        "targetWidth": 648,
+        "targetHeight": 74.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 172,
+      "type": "event",
+      "at": 12719.099999999627,
+      "timeOffsetMs": 8492.8,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": ""
+      }
+    },
+    {
+      "id": 173,
+      "type": "event",
+      "at": 12879.599999999627,
+      "timeOffsetMs": 8653.3,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "3"
+      }
+    },
+    {
+      "id": 174,
+      "type": "event",
+      "at": 13441,
+      "timeOffsetMs": 9214.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 552,
+        "y": 667,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 113.5,
+        "targetOffsetY": 20,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 175,
+      "type": "event",
+      "at": 13457.5,
+      "timeOffsetMs": 9231.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 555,
+        "y": 671,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 116.5,
+        "targetOffsetY": 24,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 176,
+      "type": "event",
+      "at": 13474.5,
+      "timeOffsetMs": 9248.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 567,
+        "y": 699,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 128.5,
+        "targetOffsetY": 52,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 177,
+      "type": "event",
+      "at": 13491.199999999255,
+      "timeOffsetMs": 9264.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > label:nth-of-type(3)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 576,
+        "y": 725,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 137.5,
+        "targetOffsetY": 102,
+        "targetWidth": 648,
+        "targetHeight": 103
+      }
+    },
+    {
+      "id": 178,
+      "type": "event",
+      "at": 13508.5,
+      "timeOffsetMs": 9282.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 583,
+        "y": 744,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 26.296875,
+        "targetOffsetY": 1.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 179,
+      "type": "event",
+      "at": 13540.799999998882,
+      "timeOffsetMs": 9314.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 585,
+        "y": 750,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 28.296875,
+        "targetOffsetY": 7.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 180,
+      "type": "event",
+      "at": 13557.39999999851,
+      "timeOffsetMs": 9331.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 585,
+        "y": 750,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 28.296875,
+        "targetOffsetY": 7.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 181,
+      "type": "event",
+      "at": 13679,
+      "timeOffsetMs": 9452.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 586,
+        "y": 750,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 29.296875,
+        "targetOffsetY": 7.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 182,
+      "type": "event",
+      "at": 13707.699999999255,
+      "timeOffsetMs": 9481.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 590,
+        "y": 758,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 33.296875,
+        "targetOffsetY": 15.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 183,
+      "type": "event",
+      "at": 13725.099999999627,
+      "timeOffsetMs": 9498.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 593,
+        "y": 763,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 36.296875,
+        "targetOffsetY": 20.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 184,
+      "type": "event",
+      "at": 13757.39999999851,
+      "timeOffsetMs": 9531.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 594,
+        "y": 765,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 37.296875,
+        "targetOffsetY": 22.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 185,
+      "type": "event",
+      "at": 13827.099999999627,
+      "timeOffsetMs": 9600.8,
+      "data": {
+        "eventType": "change",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "3"
+      }
+    },
+    {
+      "id": 186,
+      "type": "event",
+      "at": 13939.099999999627,
+      "timeOffsetMs": 9712.8,
+      "data": {
+        "eventType": "click",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 594,
+        "y": 765,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 37.296875,
+        "targetOffsetY": 22.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 187,
+      "type": "mutation",
+      "at": 13939.5,
+      "timeOffsetMs": 9713.2,
+      "data": {
+        "mutationType": "childList",
+        "target": "#item-list",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "\n                      <li>seed item 1</li>\n                      <li>seed item 2</li>\n                      <li>seed item 3</li>\n                      <li>seed item 4</li>\n                      <li>seed item 5</li>\n                      <li>seed item 6</li>\n                      <li>seed item 7</li>\n                      <li>seed item 8</li>\n                      <li>seed item 9</li>\n                      <li>seed item 10</li>\n                    <li>appended at 오전 2:16:36</li><li>appended at 오전 2:16:38</li><li>appended at 오전 2:16:40</li>",
+        "addedNodes": [
+          {
+            "nodeType": "element",
+            "tagName": "LI",
+            "path": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > div:nth-of-type(1) > ul:nth-of-type(1) > li:nth-of-type(13)",
+            "outerHTML": "<li>appended at 오전 2:16:40</li>"
+          }
+        ],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 188,
+      "type": "event",
+      "at": 13957.599999999627,
+      "timeOffsetMs": 9731.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 595,
+        "y": 764,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 38.296875,
+        "targetOffsetY": 21.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 189,
+      "type": "event",
+      "at": 13975.199999999255,
+      "timeOffsetMs": 9748.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 594,
+        "y": 758,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 37.296875,
+        "targetOffsetY": 15.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 190,
+      "type": "event",
+      "at": 14007.39999999851,
+      "timeOffsetMs": 9781.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 590,
+        "y": 743,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 33.296875,
+        "targetOffsetY": 0.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 191,
+      "type": "event",
+      "at": 14025.199999999255,
+      "timeOffsetMs": 9798.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 586,
+        "y": 727,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 147.5,
+        "targetOffsetY": 237.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 192,
+      "type": "event",
+      "at": 14057.39999999851,
+      "timeOffsetMs": 9831.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 574,
+        "y": 691,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 135.5,
+        "targetOffsetY": 44,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 193,
+      "type": "event",
+      "at": 14074.199999999255,
+      "timeOffsetMs": 9847.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 569,
+        "y": 673,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 130.5,
+        "targetOffsetY": 26,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 194,
+      "type": "event",
+      "at": 14090.699999999255,
+      "timeOffsetMs": 9864.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 569,
+        "y": 672,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 130.5,
+        "targetOffsetY": 25,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 195,
+      "type": "event",
+      "at": 14251.299999998882,
+      "timeOffsetMs": 10025,
+      "data": {
+        "eventType": "click",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 569,
+        "y": 672,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 130.5,
+        "targetOffsetY": 25,
+        "targetWidth": 648,
+        "targetHeight": 74.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 196,
+      "type": "event",
+      "at": 14771.89999999851,
+      "timeOffsetMs": 10545.6,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": ""
+      }
+    },
+    {
+      "id": 197,
+      "type": "event",
+      "at": 14928.199999999255,
+      "timeOffsetMs": 10701.9,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "4"
+      }
+    },
+    {
+      "id": 198,
+      "type": "event",
+      "at": 15474.299999998882,
+      "timeOffsetMs": 11248,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 568,
+        "y": 671,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 129.5,
+        "targetOffsetY": 24,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 199,
+      "type": "event",
+      "at": 15491.099999999627,
+      "timeOffsetMs": 11264.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 566,
+        "y": 672,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 127.5,
+        "targetOffsetY": 25,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 200,
+      "type": "event",
+      "at": 15507.699999999255,
+      "timeOffsetMs": 11281.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 565,
+        "y": 672,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 126.5,
+        "targetOffsetY": 25,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 201,
+      "type": "event",
+      "at": 15524.199999999255,
+      "timeOffsetMs": 11297.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 565,
+        "y": 674,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 126.5,
+        "targetOffsetY": 27,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 202,
+      "type": "event",
+      "at": 15540.799999998882,
+      "timeOffsetMs": 11314.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 569,
+        "y": 681,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 130.5,
+        "targetOffsetY": 34,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 203,
+      "type": "event",
+      "at": 15557.39999999851,
+      "timeOffsetMs": 11331.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 573,
+        "y": 687,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 134.5,
+        "targetOffsetY": 40,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 204,
+      "type": "event",
+      "at": 15574,
+      "timeOffsetMs": 11347.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 583,
+        "y": 702,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 144.5,
+        "targetOffsetY": 55,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 205,
+      "type": "event",
+      "at": 15591,
+      "timeOffsetMs": 11364.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > label:nth-of-type(3)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 597,
+        "y": 721,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 158.5,
+        "targetOffsetY": 98,
+        "targetWidth": 648,
+        "targetHeight": 103
+      }
+    },
+    {
+      "id": 206,
+      "type": "event",
+      "at": 15607.5,
+      "timeOffsetMs": 11381.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 611,
+        "y": 741,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 172.5,
+        "targetOffsetY": 251.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 207,
+      "type": "event",
+      "at": 15624.099999999627,
+      "timeOffsetMs": 11397.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 624,
+        "y": 759,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 67.296875,
+        "targetOffsetY": 16.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 208,
+      "type": "event",
+      "at": 15640.89999999851,
+      "timeOffsetMs": 11414.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 636,
+        "y": 773,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 79.296875,
+        "targetOffsetY": 30.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 209,
+      "type": "event",
+      "at": 15657.89999999851,
+      "timeOffsetMs": 11431.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 644,
+        "y": 781,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 223.5,
+        "targetOffsetY": 346,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 210,
+      "type": "event",
+      "at": 15674.199999999255,
+      "timeOffsetMs": 11447.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 648,
+        "y": 783,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 227.5,
+        "targetOffsetY": 348,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 211,
+      "type": "event",
+      "at": 15818.599999999627,
+      "timeOffsetMs": 11592.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 648,
+        "y": 783,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 227.5,
+        "targetOffsetY": 348,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 212,
+      "type": "event",
+      "at": 15842,
+      "timeOffsetMs": 11615.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 648,
+        "y": 782,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 227.5,
+        "targetOffsetY": 347,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 213,
+      "type": "event",
+      "at": 15874.099999999627,
+      "timeOffsetMs": 11647.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 647,
+        "y": 775,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 90.296875,
+        "targetOffsetY": 32.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 214,
+      "type": "event",
+      "at": 15891.599999999627,
+      "timeOffsetMs": 11665.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 647,
+        "y": 771,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 90.296875,
+        "targetOffsetY": 28.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 215,
+      "type": "event",
+      "at": 15924.099999999627,
+      "timeOffsetMs": 11697.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 647,
+        "y": 767,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 90.296875,
+        "targetOffsetY": 24.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 216,
+      "type": "event",
+      "at": 16003.699999999255,
+      "timeOffsetMs": 11777.4,
+      "data": {
+        "eventType": "change",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "4"
+      }
+    },
+    {
+      "id": 217,
+      "type": "event",
+      "at": 16084.89999999851,
+      "timeOffsetMs": 11858.6,
+      "data": {
+        "eventType": "click",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 647,
+        "y": 767,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 90.296875,
+        "targetOffsetY": 24.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 218,
+      "type": "mutation",
+      "at": 16085.299999998882,
+      "timeOffsetMs": 11859,
+      "data": {
+        "mutationType": "childList",
+        "target": "#item-list",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "\n                      <li>seed item 1</li>\n                      <li>seed item 2</li>\n                      <li>seed item 3</li>\n                      <li>seed item 4</li>\n                      <li>seed item 5</li>\n                      <li>seed item 6</li>\n                      <li>seed item 7</li>\n                      <li>seed item 8</li>\n                      <li>seed item 9</li>\n                      <li>seed item 10</li>\n                    <li>appended at 오전 2:16:36</li><li>appended at 오전 2:16:38</li><li>appended at 오전 2:16:40</li><li>appended at 오전 2:16:43</li>",
+        "addedNodes": [
+          {
+            "nodeType": "element",
+            "tagName": "LI",
+            "path": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > div:nth-of-type(1) > ul:nth-of-type(1) > li:nth-of-type(14)",
+            "outerHTML": "<li>appended at 오전 2:16:43</li>"
+          }
+        ],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 219,
+      "type": "event",
+      "at": 16099,
+      "timeOffsetMs": 11872.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 646,
+        "y": 766,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 89.296875,
+        "targetOffsetY": 23.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 220,
+      "type": "event",
+      "at": 16124.099999999627,
+      "timeOffsetMs": 11897.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 644,
+        "y": 760,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 87.296875,
+        "targetOffsetY": 17.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 221,
+      "type": "event",
+      "at": 16140.699999999255,
+      "timeOffsetMs": 11914.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 641,
+        "y": 754,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 84.296875,
+        "targetOffsetY": 11.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 222,
+      "type": "event",
+      "at": 16157.5,
+      "timeOffsetMs": 11931.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 637,
+        "y": 742,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 80.296875,
+        "targetOffsetY": -0.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 223,
+      "type": "event",
+      "at": 16174.299999998882,
+      "timeOffsetMs": 11948,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 633,
+        "y": 729,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 194.5,
+        "targetOffsetY": 239.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 224,
+      "type": "event",
+      "at": 16190.89999999851,
+      "timeOffsetMs": 11964.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 629,
+        "y": 717,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 190.5,
+        "targetOffsetY": 70,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 225,
+      "type": "event",
+      "at": 16207.5,
+      "timeOffsetMs": 11981.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 624,
+        "y": 706,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 185.5,
+        "targetOffsetY": 59,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 226,
+      "type": "event",
+      "at": 16224.099999999627,
+      "timeOffsetMs": 11997.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 623,
+        "y": 702,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 184.5,
+        "targetOffsetY": 55,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 227,
+      "type": "event",
+      "at": 16240.799999998882,
+      "timeOffsetMs": 12014.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 622,
+        "y": 701,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 183.5,
+        "targetOffsetY": 54,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 228,
+      "type": "event",
+      "at": 16377.39999999851,
+      "timeOffsetMs": 12151.1,
+      "data": {
+        "eventType": "click",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 622,
+        "y": 701,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 183.5,
+        "targetOffsetY": 54,
+        "targetWidth": 648,
+        "targetHeight": 74.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 229,
+      "type": "event",
+      "at": 16892,
+      "timeOffsetMs": 12665.7,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": ""
+      }
+    },
+    {
+      "id": 230,
+      "type": "event",
+      "at": 17038.89999999851,
+      "timeOffsetMs": 12812.6,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "5"
+      }
+    },
+    {
+      "id": 231,
+      "type": "event",
+      "at": 17612.599999999627,
+      "timeOffsetMs": 13386.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 622,
+        "y": 701,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 183.5,
+        "targetOffsetY": 54,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 232,
+      "type": "event",
+      "at": 17657.699999999255,
+      "timeOffsetMs": 13431.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 622,
+        "y": 705,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 183.5,
+        "targetOffsetY": 58,
+        "targetWidth": 648,
+        "targetHeight": 74.5
+      }
+    },
+    {
+      "id": 233,
+      "type": "event",
+      "at": 17674.599999999627,
+      "timeOffsetMs": 13448.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > label:nth-of-type(3)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 624,
+        "y": 721,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 185.5,
+        "targetOffsetY": 98,
+        "targetWidth": 648,
+        "targetHeight": 103
+      }
+    },
+    {
+      "id": 234,
+      "type": "event",
+      "at": 17691,
+      "timeOffsetMs": 13464.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 624,
+        "y": 732,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 185.5,
+        "targetOffsetY": 242.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 235,
+      "type": "event",
+      "at": 17707.39999999851,
+      "timeOffsetMs": 13481.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 624,
+        "y": 738,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 185.5,
+        "targetOffsetY": 248.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 236,
+      "type": "event",
+      "at": 17724.199999999255,
+      "timeOffsetMs": 13497.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 624,
+        "y": 743,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 67.296875,
+        "targetOffsetY": 0.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 237,
+      "type": "event",
+      "at": 17740.799999998882,
+      "timeOffsetMs": 13514.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 623,
+        "y": 744,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 66.296875,
+        "targetOffsetY": 1.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 238,
+      "type": "event",
+      "at": 17790.799999998882,
+      "timeOffsetMs": 13564.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 623,
+        "y": 743,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 66.296875,
+        "targetOffsetY": 0.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 239,
+      "type": "event",
+      "at": 17807.39999999851,
+      "timeOffsetMs": 13581.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 622,
+        "y": 741,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 183.5,
+        "targetOffsetY": 251.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 240,
+      "type": "event",
+      "at": 17824,
+      "timeOffsetMs": 13597.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 621,
+        "y": 740,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 182.5,
+        "targetOffsetY": 250.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 241,
+      "type": "event",
+      "at": 17850.099999999627,
+      "timeOffsetMs": 13623.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 620,
+        "y": 740,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 181.5,
+        "targetOffsetY": 250.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 242,
+      "type": "event",
+      "at": 17874.099999999627,
+      "timeOffsetMs": 13647.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 619,
+        "y": 740,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 180.5,
+        "targetOffsetY": 250.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 243,
+      "type": "event",
+      "at": 17890.699999999255,
+      "timeOffsetMs": 13664.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 619,
+        "y": 740,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 180.5,
+        "targetOffsetY": 250.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 244,
+      "type": "event",
+      "at": 17922,
+      "timeOffsetMs": 13695.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 619,
+        "y": 740,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 180.5,
+        "targetOffsetY": 250.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 245,
+      "type": "event",
+      "at": 17938.099999999627,
+      "timeOffsetMs": 13711.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 618,
+        "y": 740,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 179.5,
+        "targetOffsetY": 250.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 246,
+      "type": "event",
+      "at": 17957.299999998882,
+      "timeOffsetMs": 13731,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 618,
+        "y": 740,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 179.5,
+        "targetOffsetY": 250.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 247,
+      "type": "event",
+      "at": 17974.299999998882,
+      "timeOffsetMs": 13748,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 617,
+        "y": 742,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 60.296875,
+        "targetOffsetY": -0.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 248,
+      "type": "event",
+      "at": 17990.699999999255,
+      "timeOffsetMs": 13764.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 616,
+        "y": 745,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 59.296875,
+        "targetOffsetY": 2.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 249,
+      "type": "event",
+      "at": 18007.39999999851,
+      "timeOffsetMs": 13781.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 615,
+        "y": 746,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 58.296875,
+        "targetOffsetY": 3.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 250,
+      "type": "event",
+      "at": 18024,
+      "timeOffsetMs": 13797.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 614,
+        "y": 747,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 57.296875,
+        "targetOffsetY": 4.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 251,
+      "type": "event",
+      "at": 18057.599999999627,
+      "timeOffsetMs": 13831.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 613,
+        "y": 748,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 56.296875,
+        "targetOffsetY": 5.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 252,
+      "type": "event",
+      "at": 18074.199999999255,
+      "timeOffsetMs": 13847.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 613,
+        "y": 748,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 56.296875,
+        "targetOffsetY": 5.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 253,
+      "type": "event",
+      "at": 18083.699999999255,
+      "timeOffsetMs": 13857.4,
+      "data": {
+        "eventType": "change",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "5"
+      }
+    },
+    {
+      "id": 254,
+      "type": "event",
+      "at": 18090.699999999255,
+      "timeOffsetMs": 13864.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 613,
+        "y": 748,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 56.296875,
+        "targetOffsetY": 5.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 255,
+      "type": "event",
+      "at": 18156.89999999851,
+      "timeOffsetMs": 13930.6,
+      "data": {
+        "eventType": "click",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 613,
+        "y": 748,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 56.296875,
+        "targetOffsetY": 5.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 256,
+      "type": "mutation",
+      "at": 18157.299999998882,
+      "timeOffsetMs": 13931,
+      "data": {
+        "mutationType": "childList",
+        "target": "#item-list",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "\n                      <li>seed item 1</li>\n                      <li>seed item 2</li>\n                      <li>seed item 3</li>\n                      <li>seed item 4</li>\n                      <li>seed item 5</li>\n                      <li>seed item 6</li>\n                      <li>seed item 7</li>\n                      <li>seed item 8</li>\n                      <li>seed item 9</li>\n                      <li>seed item 10</li>\n                    <li>appended at 오전 2:16:36</li><li>appended at 오전 2:16:38</li><li>appended at 오전 2:16:40</li><li>appended at 오전 2:16:43</li><li>appended at 오전 2:16:45</li>",
+        "addedNodes": [
+          {
+            "nodeType": "element",
+            "tagName": "LI",
+            "path": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > div:nth-of-type(1) > ul:nth-of-type(1) > li:nth-of-type(15)",
+            "outerHTML": "<li>appended at 오전 2:16:45</li>"
+          }
+        ],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 257,
+      "type": "event",
+      "at": 18174.099999999627,
+      "timeOffsetMs": 13947.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 613,
+        "y": 748,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 56.296875,
+        "targetOffsetY": 5.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 258,
+      "type": "event",
+      "at": 18191.099999999627,
+      "timeOffsetMs": 13964.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 610,
+        "y": 749,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 53.296875,
+        "targetOffsetY": 6.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 259,
+      "type": "event",
+      "at": 18207.5,
+      "timeOffsetMs": 13981.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 608,
+        "y": 749,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 51.296875,
+        "targetOffsetY": 6.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 260,
+      "type": "event",
+      "at": 18225,
+      "timeOffsetMs": 13998.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 604,
+        "y": 750,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 47.296875,
+        "targetOffsetY": 7.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 261,
+      "type": "event",
+      "at": 18257.39999999851,
+      "timeOffsetMs": 14031.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 577,
+        "y": 750,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 20.296875,
+        "targetOffsetY": 7.5,
+        "targetWidth": 108.7265625,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 262,
+      "type": "event",
+      "at": 18274.299999998882,
+      "timeOffsetMs": 14048,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > div:nth-of-type(1) > button:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 547,
+        "y": 750,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 108.5,
+        "targetOffsetY": 7.5,
+        "targetWidth": 110.203125,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 263,
+      "type": "event",
+      "at": 18290.799999998882,
+      "timeOffsetMs": 14064.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > div:nth-of-type(1) > button:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 531,
+        "y": 750,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 92.5,
+        "targetOffsetY": 7.5,
+        "targetWidth": 110.203125,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 264,
+      "type": "event",
+      "at": 18307.39999999851,
+      "timeOffsetMs": 14081.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > div:nth-of-type(1) > button:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 520,
+        "y": 750,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 81.5,
+        "targetOffsetY": 7.5,
+        "targetWidth": 110.203125,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 265,
+      "type": "event",
+      "at": 18324.099999999627,
+      "timeOffsetMs": 14097.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > div:nth-of-type(1) > button:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 509,
+        "y": 750,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 70.5,
+        "targetOffsetY": 7.5,
+        "targetWidth": 110.203125,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 266,
+      "type": "event",
+      "at": 18340.799999998882,
+      "timeOffsetMs": 14114.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > div:nth-of-type(1) > button:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 505,
+        "y": 750,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 66.5,
+        "targetOffsetY": 7.5,
+        "targetWidth": 110.203125,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 267,
+      "type": "event",
+      "at": 18357.39999999851,
+      "timeOffsetMs": 14131.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > div:nth-of-type(1) > button:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 504,
+        "y": 750,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 65.5,
+        "targetOffsetY": 7.5,
+        "targetWidth": 110.203125,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 268,
+      "type": "event",
+      "at": 18374,
+      "timeOffsetMs": 14147.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > div:nth-of-type(1) > button:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 504,
+        "y": 750,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 65.5,
+        "targetOffsetY": 7.5,
+        "targetWidth": 110.203125,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 269,
+      "type": "event",
+      "at": 18531.599999999627,
+      "timeOffsetMs": 14305.3,
+      "data": {
+        "eventType": "click",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > div:nth-of-type(1) > button:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 504,
+        "y": 750,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 65.5,
+        "targetOffsetY": 7.5,
+        "targetWidth": 110.203125,
+        "targetHeight": 35.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 270,
+      "type": "event",
+      "at": 18532.39999999851,
+      "timeOffsetMs": 14306.1,
+      "data": {
+        "eventType": "submit",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "prevented": false
+      }
+    },
+    {
+      "id": 271,
+      "type": "mutation",
+      "at": 18532.599999999627,
+      "timeOffsetMs": 14306.3,
+      "data": {
+        "mutationType": "childList",
+        "target": "#status",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "폼 submit 이벤트가 발생했습니다.",
+        "addedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "폼 submit 이벤트가 발생했습니다."
+          }
+        ],
+        "removedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "Recording started. 상호작용 후 Stop 버튼을 누르세요."
+          }
+        ]
+      }
+    },
+    {
+      "id": 272,
+      "type": "event",
+      "at": 18839.89999999851,
+      "timeOffsetMs": 14613.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > div:nth-of-type(1) > button:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 506,
+        "y": 748,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 67.5,
+        "targetOffsetY": 5.5,
+        "targetWidth": 110.203125,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 273,
+      "type": "event",
+      "at": 18857.599999999627,
+      "timeOffsetMs": 14631.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 515,
+        "y": 737,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 76.5,
+        "targetOffsetY": 247.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 274,
+      "type": "event",
+      "at": 18874,
+      "timeOffsetMs": 14647.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 598,
+        "y": 632,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 159.5,
+        "targetOffsetY": 142.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 275,
+      "type": "event",
+      "at": 18890.699999999255,
+      "timeOffsetMs": 14664.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 638,
+        "y": 565,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 199.5,
+        "targetOffsetY": 75.5,
+        "targetWidth": 648,
+        "targetHeight": 288.5
+      }
+    },
+    {
+      "id": 276,
+      "type": "event",
+      "at": 18907.699999999255,
+      "timeOffsetMs": 14681.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 674,
+        "y": 461,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 235.5,
+        "targetOffsetY": 8,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 277,
+      "type": "event",
+      "at": 18924.099999999627,
+      "timeOffsetMs": 14697.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 684,
+        "y": 414,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 263.5,
+        "targetOffsetY": 246.5,
+        "targetWidth": 1384,
+        "targetHeight": 251.5
+      }
+    },
+    {
+      "id": 278,
+      "type": "event",
+      "at": 18940.799999998882,
+      "timeOffsetMs": 14714.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 689,
+        "y": 388,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 250.5,
+        "targetOffsetY": 83,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 279,
+      "type": "event",
+      "at": 18957.5,
+      "timeOffsetMs": 14731.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 692,
+        "y": 375,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 253.5,
+        "targetOffsetY": 70,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 280,
+      "type": "event",
+      "at": 18974.099999999627,
+      "timeOffsetMs": 14747.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 692,
+        "y": 371,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 253.5,
+        "targetOffsetY": 66,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 281,
+      "type": "event",
+      "at": 18990.699999999255,
+      "timeOffsetMs": 14764.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 692,
+        "y": 369,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 253.5,
+        "targetOffsetY": 64,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 282,
+      "type": "event",
+      "at": 19007.39999999851,
+      "timeOffsetMs": 14781.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 691,
+        "y": 367,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 252.5,
+        "targetOffsetY": 62,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 283,
+      "type": "event",
+      "at": 19024.099999999627,
+      "timeOffsetMs": 14797.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 690,
+        "y": 365,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 251.5,
+        "targetOffsetY": 60,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 284,
+      "type": "event",
+      "at": 19040.799999998882,
+      "timeOffsetMs": 14814.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 689,
+        "y": 363,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 250.5,
+        "targetOffsetY": 58,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 285,
+      "type": "event",
+      "at": 19057.39999999851,
+      "timeOffsetMs": 14831.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 688,
+        "y": 360,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 249.5,
+        "targetOffsetY": 55,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 286,
+      "type": "event",
+      "at": 19074,
+      "timeOffsetMs": 14847.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 686,
+        "y": 353,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 247.5,
+        "targetOffsetY": 48,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 287,
+      "type": "event",
+      "at": 19090.699999999255,
+      "timeOffsetMs": 14864.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 684,
+        "y": 348,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 245.5,
+        "targetOffsetY": 43,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 288,
+      "type": "event",
+      "at": 19107.299999998882,
+      "timeOffsetMs": 14881,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 681,
+        "y": 341,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 242.5,
+        "targetOffsetY": 36,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 289,
+      "type": "event",
+      "at": 19124,
+      "timeOffsetMs": 14897.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 679,
+        "y": 337,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 240.5,
+        "targetOffsetY": 32,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 290,
+      "type": "event",
+      "at": 19140.699999999255,
+      "timeOffsetMs": 14914.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 678,
+        "y": 334,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 239.5,
+        "targetOffsetY": 29,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 291,
+      "type": "event",
+      "at": 19157.299999998882,
+      "timeOffsetMs": 14931,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 677,
+        "y": 332,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 238.5,
+        "targetOffsetY": 27,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 292,
+      "type": "event",
+      "at": 19174,
+      "timeOffsetMs": 14947.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 675,
+        "y": 327,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 236.5,
+        "targetOffsetY": 22,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 293,
+      "type": "event",
+      "at": 19190.599999999627,
+      "timeOffsetMs": 14964.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 671,
+        "y": 318,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 232.5,
+        "targetOffsetY": 13,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 294,
+      "type": "event",
+      "at": 19207.799999998882,
+      "timeOffsetMs": 14981.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 666,
+        "y": 309,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 227.5,
+        "targetOffsetY": 4,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 295,
+      "type": "event",
+      "at": 19224.39999999851,
+      "timeOffsetMs": 14998.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 663,
+        "y": 300,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 242.5,
+        "targetOffsetY": 132.5,
+        "targetWidth": 1384,
+        "targetHeight": 251.5
+      }
+    },
+    {
+      "id": 296,
+      "type": "event",
+      "at": 19240.89999999851,
+      "timeOffsetMs": 15014.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 661,
+        "y": 295,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 240.5,
+        "targetOffsetY": 127.5,
+        "targetWidth": 1384,
+        "targetHeight": 251.5
+      }
+    },
+    {
+      "id": 297,
+      "type": "event",
+      "at": 19257.799999998882,
+      "timeOffsetMs": 15031.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 659,
+        "y": 293,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 238.5,
+        "targetOffsetY": 125.5,
+        "targetWidth": 1384,
+        "targetHeight": 251.5
+      }
+    },
+    {
+      "id": 298,
+      "type": "event",
+      "at": 19274.299999998882,
+      "timeOffsetMs": 15048,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 659,
+        "y": 291,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 84.5078125,
+        "targetOffsetY": 33.5,
+        "targetWidth": 127.234375,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 299,
+      "type": "event",
+      "at": 19290.699999999255,
+      "timeOffsetMs": 15064.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 659,
+        "y": 291,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 84.5078125,
+        "targetOffsetY": 33.5,
+        "targetWidth": 127.234375,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 300,
+      "type": "event",
+      "at": 19395.299999998882,
+      "timeOffsetMs": 15169,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 659,
+        "y": 290,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 84.5078125,
+        "targetOffsetY": 32.5,
+        "targetWidth": 127.234375,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 301,
+      "type": "event",
+      "at": 19424,
+      "timeOffsetMs": 15197.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 659,
+        "y": 289,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 84.5078125,
+        "targetOffsetY": 31.5,
+        "targetWidth": 127.234375,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 302,
+      "type": "event",
+      "at": 19440.699999999255,
+      "timeOffsetMs": 15214.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 659,
+        "y": 288,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 84.5078125,
+        "targetOffsetY": 30.5,
+        "targetWidth": 127.234375,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 303,
+      "type": "event",
+      "at": 19457.39999999851,
+      "timeOffsetMs": 15231.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 659,
+        "y": 287,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 84.5078125,
+        "targetOffsetY": 29.5,
+        "targetWidth": 127.234375,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 304,
+      "type": "event",
+      "at": 19474,
+      "timeOffsetMs": 15247.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 659,
+        "y": 284,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 84.5078125,
+        "targetOffsetY": 26.5,
+        "targetWidth": 127.234375,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 305,
+      "type": "event",
+      "at": 19490.799999998882,
+      "timeOffsetMs": 15264.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 659,
+        "y": 283,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 84.5078125,
+        "targetOffsetY": 25.5,
+        "targetWidth": 127.234375,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 306,
+      "type": "event",
+      "at": 19507.299999998882,
+      "timeOffsetMs": 15281,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 660,
+        "y": 282,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 85.5078125,
+        "targetOffsetY": 24.5,
+        "targetWidth": 127.234375,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 307,
+      "type": "event",
+      "at": 19523.89999999851,
+      "timeOffsetMs": 15297.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 660,
+        "y": 281,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 85.5078125,
+        "targetOffsetY": 23.5,
+        "targetWidth": 127.234375,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 308,
+      "type": "event",
+      "at": 19540.699999999255,
+      "timeOffsetMs": 15314.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 660,
+        "y": 281,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 85.5078125,
+        "targetOffsetY": 23.5,
+        "targetWidth": 127.234375,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 309,
+      "type": "event",
+      "at": 19557.299999998882,
+      "timeOffsetMs": 15331,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 660,
+        "y": 280,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 85.5078125,
+        "targetOffsetY": 22.5,
+        "targetWidth": 127.234375,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 310,
+      "type": "event",
+      "at": 19674,
+      "timeOffsetMs": 15447.7,
+      "data": {
+        "eventType": "click",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 660,
+        "y": 280,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 85.5078125,
+        "targetOffsetY": 22.5,
+        "targetWidth": 127.234375,
+        "targetHeight": 35.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 311,
+      "type": "meta",
+      "at": 19674.299999998882,
+      "timeOffsetMs": 15448,
+      "data": {
+        "action": "recording_stopped"
+      }
+    }
+  ]
+}

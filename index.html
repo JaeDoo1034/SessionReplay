@@ -182,6 +182,13 @@
         height: clamp(520px, calc(100vh - 260px), 900px);
       }
 
+      .analysis-shell {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
       iframe {
         width: 100%;
         height: 100%;
@@ -311,6 +318,15 @@
                 <div id="replay-status" class="log">Replay idle</div>
                 <div class="replay-shell">
                   <iframe id="replay-frame" sandbox="allow-same-origin"></iframe>
+                </div>
+                <div class="analysis-shell">
+                  <div class="controls">
+                    <button id="analyze-btn">Analyze Behavior</button>
+                    <button id="llm-analyze-btn" class="secondary">Analyze with LLM</button>
+                    <button id="copy-prompt-btn" class="secondary" disabled>Copy LLM Prompt</button>
+                  </div>
+                  <div id="analysis-status" class="log">Behavior analysis idle</div>
+                  <div id="llm-analysis-status" class="log">LLM analysis idle</div>
                 </div>
               </section>
             </div>
