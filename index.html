@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Session Replay MVP</title>
+    <style>
+      :root {
+        --bg: #f3f6fb;
+        --surface: #ffffff;
+        --text: #1f2937;
+        --muted: #64748b;
+        --primary: #0f766e;
+        --primary-2: #0ea5a4;
+        --danger: #be123c;
+        --line: #d2dce8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", "Apple SD Gothic Neo", sans-serif;
+        color: var(--text);
+        background: radial-gradient(circle at top right, #dff4f1, var(--bg));
+      }
+
+      .app {
+        width: min(1440px, 100vw);
+        margin: 0 auto;
+        padding: 16px clamp(12px, 2vw, 28px) 20px;
+      }
+
+      .card {
+        background: var(--surface);
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 1.35rem;
+      }
+
+      h2 {
+        margin: 0 0 8px;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .tabs-shell {
+        margin-top: 12px;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .tab-btn {
+        border: 1px solid #b8c4d7;
+        background: #f7fafc;
+        color: #0f172a;
+        border-radius: 999px;
+        padding: 10px 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .tab-btn.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #fff;
+      }
+
+      .tab-stage {
+        min-height: calc(100vh - 164px);
+      }
+
+      .tab-panel[hidden] {
+        display: none;
+      }
+
+      .panel-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+        min-height: inherit;
+      }
+
+      @media (min-width: 920px) {
+        .panel-grid.split {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .controls {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+      }
+
+      .controls label {
+        min-width: 160px;
+        flex: 1 1 180px;
+      }
+
+      button {
+        border: none;
+        border-radius: 10px;
+        padding: 10px 14px;
+        color: white;
+        background: var(--primary);
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      button.secondary {
+        background: var(--primary-2);
+      }
+
+      button.danger {
+        background: var(--danger);
+      }
+
+      button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      label {
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+
+      input,
+      textarea,
+      select {
+        width: 100%;
+        margin-top: 6px;
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid #cbd5e1;
+        font: inherit;
+      }
+
+      .scroll-area {
+        margin-top: 12px;
+        border: 1px dashed #94a3b8;
+        border-radius: 10px;
+        height: clamp(240px, 35vh, 420px);
+        overflow: auto;
+        padding: 10px;
+        background: #f8fafc;
+      }
+
+      .log {
+        margin-top: 12px;
+        background: #0b1220;
+        color: #d6e2ff;
+        border-radius: 10px;
+        padding: 12px;
+        min-height: 96px;
+        white-space: pre-wrap;
+        font-size: 0.85rem;
+      }
+
+      .replay-shell {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        overflow: hidden;
+        height: clamp(520px, calc(100vh - 260px), 900px);
+      }
+
+      iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: white;
+      }
+
+      ul {
+        margin: 8px 0 0;
+        padding-left: 18px;
+      }
+
+      @media (max-width: 760px) {
+        .tab-stage {
+          min-height: auto;
+        }
+
+        .replay-shell {
+          height: 62vh;
+          min-height: 420px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="card">
+        <h1>Session Replay Recorder & Replayer</h1>
+        <p>탭 전환으로 설정화면과 시연화면을 동일한 폭/높이 기준에서 확인합니다.</p>
+      </section>
+
+      <section class="tabs-shell">
+        <div class="tabs" role="tablist" aria-label="Session Replay Workspace Tabs">
+          <button class="tab-btn active" id="tab-settings" data-tab="settings" role="tab" aria-selected="true" aria-controls="panel-settings">
+            설정화면
+          </button>
+          <button class="tab-btn" id="tab-demo" data-tab="demo" role="tab" aria-selected="false" aria-controls="panel-demo">
+            시연화면
+          </button>
+        </div>
+
+        <section class="tab-stage">
+          <div id="panel-settings" data-tab-panel="settings" role="tabpanel" aria-labelledby="tab-settings">
+            <div class="panel-grid">
+              <section class="card">
+                <h2>Recorder Controls</h2>
+                <p>이벤트를 생성하고 로컬 JSON으로 저장합니다.</p>
+                <div class="controls">
+                  <button id="start-btn">Start Recording</button>
+                  <button id="stop-btn" class="danger" disabled>Stop Recording</button>
+                  <button id="download-btn" class="secondary" disabled>Download JSON</button>
+                </div>
+                <div id="status" class="log">Idle</div>
+              </section>
+
+              <section class="panel-grid split">
+                <article class="card" id="interaction-zone">
+                  <h2>Interaction Zone</h2>
+                  <form id="sample-form">
+                    <label>
+                      Name
+                      <input id="name-input" name="name" placeholder="type here" />
+                    </label>
+                    <label>
+                      Role
+                      <select id="role-select" name="role">
+                        <option value="frontend">Frontend</option>
+                        <option value="backend">Backend</option>
+                        <option value="product">Product</option>
+                      </select>
+                    </label>
+                    <label>
+                      Note
+                      <textarea id="note-input" name="note" rows="3"></textarea>
+                    </label>
+                    <div class="controls">
+                      <button type="submit">Submit Form</button>
+                      <button type="button" id="add-item-btn" class="secondary">Append Item</button>
+                    </div>
+                  </form>
+                </article>
+
+                <article class="card">
+                  <h2>Scrollable & Mutable Area</h2>
+                  <p>스크롤/DOM 변화 기록 테스트 영역입니다.</p>
+                  <div class="scroll-area" id="scroll-area">
+                    <ul id="item-list">
+                      <li>seed item 1</li>
+                      <li>seed item 2</li>
+                      <li>seed item 3</li>
+                      <li>seed item 4</li>
+                      <li>seed item 5</li>
+                      <li>seed item 6</li>
+                      <li>seed item 7</li>
+                      <li>seed item 8</li>
+                      <li>seed item 9</li>
+                      <li>seed item 10</li>
+                    </ul>
+                  </div>
+                </article>
+              </section>
+            </div>
+          </div>
+
+          <div id="panel-demo" data-tab-panel="demo" role="tabpanel" aria-labelledby="tab-demo" hidden>
+            <div class="panel-grid">
+              <section class="card">
+                <h2>Replay Controls</h2>
+                <p>저장한 JSON을 불러와 동일한 크기 뷰에서 재생합니다.</p>
+                <div class="controls">
+                  <label>
+                    Replay JSON
+                    <input id="replay-file" type="file" accept="application/json" />
+                  </label>
+                  <label>
+                    Speed
+                    <select id="replay-speed">
+                      <option value="0.5">0.5x</option>
+                      <option value="1" selected>1x</option>
+                      <option value="2">2x</option>
+                      <option value="4">4x</option>
+                    </select>
+                  </label>
+                  <button id="replay-play-btn" class="secondary" disabled>Play Replay</button>
+                  <button id="replay-stop-btn" class="danger" disabled>Stop Replay</button>
+                </div>
+                <div id="replay-status" class="log">Replay idle</div>
+                <div class="replay-shell">
+                  <iframe id="replay-frame" sandbox="allow-same-origin"></iframe>
+                </div>
+              </section>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,5498 @@
+{
+  "version": 1,
+  "createdAt": "2026-02-17T16:53:56.085Z",
+  "page": {
+    "href": "http://127.0.0.1:5500/index.html",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"
+  },
+  "eventCount": 275,
+  "events": [
+    {
+      "id": 1,
+      "type": "snapshot",
+      "at": 14664.799999998882,
+      "timeOffsetMs": 0.3,
+      "data": {
+        "url": "http://127.0.0.1:5500/index.html",
+        "viewport": {
+          "width": 2240,
+          "height": 1058
+        },
+        "html": "<html lang=\"ko\"><head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Session Replay MVP</title>\n    <style>\n      :root {\n        --bg: #f3f6fb;\n        --surface: #ffffff;\n        --text: #1f2937;\n        --muted: #64748b;\n        --primary: #0f766e;\n        --primary-2: #0ea5a4;\n        --danger: #be123c;\n        --line: #d2dce8;\n      }\n\n      * {\n        box-sizing: border-box;\n      }\n\n      body {\n        margin: 0;\n        min-height: 100vh;\n        font-family: \"Segoe UI\", \"Apple SD Gothic Neo\", sans-serif;\n        color: var(--text);\n        background: radial-gradient(circle at top right, #dff4f1, var(--bg));\n      }\n\n      .app {\n        width: min(1440px, 100vw);\n        margin: 0 auto;\n        padding: 16px clamp(12px, 2vw, 28px) 20px;\n      }\n\n      .card {\n        background: var(--surface);\n        border-radius: 14px;\n        padding: 18px;\n        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);\n      }\n\n      h1 {\n        margin: 0 0 8px;\n        font-size: 1.35rem;\n      }\n\n      h2 {\n        margin: 0 0 8px;\n      }\n\n      p {\n        margin: 0;\n        color: var(--muted);\n      }\n\n      .tabs-shell {\n        margin-top: 12px;\n      }\n\n      .tabs {\n        display: flex;\n        gap: 8px;\n        margin-bottom: 12px;\n      }\n\n      .tab-btn {\n        border: 1px solid #b8c4d7;\n        background: #f7fafc;\n        color: #0f172a;\n        border-radius: 999px;\n        padding: 10px 14px;\n        font-weight: 700;\n        cursor: pointer;\n      }\n\n      .tab-btn.active {\n        background: var(--primary);\n        border-color: var(--primary);\n        color: #fff;\n      }\n\n      .tab-stage {\n        min-height: calc(100vh - 164px);\n      }\n\n      .tab-panel[hidden] {\n        display: none;\n      }\n\n      .panel-grid {\n        display: grid;\n        grid-template-columns: 1fr;\n        gap: 16px;\n        min-height: inherit;\n      }\n\n      @media (min-width: 920px) {\n        .panel-grid.split {\n          grid-template-columns: 1fr 1fr;\n        }\n      }\n\n      .controls {\n        display: flex;\n        gap: 8px;\n        flex-wrap: wrap;\n        margin-top: 16px;\n      }\n\n      .controls label {\n        min-width: 160px;\n        flex: 1 1 180px;\n      }\n\n      button {\n        border: none;\n        border-radius: 10px;\n        padding: 10px 14px;\n        color: white;\n        background: var(--primary);\n        cursor: pointer;\n        font-weight: 600;\n      }\n\n      button.secondary {\n        background: var(--primary-2);\n      }\n\n      button.danger {\n        background: var(--danger);\n      }\n\n      button:disabled {\n        opacity: 0.45;\n        cursor: not-allowed;\n      }\n\n      label {\n        font-size: 0.92rem;\n        font-weight: 600;\n      }\n\n      input,\n      textarea,\n      select {\n        width: 100%;\n        margin-top: 6px;\n        padding: 10px;\n        border-radius: 10px;\n        border: 1px solid #cbd5e1;\n        font: inherit;\n      }\n\n      .scroll-area {\n        margin-top: 12px;\n        border: 1px dashed #94a3b8;\n        border-radius: 10px;\n        height: clamp(240px, 35vh, 420px);\n        overflow: auto;\n        padding: 10px;\n        background: #f8fafc;\n      }\n\n      .log {\n        margin-top: 12px;\n        background: #0b1220;\n        color: #d6e2ff;\n        border-radius: 10px;\n        padding: 12px;\n        min-height: 96px;\n        white-space: pre-wrap;\n        font-size: 0.85rem;\n      }\n\n      .replay-shell {\n        margin-top: 12px;\n        border: 1px solid var(--line);\n        border-radius: 10px;\n        overflow: hidden;\n        height: clamp(520px, calc(100vh - 260px), 900px);\n      }\n\n      iframe {\n        width: 100%;\n        height: 100%;\n        border: 0;\n        background: white;\n      }\n\n      ul {\n        margin: 8px 0 0;\n        padding-left: 18px;\n      }\n\n      @media (max-width: 760px) {\n        .tab-stage {\n          min-height: auto;\n        }\n\n        .replay-shell {\n          height: 62vh;\n          min-height: 420px;\n        }\n      }\n    </style>\n  </head>\n  <body>\n    <main class=\"app\">\n      <section class=\"card\">\n        <h1>Session Replay Recorder &amp; Replayer</h1>\n        <p>탭 전환으로 설정화면과 시연화면을 동일한 폭/높이 기준에서 확인합니다.</p>\n      </section>\n\n      <section class=\"tabs-shell\">\n        <div class=\"tabs\" role=\"tablist\" aria-label=\"Session Replay Workspace Tabs\">\n          <button class=\"tab-btn active\" id=\"tab-settings\" data-tab=\"settings\" role=\"tab\" aria-selected=\"true\" aria-controls=\"panel-settings\">\n            설정화면\n          </button>\n          <button class=\"tab-btn\" id=\"tab-demo\" data-tab=\"demo\" role=\"tab\" aria-selected=\"false\" aria-controls=\"panel-demo\">\n            시연화면\n          </button>\n        </div>\n\n        <section class=\"tab-stage\">\n          <div id=\"panel-settings\" data-tab-panel=\"settings\" role=\"tabpanel\" aria-labelledby=\"tab-settings\">\n            <div class=\"panel-grid\">\n              <section class=\"card\">\n                <h2>Recorder Controls</h2>\n                <p>이벤트를 생성하고 로컬 JSON으로 저장합니다.</p>\n                <div class=\"controls\">\n                  <button id=\"start-btn\">Start Recording</button>\n                  <button id=\"stop-btn\" class=\"danger\" disabled=\"\">Stop Recording</button>\n                  <button id=\"download-btn\" class=\"secondary\" disabled=\"\">Download JSON</button>\n                </div>\n                <div id=\"status\" class=\"log\">Idle</div>\n              </section>\n\n              <section class=\"panel-grid split\">\n                <article class=\"card\" id=\"interaction-zone\">\n                  <h2>Interaction Zone</h2>\n                  <form id=\"sample-form\">\n                    <label>\n                      Name\n                      <input id=\"name-input\" name=\"name\" placeholder=\"type here\">\n                    </label>\n                    <label>\n                      Role\n                      <select id=\"role-select\" name=\"role\">\n                        <option value=\"frontend\">Frontend</option>\n                        <option value=\"backend\">Backend</option>\n                        <option value=\"product\">Product</option>\n                      </select>\n                    </label>\n                    <label>\n                      Note\n                      <textarea id=\"note-input\" name=\"note\" rows=\"3\"></textarea>\n                    </label>\n                    <div class=\"controls\">\n                      <button type=\"submit\">Submit Form</button>\n                      <button type=\"button\" id=\"add-item-btn\" class=\"secondary\">Append Item</button>\n                    </div>\n                  </form>\n                </article>\n\n                <article class=\"card\">\n                  <h2>Scrollable &amp; Mutable Area</h2>\n                  <p>스크롤/DOM 변화 기록 테스트 영역입니다.</p>\n                  <div class=\"scroll-area\" id=\"scroll-area\">\n                    <ul id=\"item-list\">\n                      <li>seed item 1</li>\n                      <li>seed item 2</li>\n                      <li>seed item 3</li>\n                      <li>seed item 4</li>\n                      <li>seed item 5</li>\n                      <li>seed item 6</li>\n                      <li>seed item 7</li>\n                      <li>seed item 8</li>\n                      <li>seed item 9</li>\n                      <li>seed item 10</li>\n                    </ul>\n                  </div>\n                </article>\n              </section>\n            </div>\n          </div>\n\n          <div id=\"panel-demo\" data-tab-panel=\"demo\" role=\"tabpanel\" aria-labelledby=\"tab-demo\" hidden=\"\">\n            <div class=\"panel-grid\">\n              <section class=\"card\">\n                <h2>Replay Controls</h2>\n                <p>저장한 JSON을 불러와 동일한 크기 뷰에서 재생합니다.</p>\n                <div class=\"controls\">\n                  <label>\n                    Replay JSON\n                    <input id=\"replay-file\" type=\"file\" accept=\"application/json\">\n                  </label>\n                  <label>\n                    Speed\n                    <select id=\"replay-speed\">\n                      <option value=\"0.5\">0.5x</option>\n                      <option value=\"1\" selected=\"\">1x</option>\n                      <option value=\"2\">2x</option>\n                      <option value=\"4\">4x</option>\n                    </select>\n                  </label>\n                  <button id=\"replay-play-btn\" class=\"secondary\" disabled=\"\">Play Replay</button>\n                  <button id=\"replay-stop-btn\" class=\"danger\" disabled=\"\">Stop Replay</button>\n                </div>\n                <div id=\"replay-status\" class=\"log\">Replay idle</div>\n                <div class=\"replay-shell\">\n                  <iframe id=\"replay-frame\" sandbox=\"allow-same-origin\"></iframe>\n                </div>\n              </section>\n            </div>\n          </div>\n        </section>\n      </section>\n    </main>\n\n    <script type=\"module\" src=\"./src/main.js\"></script>\n  <!-- Code injected by live-server -->\n<script>\n\t// <![CDATA[  <-- For SVG support\n\tif ('WebSocket' in window) {\n\t\t(function () {\n\t\t\tfunction refreshCSS() {\n\t\t\t\tvar sheets = [].slice.call(document.getElementsByTagName(\"link\"));\n\t\t\t\tvar head = document.getElementsByTagName(\"head\")[0];\n\t\t\t\tfor (var i = 0; i < sheets.length; ++i) {\n\t\t\t\t\tvar elem = sheets[i];\n\t\t\t\t\tvar parent = elem.parentElement || head;\n\t\t\t\t\tparent.removeChild(elem);\n\t\t\t\t\tvar rel = elem.rel;\n\t\t\t\t\tif (elem.href && typeof rel != \"string\" || rel.length == 0 || rel.toLowerCase() == \"stylesheet\") {\n\t\t\t\t\t\tvar url = elem.href.replace(/(&|\\?)_cacheOverride=\\d+/, '');\n\t\t\t\t\t\telem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());\n\t\t\t\t\t}\n\t\t\t\t\tparent.appendChild(elem);\n\t\t\t\t}\n\t\t\t}\n\t\t\tvar protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';\n\t\t\tvar address = protocol + window.location.host + window.location.pathname + '/ws';\n\t\t\tvar socket = new WebSocket(address);\n\t\t\tsocket.onmessage = function (msg) {\n\t\t\t\tif (msg.data == 'reload') window.location.reload();\n\t\t\t\telse if (msg.data == 'refreshcss') refreshCSS();\n\t\t\t};\n\t\t\tif (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {\n\t\t\t\tconsole.log('Live reload enabled.');\n\t\t\t\tsessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);\n\t\t\t}\n\t\t})();\n\t}\n\telse {\n\t\tconsole.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');\n\t}\n\t// ]]>\n</script>\n\n\n</body></html>"
+      }
+    },
+    {
+      "id": 2,
+      "type": "mutation",
+      "at": 14665.799999998882,
+      "timeOffsetMs": 1.3,
+      "data": {
+        "mutationType": "attributes",
+        "target": "#start-btn",
+        "attributeName": "disabled",
+        "oldValue": null,
+        "newValue": "",
+        "targetInnerHTML": null,
+        "addedNodes": [],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "mutation",
+      "at": 14665.799999998882,
+      "timeOffsetMs": 1.3,
+      "data": {
+        "mutationType": "attributes",
+        "target": "#stop-btn",
+        "attributeName": "disabled",
+        "oldValue": "",
+        "newValue": null,
+        "targetInnerHTML": null,
+        "addedNodes": [],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "mutation",
+      "at": 14665.900000000373,
+      "timeOffsetMs": 1.4,
+      "data": {
+        "mutationType": "attributes",
+        "target": "#download-btn",
+        "attributeName": "disabled",
+        "oldValue": "",
+        "newValue": "",
+        "targetInnerHTML": null,
+        "addedNodes": [],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "mutation",
+      "at": 14666,
+      "timeOffsetMs": 1.5,
+      "data": {
+        "mutationType": "childList",
+        "target": "#status",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "Recording started. 상호작용 후 Stop 버튼을 누르세요.",
+        "addedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "Recording started. 상호작용 후 Stop 버튼을 누르세요."
+          }
+        ],
+        "removedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "Idle"
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "type": "event",
+      "at": 14841.900000000373,
+      "timeOffsetMs": 177.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#start-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 519,
+        "y": 257,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 80.5,
+        "targetOffsetY": 23,
+        "targetWidth": 127.9921875,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 7,
+      "type": "event",
+      "at": 14861.5,
+      "timeOffsetMs": 197,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#start-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 521,
+        "y": 262,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 82.5,
+        "targetOffsetY": 28,
+        "targetWidth": 127.9921875,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 8,
+      "type": "event",
+      "at": 14878.199999999255,
+      "timeOffsetMs": 213.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#start-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 525,
+        "y": 268,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 86.5,
+        "targetOffsetY": 34,
+        "targetWidth": 127.9921875,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 9,
+      "type": "event",
+      "at": 14894.799999998882,
+      "timeOffsetMs": 230.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 538,
+        "y": 293,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 99.5,
+        "targetOffsetY": 11.5,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 10,
+      "type": "event",
+      "at": 14911.400000000373,
+      "timeOffsetMs": 246.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 550,
+        "y": 320,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 111.5,
+        "targetOffsetY": 38.5,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 11,
+      "type": "event",
+      "at": 14928,
+      "timeOffsetMs": 263.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 572,
+        "y": 374,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 133.5,
+        "targetOffsetY": 92.5,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 12,
+      "type": "event",
+      "at": 14945.099999999627,
+      "timeOffsetMs": 280.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 584,
+        "y": 402,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 163.5,
+        "targetOffsetY": 258,
+        "targetWidth": 1384,
+        "targetHeight": 741.796875
+      }
+    },
+    {
+      "id": 13,
+      "type": "event",
+      "at": 14961.299999998882,
+      "timeOffsetMs": 296.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 592,
+        "y": 420,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 171.5,
+        "targetOffsetY": 8.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 14,
+      "type": "event",
+      "at": 14978.900000000373,
+      "timeOffsetMs": 314.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 595,
+        "y": 427,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 174.5,
+        "targetOffsetY": 15.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 15,
+      "type": "event",
+      "at": 14995,
+      "timeOffsetMs": 330.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 596,
+        "y": 429,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 157.5,
+        "targetOffsetY": -0.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 16,
+      "type": "event",
+      "at": 15011.400000000373,
+      "timeOffsetMs": 346.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 597,
+        "y": 430,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 158.5,
+        "targetOffsetY": 0.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 17,
+      "type": "event",
+      "at": 15144.799999998882,
+      "timeOffsetMs": 480.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 597,
+        "y": 431,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 158.5,
+        "targetOffsetY": 1.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 18,
+      "type": "event",
+      "at": 15161.400000000373,
+      "timeOffsetMs": 496.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 597,
+        "y": 434,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 158.5,
+        "targetOffsetY": 4.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 19,
+      "type": "event",
+      "at": 15178.099999999627,
+      "timeOffsetMs": 513.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 597,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 158.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 20,
+      "type": "event",
+      "at": 15194.799999998882,
+      "timeOffsetMs": 530.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 598,
+        "y": 454,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 159.5,
+        "targetOffsetY": 24.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 21,
+      "type": "event",
+      "at": 15211.400000000373,
+      "timeOffsetMs": 546.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 599,
+        "y": 462,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 178.5,
+        "targetOffsetY": 50.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 22,
+      "type": "event",
+      "at": 15227.900000000373,
+      "timeOffsetMs": 563.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 599,
+        "y": 462,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 178.5,
+        "targetOffsetY": 50.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 23,
+      "type": "event",
+      "at": 15251.900000000373,
+      "timeOffsetMs": 587.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 599,
+        "y": 463,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 178.5,
+        "targetOffsetY": 51.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 24,
+      "type": "event",
+      "at": 15268,
+      "timeOffsetMs": 603.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 600,
+        "y": 463,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 179.5,
+        "targetOffsetY": 51.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 25,
+      "type": "event",
+      "at": 15294.5,
+      "timeOffsetMs": 630,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 600,
+        "y": 462,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 179.5,
+        "targetOffsetY": 50.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 26,
+      "type": "event",
+      "at": 15311.199999999255,
+      "timeOffsetMs": 646.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 600,
+        "y": 461,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 179.5,
+        "targetOffsetY": 49.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 27,
+      "type": "event",
+      "at": 15327.900000000373,
+      "timeOffsetMs": 663.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 600,
+        "y": 461,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 179.5,
+        "targetOffsetY": 49.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 28,
+      "type": "event",
+      "at": 15351.900000000373,
+      "timeOffsetMs": 687.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 599,
+        "y": 461,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 178.5,
+        "targetOffsetY": 49.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 29,
+      "type": "event",
+      "at": 15378,
+      "timeOffsetMs": 713.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 593,
+        "y": 460,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 172.5,
+        "targetOffsetY": 48.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 30,
+      "type": "event",
+      "at": 15394.599999999627,
+      "timeOffsetMs": 730.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 586,
+        "y": 460,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 165.5,
+        "targetOffsetY": 48.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 31,
+      "type": "event",
+      "at": 15411.299999998882,
+      "timeOffsetMs": 746.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 574,
+        "y": 460,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 153.5,
+        "targetOffsetY": 48.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 32,
+      "type": "event",
+      "at": 15428,
+      "timeOffsetMs": 763.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 561,
+        "y": 459,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 140.5,
+        "targetOffsetY": 47.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 33,
+      "type": "event",
+      "at": 15444.799999998882,
+      "timeOffsetMs": 780.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 537,
+        "y": 457,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 98.5,
+        "targetOffsetY": 27.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 34,
+      "type": "event",
+      "at": 15461.400000000373,
+      "timeOffsetMs": 796.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 528,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 89.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 35,
+      "type": "event",
+      "at": 15478,
+      "timeOffsetMs": 813.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 514,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 75.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 36,
+      "type": "event",
+      "at": 15494.699999999255,
+      "timeOffsetMs": 830.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 503,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 64.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 37,
+      "type": "event",
+      "at": 15511.400000000373,
+      "timeOffsetMs": 846.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 490,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 51.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 38,
+      "type": "event",
+      "at": 15528,
+      "timeOffsetMs": 863.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 487,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 48.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 39,
+      "type": "event",
+      "at": 15544.599999999627,
+      "timeOffsetMs": 880.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 486,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 47.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 40,
+      "type": "event",
+      "at": 15561.299999998882,
+      "timeOffsetMs": 896.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 485,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 46.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 41,
+      "type": "event",
+      "at": 15578,
+      "timeOffsetMs": 913.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 483,
+        "y": 455,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 44.5,
+        "targetOffsetY": 25.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 42,
+      "type": "event",
+      "at": 15594.599999999627,
+      "timeOffsetMs": 930.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 480,
+        "y": 454,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 41.5,
+        "targetOffsetY": 24.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 43,
+      "type": "event",
+      "at": 15611.400000000373,
+      "timeOffsetMs": 946.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 478,
+        "y": 454,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 39.5,
+        "targetOffsetY": 24.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 44,
+      "type": "event",
+      "at": 15628.099999999627,
+      "timeOffsetMs": 963.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 474,
+        "y": 453,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 35.5,
+        "targetOffsetY": 23.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 45,
+      "type": "event",
+      "at": 15644.699999999255,
+      "timeOffsetMs": 980.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 470,
+        "y": 453,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 31.5,
+        "targetOffsetY": 23.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 46,
+      "type": "event",
+      "at": 15661.400000000373,
+      "timeOffsetMs": 996.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 468,
+        "y": 453,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 29.5,
+        "targetOffsetY": 23.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 47,
+      "type": "event",
+      "at": 15678,
+      "timeOffsetMs": 1013.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 466,
+        "y": 453,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 27.5,
+        "targetOffsetY": 23.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 48,
+      "type": "event",
+      "at": 15694.799999998882,
+      "timeOffsetMs": 1030.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 464,
+        "y": 453,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 25.5,
+        "targetOffsetY": 23.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 49,
+      "type": "event",
+      "at": 15711.5,
+      "timeOffsetMs": 1047,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 463,
+        "y": 453,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 24.5,
+        "targetOffsetY": 23.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 50,
+      "type": "event",
+      "at": 15728.299999998882,
+      "timeOffsetMs": 1063.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 461,
+        "y": 452,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 22.5,
+        "targetOffsetY": 22.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 51,
+      "type": "event",
+      "at": 15744.799999998882,
+      "timeOffsetMs": 1080.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 461,
+        "y": 452,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 22.5,
+        "targetOffsetY": 22.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 52,
+      "type": "event",
+      "at": 15761.199999999255,
+      "timeOffsetMs": 1096.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 459,
+        "y": 452,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 20.5,
+        "targetOffsetY": 22.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 53,
+      "type": "event",
+      "at": 15778.099999999627,
+      "timeOffsetMs": 1113.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 457,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 18.5,
+        "targetOffsetY": 21.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 54,
+      "type": "event",
+      "at": 15794.699999999255,
+      "timeOffsetMs": 1130.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 454,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 15.5,
+        "targetOffsetY": 21.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 55,
+      "type": "event",
+      "at": 15811.400000000373,
+      "timeOffsetMs": 1146.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 452,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 13.5,
+        "targetOffsetY": 21.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 56,
+      "type": "event",
+      "at": 15827.900000000373,
+      "timeOffsetMs": 1163.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 449,
+        "y": 450,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 10.5,
+        "targetOffsetY": 20.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 57,
+      "type": "event",
+      "at": 15845.599999999627,
+      "timeOffsetMs": 1181.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 447,
+        "y": 450,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 8.5,
+        "targetOffsetY": 20.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 58,
+      "type": "event",
+      "at": 15878,
+      "timeOffsetMs": 1213.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 445,
+        "y": 449,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 6.5,
+        "targetOffsetY": 19.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 59,
+      "type": "event",
+      "at": 15894.599999999627,
+      "timeOffsetMs": 1230.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 445,
+        "y": 449,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 6.5,
+        "targetOffsetY": 19.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 60,
+      "type": "event",
+      "at": 15911.199999999255,
+      "timeOffsetMs": 1246.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 444,
+        "y": 449,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 5.5,
+        "targetOffsetY": 19.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 61,
+      "type": "event",
+      "at": 15928,
+      "timeOffsetMs": 1263.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 444,
+        "y": 449,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 5.5,
+        "targetOffsetY": 19.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 62,
+      "type": "event",
+      "at": 15944.699999999255,
+      "timeOffsetMs": 1280.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 444,
+        "y": 449,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 5.5,
+        "targetOffsetY": 19.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 63,
+      "type": "event",
+      "at": 15961.299999998882,
+      "timeOffsetMs": 1296.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 444,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 5.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 64,
+      "type": "event",
+      "at": 16144.900000000373,
+      "timeOffsetMs": 1480.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 447,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 8.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 65,
+      "type": "event",
+      "at": 16161.299999998882,
+      "timeOffsetMs": 1496.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 450,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 11.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 66,
+      "type": "event",
+      "at": 16178,
+      "timeOffsetMs": 1513.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 456,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 17.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 67,
+      "type": "event",
+      "at": 16194.799999998882,
+      "timeOffsetMs": 1530.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 465,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 26.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 68,
+      "type": "event",
+      "at": 16211.5,
+      "timeOffsetMs": 1547,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 475,
+        "y": 447,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 36.5,
+        "targetOffsetY": 17.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 69,
+      "type": "event",
+      "at": 16228,
+      "timeOffsetMs": 1563.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 488,
+        "y": 446,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 49.5,
+        "targetOffsetY": 16.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 70,
+      "type": "event",
+      "at": 16244.699999999255,
+      "timeOffsetMs": 1580.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 509,
+        "y": 445,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 70.5,
+        "targetOffsetY": 15.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 71,
+      "type": "event",
+      "at": 16261.599999999627,
+      "timeOffsetMs": 1597.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 522,
+        "y": 444,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 83.5,
+        "targetOffsetY": 14.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 72,
+      "type": "event",
+      "at": 16278.199999999255,
+      "timeOffsetMs": 1613.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 534,
+        "y": 444,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 95.5,
+        "targetOffsetY": 14.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 73,
+      "type": "event",
+      "at": 16294.900000000373,
+      "timeOffsetMs": 1630.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 552,
+        "y": 444,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 113.5,
+        "targetOffsetY": 14.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 74,
+      "type": "event",
+      "at": 16311.599999999627,
+      "timeOffsetMs": 1647.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 570,
+        "y": 444,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 131.5,
+        "targetOffsetY": 14.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 75,
+      "type": "event",
+      "at": 16328.299999998882,
+      "timeOffsetMs": 1663.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 588,
+        "y": 444,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 149.5,
+        "targetOffsetY": 14.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 76,
+      "type": "event",
+      "at": 16344.900000000373,
+      "timeOffsetMs": 1680.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 603,
+        "y": 443,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 164.5,
+        "targetOffsetY": 13.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 77,
+      "type": "event",
+      "at": 16361.599999999627,
+      "timeOffsetMs": 1697.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 615,
+        "y": 443,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 176.5,
+        "targetOffsetY": 13.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 78,
+      "type": "event",
+      "at": 16378.299999998882,
+      "timeOffsetMs": 1713.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 624,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 185.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 79,
+      "type": "event",
+      "at": 16394.799999998882,
+      "timeOffsetMs": 1730.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 629,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 190.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 80,
+      "type": "event",
+      "at": 16411.400000000373,
+      "timeOffsetMs": 1746.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 631,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 192.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 81,
+      "type": "event",
+      "at": 16428,
+      "timeOffsetMs": 1763.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 631,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 192.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 82,
+      "type": "event",
+      "at": 16444.599999999627,
+      "timeOffsetMs": 1780.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 632,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 193.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 83,
+      "type": "event",
+      "at": 16461.199999999255,
+      "timeOffsetMs": 1796.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 632,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 193.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 84,
+      "type": "event",
+      "at": 16478,
+      "timeOffsetMs": 1813.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 633,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 194.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 85,
+      "type": "event",
+      "at": 16494.599999999627,
+      "timeOffsetMs": 1830.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 633,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 194.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 86,
+      "type": "event",
+      "at": 16511.299999998882,
+      "timeOffsetMs": 1846.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 634,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 195.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 87,
+      "type": "event",
+      "at": 16594.599999999627,
+      "timeOffsetMs": 1930.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 634,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 195.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 88,
+      "type": "event",
+      "at": 16611.299999998882,
+      "timeOffsetMs": 1946.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 634,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 195.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 89,
+      "type": "event",
+      "at": 16700.299999998882,
+      "timeOffsetMs": 2035.8,
+      "data": {
+        "eventType": "click",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 634,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 195.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 90,
+      "type": "event",
+      "at": 16941.400000000373,
+      "timeOffsetMs": 2276.9,
+      "data": {
+        "eventType": "click",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 634,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 195.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 91,
+      "type": "event",
+      "at": 17069.5,
+      "timeOffsetMs": 2405,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 635,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 196.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 92,
+      "type": "event",
+      "at": 17094.699999999255,
+      "timeOffsetMs": 2430.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 642,
+        "y": 443,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 203.5,
+        "targetOffsetY": 13.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 93,
+      "type": "event",
+      "at": 17111.299999998882,
+      "timeOffsetMs": 2446.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 648,
+        "y": 444,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 209.5,
+        "targetOffsetY": 14.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 94,
+      "type": "event",
+      "at": 17128,
+      "timeOffsetMs": 2463.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 661,
+        "y": 445,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 222.5,
+        "targetOffsetY": 15.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 95,
+      "type": "event",
+      "at": 17145.599999999627,
+      "timeOffsetMs": 2481.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 670,
+        "y": 447,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 231.5,
+        "targetOffsetY": 17.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 96,
+      "type": "event",
+      "at": 17178,
+      "timeOffsetMs": 2513.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 681,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 242.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 97,
+      "type": "event",
+      "at": 17194.599999999627,
+      "timeOffsetMs": 2530.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 682,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 243.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 98,
+      "type": "event",
+      "at": 17211.299999998882,
+      "timeOffsetMs": 2546.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 683,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 244.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 99,
+      "type": "event",
+      "at": 17228,
+      "timeOffsetMs": 2563.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 683,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 244.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 100,
+      "type": "event",
+      "at": 17244.699999999255,
+      "timeOffsetMs": 2580.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 684,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 245.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 101,
+      "type": "event",
+      "at": 17261.400000000373,
+      "timeOffsetMs": 2596.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 684,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 245.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 102,
+      "type": "event",
+      "at": 17278,
+      "timeOffsetMs": 2613.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 685,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 246.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 103,
+      "type": "event",
+      "at": 17294.599999999627,
+      "timeOffsetMs": 2630.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 686,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 247.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 104,
+      "type": "event",
+      "at": 17311.099999999627,
+      "timeOffsetMs": 2646.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 688,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 249.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 105,
+      "type": "event",
+      "at": 17327.900000000373,
+      "timeOffsetMs": 2663.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 690,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 251.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 106,
+      "type": "event",
+      "at": 17345.5,
+      "timeOffsetMs": 2681,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 693,
+        "y": 447,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 254.5,
+        "targetOffsetY": 17.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 107,
+      "type": "event",
+      "at": 17378,
+      "timeOffsetMs": 2713.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 700,
+        "y": 447,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 261.5,
+        "targetOffsetY": 17.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 108,
+      "type": "event",
+      "at": 17394.599999999627,
+      "timeOffsetMs": 2730.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 706,
+        "y": 447,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 267.5,
+        "targetOffsetY": 17.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 109,
+      "type": "event",
+      "at": 17411.299999998882,
+      "timeOffsetMs": 2746.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 713,
+        "y": 447,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 274.5,
+        "targetOffsetY": 17.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 110,
+      "type": "event",
+      "at": 17427.799999998882,
+      "timeOffsetMs": 2763.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 724,
+        "y": 447,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 285.5,
+        "targetOffsetY": 17.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 111,
+      "type": "event",
+      "at": 17444.400000000373,
+      "timeOffsetMs": 2779.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 732,
+        "y": 446,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 293.5,
+        "targetOffsetY": 16.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 112,
+      "type": "event",
+      "at": 17461.199999999255,
+      "timeOffsetMs": 2796.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 741,
+        "y": 445,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 302.5,
+        "targetOffsetY": 15.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 113,
+      "type": "event",
+      "at": 17477.900000000373,
+      "timeOffsetMs": 2813.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 745,
+        "y": 445,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 306.5,
+        "targetOffsetY": 15.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 114,
+      "type": "event",
+      "at": 17494.699999999255,
+      "timeOffsetMs": 2830.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 750,
+        "y": 444,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 311.5,
+        "targetOffsetY": 14.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 115,
+      "type": "event",
+      "at": 17511.299999998882,
+      "timeOffsetMs": 2846.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 754,
+        "y": 443,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 315.5,
+        "targetOffsetY": 13.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 116,
+      "type": "event",
+      "at": 17693.099999999627,
+      "timeOffsetMs": 3028.6,
+      "data": {
+        "eventType": "click",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 754,
+        "y": 443,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 315.5,
+        "targetOffsetY": 13.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 117,
+      "type": "event",
+      "at": 17745.199999999255,
+      "timeOffsetMs": 3080.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 755,
+        "y": 443,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 316.5,
+        "targetOffsetY": 13.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 118,
+      "type": "event",
+      "at": 17761.400000000373,
+      "timeOffsetMs": 3096.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 756,
+        "y": 443,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 317.5,
+        "targetOffsetY": 13.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 119,
+      "type": "event",
+      "at": 17778,
+      "timeOffsetMs": 3113.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 759,
+        "y": 443,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 320.5,
+        "targetOffsetY": 13.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 120,
+      "type": "event",
+      "at": 17794.599999999627,
+      "timeOffsetMs": 3130.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 763,
+        "y": 443,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 324.5,
+        "targetOffsetY": 13.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 121,
+      "type": "event",
+      "at": 17811.299999998882,
+      "timeOffsetMs": 3146.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 767,
+        "y": 443,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 328.5,
+        "targetOffsetY": 13.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 122,
+      "type": "event",
+      "at": 17828,
+      "timeOffsetMs": 3163.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 779,
+        "y": 443,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 340.5,
+        "targetOffsetY": 13.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 123,
+      "type": "event",
+      "at": 17844.599999999627,
+      "timeOffsetMs": 3180.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 794,
+        "y": 443,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 355.5,
+        "targetOffsetY": 13.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 124,
+      "type": "event",
+      "at": 17861.400000000373,
+      "timeOffsetMs": 3196.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 812,
+        "y": 443,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 373.5,
+        "targetOffsetY": 13.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 125,
+      "type": "event",
+      "at": 17878.799999998882,
+      "timeOffsetMs": 3214.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 832,
+        "y": 443,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 393.5,
+        "targetOffsetY": 13.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 126,
+      "type": "event",
+      "at": 17911.299999998882,
+      "timeOffsetMs": 3246.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 860,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 421.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 127,
+      "type": "event",
+      "at": 17928.900000000373,
+      "timeOffsetMs": 3264.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 865,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 426.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 128,
+      "type": "event",
+      "at": 17961.299999998882,
+      "timeOffsetMs": 3296.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 867,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 428.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 129,
+      "type": "event",
+      "at": 17984.099999999627,
+      "timeOffsetMs": 3319.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 867,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 428.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 130,
+      "type": "event",
+      "at": 18011.400000000373,
+      "timeOffsetMs": 3346.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 867,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 428.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 131,
+      "type": "event",
+      "at": 18028,
+      "timeOffsetMs": 3363.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 868,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 429.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 132,
+      "type": "event",
+      "at": 18214.699999999255,
+      "timeOffsetMs": 3550.2,
+      "data": {
+        "eventType": "click",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 868,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 429.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 133,
+      "type": "event",
+      "at": 18252.900000000373,
+      "timeOffsetMs": 3588.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 869,
+        "y": 442,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 430.5,
+        "targetOffsetY": 12.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 134,
+      "type": "event",
+      "at": 18278,
+      "timeOffsetMs": 3613.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 874,
+        "y": 444,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 435.5,
+        "targetOffsetY": 14.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 135,
+      "type": "event",
+      "at": 18294.699999999255,
+      "timeOffsetMs": 3630.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 883,
+        "y": 446,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 444.5,
+        "targetOffsetY": 16.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 136,
+      "type": "event",
+      "at": 18311.299999998882,
+      "timeOffsetMs": 3646.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 896,
+        "y": 449,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 457.5,
+        "targetOffsetY": 19.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 137,
+      "type": "event",
+      "at": 18328,
+      "timeOffsetMs": 3663.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 912,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 473.5,
+        "targetOffsetY": 21.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 138,
+      "type": "event",
+      "at": 18344.599999999627,
+      "timeOffsetMs": 3680.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 930,
+        "y": 453,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 491.5,
+        "targetOffsetY": 23.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 139,
+      "type": "event",
+      "at": 18361.199999999255,
+      "timeOffsetMs": 3696.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 949,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 510.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 140,
+      "type": "event",
+      "at": 18378,
+      "timeOffsetMs": 3713.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 964,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 525.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 141,
+      "type": "event",
+      "at": 18394.599999999627,
+      "timeOffsetMs": 3730.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 974,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 535.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 142,
+      "type": "event",
+      "at": 18411.299999998882,
+      "timeOffsetMs": 3746.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 981,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 542.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 143,
+      "type": "event",
+      "at": 18427.900000000373,
+      "timeOffsetMs": 3763.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 982,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 543.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 144,
+      "type": "event",
+      "at": 18451.599999999627,
+      "timeOffsetMs": 3787.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 982,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 543.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 145,
+      "type": "event",
+      "at": 18494.699999999255,
+      "timeOffsetMs": 3830.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 983,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 544.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 146,
+      "type": "event",
+      "at": 18524,
+      "timeOffsetMs": 3859.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 983,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 544.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 147,
+      "type": "event",
+      "at": 18540.099999999627,
+      "timeOffsetMs": 3875.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 983,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 544.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 148,
+      "type": "event",
+      "at": 18765.299999998882,
+      "timeOffsetMs": 4100.8,
+      "data": {
+        "eventType": "click",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 983,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 544.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 149,
+      "type": "event",
+      "at": 18773.400000000373,
+      "timeOffsetMs": 4108.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 982,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 543.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 150,
+      "type": "event",
+      "at": 18794.900000000373,
+      "timeOffsetMs": 4130.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 978,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 539.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 151,
+      "type": "event",
+      "at": 18812,
+      "timeOffsetMs": 4147.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 963,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 524.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 152,
+      "type": "event",
+      "at": 18844.699999999255,
+      "timeOffsetMs": 4180.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 918,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 479.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 153,
+      "type": "event",
+      "at": 18861.299999998882,
+      "timeOffsetMs": 4196.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 884,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 445.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 154,
+      "type": "event",
+      "at": 18877.900000000373,
+      "timeOffsetMs": 4213.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 850,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 411.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 155,
+      "type": "event",
+      "at": 18894.599999999627,
+      "timeOffsetMs": 4230.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 819,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 380.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 156,
+      "type": "event",
+      "at": 18911.199999999255,
+      "timeOffsetMs": 4246.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 793,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 354.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 157,
+      "type": "event",
+      "at": 18928,
+      "timeOffsetMs": 4263.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 768,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 329.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 158,
+      "type": "event",
+      "at": 18945.299999998882,
+      "timeOffsetMs": 4280.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 747,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 308.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 159,
+      "type": "event",
+      "at": 18977.799999998882,
+      "timeOffsetMs": 4313.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 719,
+        "y": 458,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 298.5,
+        "targetOffsetY": 46.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 160,
+      "type": "event",
+      "at": 18994.400000000373,
+      "timeOffsetMs": 4329.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 712,
+        "y": 459,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 291.5,
+        "targetOffsetY": 47.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 161,
+      "type": "event",
+      "at": 19011.599999999627,
+      "timeOffsetMs": 4347.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 701,
+        "y": 459,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 280.5,
+        "targetOffsetY": 47.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 162,
+      "type": "event",
+      "at": 19027.900000000373,
+      "timeOffsetMs": 4363.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 693,
+        "y": 459,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 272.5,
+        "targetOffsetY": 47.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 163,
+      "type": "event",
+      "at": 19044.5,
+      "timeOffsetMs": 4380,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 684,
+        "y": 460,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 263.5,
+        "targetOffsetY": 48.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 164,
+      "type": "event",
+      "at": 19061.099999999627,
+      "timeOffsetMs": 4396.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 677,
+        "y": 460,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 256.5,
+        "targetOffsetY": 48.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 165,
+      "type": "event",
+      "at": 19078,
+      "timeOffsetMs": 4413.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 670,
+        "y": 460,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 249.5,
+        "targetOffsetY": 48.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 166,
+      "type": "event",
+      "at": 19094.599999999627,
+      "timeOffsetMs": 4430.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 664,
+        "y": 460,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 243.5,
+        "targetOffsetY": 48.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 167,
+      "type": "event",
+      "at": 19111.299999998882,
+      "timeOffsetMs": 4446.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 662,
+        "y": 460,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 241.5,
+        "targetOffsetY": 48.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 168,
+      "type": "event",
+      "at": 19127.900000000373,
+      "timeOffsetMs": 4463.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 656,
+        "y": 460,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 235.5,
+        "targetOffsetY": 48.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 169,
+      "type": "event",
+      "at": 19144.799999998882,
+      "timeOffsetMs": 4480.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 655,
+        "y": 460,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 234.5,
+        "targetOffsetY": 48.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 170,
+      "type": "event",
+      "at": 19161.5,
+      "timeOffsetMs": 4497,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 654,
+        "y": 459,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 233.5,
+        "targetOffsetY": 47.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 171,
+      "type": "event",
+      "at": 19178.299999998882,
+      "timeOffsetMs": 4513.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 654,
+        "y": 459,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 233.5,
+        "targetOffsetY": 47.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 172,
+      "type": "event",
+      "at": 19194.900000000373,
+      "timeOffsetMs": 4530.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 652,
+        "y": 458,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 231.5,
+        "targetOffsetY": 46.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 173,
+      "type": "event",
+      "at": 19211.400000000373,
+      "timeOffsetMs": 4546.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 651,
+        "y": 458,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 230.5,
+        "targetOffsetY": 46.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 174,
+      "type": "event",
+      "at": 19228.199999999255,
+      "timeOffsetMs": 4563.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 643,
+        "y": 456,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 204.5,
+        "targetOffsetY": 26.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 175,
+      "type": "event",
+      "at": 19245,
+      "timeOffsetMs": 4580.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 638,
+        "y": 454,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 199.5,
+        "targetOffsetY": 24.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 176,
+      "type": "event",
+      "at": 19261.699999999255,
+      "timeOffsetMs": 4597.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 635,
+        "y": 454,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 196.5,
+        "targetOffsetY": 24.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 177,
+      "type": "event",
+      "at": 19277.900000000373,
+      "timeOffsetMs": 4613.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 632,
+        "y": 453,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 193.5,
+        "targetOffsetY": 23.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 178,
+      "type": "event",
+      "at": 19294.799999998882,
+      "timeOffsetMs": 4630.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 630,
+        "y": 452,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 191.5,
+        "targetOffsetY": 22.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 179,
+      "type": "event",
+      "at": 19311.699999999255,
+      "timeOffsetMs": 4647.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 625,
+        "y": 452,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 186.5,
+        "targetOffsetY": 22.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 180,
+      "type": "event",
+      "at": 19327.900000000373,
+      "timeOffsetMs": 4663.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 622,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 183.5,
+        "targetOffsetY": 21.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 181,
+      "type": "event",
+      "at": 19344.900000000373,
+      "timeOffsetMs": 4680.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 621,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 182.5,
+        "targetOffsetY": 21.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 182,
+      "type": "event",
+      "at": 19525.699999999255,
+      "timeOffsetMs": 4861.2,
+      "data": {
+        "eventType": "click",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 621,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 182.5,
+        "targetOffsetY": 21.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 183,
+      "type": "event",
+      "at": 19526.299999998882,
+      "timeOffsetMs": 4861.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 624,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 185.5,
+        "targetOffsetY": 21.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 184,
+      "type": "event",
+      "at": 19544.599999999627,
+      "timeOffsetMs": 4880.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 628,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 189.5,
+        "targetOffsetY": 21.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 185,
+      "type": "event",
+      "at": 19561.299999998882,
+      "timeOffsetMs": 4896.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 642,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 203.5,
+        "targetOffsetY": 21.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 186,
+      "type": "event",
+      "at": 19577.900000000373,
+      "timeOffsetMs": 4913.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 672,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 233.5,
+        "targetOffsetY": 21.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 187,
+      "type": "event",
+      "at": 19594.5,
+      "timeOffsetMs": 4930,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 727,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 288.5,
+        "targetOffsetY": 21.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 188,
+      "type": "event",
+      "at": 19611.299999998882,
+      "timeOffsetMs": 4946.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 797,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 358.5,
+        "targetOffsetY": 21.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 189,
+      "type": "event",
+      "at": 19627.900000000373,
+      "timeOffsetMs": 4963.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 876,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 437.5,
+        "targetOffsetY": 21.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 190,
+      "type": "event",
+      "at": 19644.599999999627,
+      "timeOffsetMs": 4980.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 962,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 523.5,
+        "targetOffsetY": 21.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 191,
+      "type": "event",
+      "at": 19661.299999998882,
+      "timeOffsetMs": 4996.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1039,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 600.5,
+        "targetOffsetY": 21.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 192,
+      "type": "event",
+      "at": 19677.900000000373,
+      "timeOffsetMs": 5013.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1099,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 678.5,
+        "targetOffsetY": 39.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 193,
+      "type": "event",
+      "at": 19695.099999999627,
+      "timeOffsetMs": 5030.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1130,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 9.5,
+        "targetOffsetY": 39.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 194,
+      "type": "event",
+      "at": 19711.699999999255,
+      "timeOffsetMs": 5047.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1146,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 7.5,
+        "targetOffsetY": 21.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 195,
+      "type": "event",
+      "at": 19728,
+      "timeOffsetMs": 5063.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1155,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 16.5,
+        "targetOffsetY": 21.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 196,
+      "type": "event",
+      "at": 19744.599999999627,
+      "timeOffsetMs": 5080.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1155,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 16.5,
+        "targetOffsetY": 21.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 197,
+      "type": "event",
+      "at": 19961.699999999255,
+      "timeOffsetMs": 5297.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1155,
+        "y": 451,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 16.5,
+        "targetOffsetY": 21.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 198,
+      "type": "event",
+      "at": 19978.299999998882,
+      "timeOffsetMs": 5313.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1152,
+        "y": 450,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 13.5,
+        "targetOffsetY": 20.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 199,
+      "type": "event",
+      "at": 19994.699999999255,
+      "timeOffsetMs": 5330.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1147,
+        "y": 450,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 8.5,
+        "targetOffsetY": 20.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 200,
+      "type": "event",
+      "at": 20011.400000000373,
+      "timeOffsetMs": 5346.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1144,
+        "y": 449,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 5.5,
+        "targetOffsetY": 19.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 201,
+      "type": "event",
+      "at": 20028.199999999255,
+      "timeOffsetMs": 5363.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1140,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 1.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 202,
+      "type": "event",
+      "at": 20044.599999999627,
+      "timeOffsetMs": 5380.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1138,
+        "y": 447,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": -0.5,
+        "targetOffsetY": 17.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 203,
+      "type": "event",
+      "at": 20061.299999998882,
+      "timeOffsetMs": 5396.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1137,
+        "y": 447,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 16.5,
+        "targetOffsetY": 35.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 204,
+      "type": "event",
+      "at": 20212.099999999627,
+      "timeOffsetMs": 5547.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1137,
+        "y": 447,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 16.5,
+        "targetOffsetY": 35.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 205,
+      "type": "event",
+      "at": 20228.5,
+      "timeOffsetMs": 5564,
+      "data": {
+        "eventType": "click",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1136,
+        "y": 447,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 15.5,
+        "targetOffsetY": 35.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875,
+        "button": 0
+      }
+    },
+    {
+      "id": 206,
+      "type": "event",
+      "at": 20244.599999999627,
+      "timeOffsetMs": 5580.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1130,
+        "y": 447,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 9.5,
+        "targetOffsetY": 35.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 207,
+      "type": "event",
+      "at": 20261.299999998882,
+      "timeOffsetMs": 5596.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1123,
+        "y": 447,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 2.5,
+        "targetOffsetY": 35.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 208,
+      "type": "event",
+      "at": 20278,
+      "timeOffsetMs": 5613.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1112,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 691.5,
+        "targetOffsetY": 36.5,
+        "targetWidth": 1384,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 209,
+      "type": "event",
+      "at": 20294.599999999627,
+      "timeOffsetMs": 5630.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1098,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 677.5,
+        "targetOffsetY": 36.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 210,
+      "type": "event",
+      "at": 20311.299999998882,
+      "timeOffsetMs": 5646.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1073,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 634.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 211,
+      "type": "event",
+      "at": 20328,
+      "timeOffsetMs": 5663.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1025,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 586.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 212,
+      "type": "event",
+      "at": 20344.599999999627,
+      "timeOffsetMs": 5680.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 970,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 531.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 213,
+      "type": "event",
+      "at": 20361.199999999255,
+      "timeOffsetMs": 5696.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 918,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 479.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 214,
+      "type": "event",
+      "at": 20377.900000000373,
+      "timeOffsetMs": 5713.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 873,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 434.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 215,
+      "type": "event",
+      "at": 20394.699999999255,
+      "timeOffsetMs": 5730.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 843,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 404.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 216,
+      "type": "event",
+      "at": 20411.199999999255,
+      "timeOffsetMs": 5746.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 819,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 380.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 217,
+      "type": "event",
+      "at": 20428,
+      "timeOffsetMs": 5763.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 801,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 362.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 218,
+      "type": "event",
+      "at": 20444.599999999627,
+      "timeOffsetMs": 5780.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 794,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 355.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 219,
+      "type": "event",
+      "at": 20461.299999998882,
+      "timeOffsetMs": 5796.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 789,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 350.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 220,
+      "type": "event",
+      "at": 20477.900000000373,
+      "timeOffsetMs": 5813.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 783,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 344.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 221,
+      "type": "event",
+      "at": 20494.699999999255,
+      "timeOffsetMs": 5830.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 774,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 335.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 222,
+      "type": "event",
+      "at": 20511.400000000373,
+      "timeOffsetMs": 5846.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 765,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 326.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 223,
+      "type": "event",
+      "at": 20528,
+      "timeOffsetMs": 5863.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 754,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 315.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 224,
+      "type": "event",
+      "at": 20544.599999999627,
+      "timeOffsetMs": 5880.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 744,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 305.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 225,
+      "type": "event",
+      "at": 20561.299999998882,
+      "timeOffsetMs": 5896.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 735,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 296.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 226,
+      "type": "event",
+      "at": 20577.900000000373,
+      "timeOffsetMs": 5913.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 729,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 290.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 227,
+      "type": "event",
+      "at": 20594.599999999627,
+      "timeOffsetMs": 5930.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 724,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 285.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 228,
+      "type": "event",
+      "at": 20611.299999998882,
+      "timeOffsetMs": 5946.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 718,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 279.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 229,
+      "type": "event",
+      "at": 20628,
+      "timeOffsetMs": 5963.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 709,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 270.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 230,
+      "type": "event",
+      "at": 20644.699999999255,
+      "timeOffsetMs": 5980.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 701,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 262.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 231,
+      "type": "event",
+      "at": 20661.299999998882,
+      "timeOffsetMs": 5996.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 691,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 252.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 232,
+      "type": "event",
+      "at": 20677.900000000373,
+      "timeOffsetMs": 6013.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 682,
+        "y": 448,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 243.5,
+        "targetOffsetY": 18.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 233,
+      "type": "event",
+      "at": 20695,
+      "timeOffsetMs": 6030.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 670,
+        "y": 447,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 231.5,
+        "targetOffsetY": 17.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 234,
+      "type": "event",
+      "at": 20712.299999998882,
+      "timeOffsetMs": 6047.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 661,
+        "y": 447,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 222.5,
+        "targetOffsetY": 17.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 235,
+      "type": "event",
+      "at": 20744.599999999627,
+      "timeOffsetMs": 6080.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 653,
+        "y": 446,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 214.5,
+        "targetOffsetY": 16.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 236,
+      "type": "event",
+      "at": 20761.299999998882,
+      "timeOffsetMs": 6096.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 651,
+        "y": 445,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 212.5,
+        "targetOffsetY": 15.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 237,
+      "type": "event",
+      "at": 20777.900000000373,
+      "timeOffsetMs": 6113.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 651,
+        "y": 445,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 212.5,
+        "targetOffsetY": 15.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 238,
+      "type": "event",
+      "at": 20900.900000000373,
+      "timeOffsetMs": 6236.4,
+      "data": {
+        "eventType": "click",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 651,
+        "y": 445,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 212.5,
+        "targetOffsetY": 15.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 239,
+      "type": "event",
+      "at": 20908.400000000373,
+      "timeOffsetMs": 6243.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 651,
+        "y": 445,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 212.5,
+        "targetOffsetY": 15.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 240,
+      "type": "event",
+      "at": 20928.199999999255,
+      "timeOffsetMs": 6263.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 649,
+        "y": 443,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 210.5,
+        "targetOffsetY": 13.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 241,
+      "type": "event",
+      "at": 20944.799999998882,
+      "timeOffsetMs": 6280.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 647,
+        "y": 438,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 208.5,
+        "targetOffsetY": 8.5,
+        "targetWidth": 648,
+        "targetHeight": 28.5
+      }
+    },
+    {
+      "id": 242,
+      "type": "event",
+      "at": 20961.299999998882,
+      "timeOffsetMs": 6296.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 644,
+        "y": 428,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 223.5,
+        "targetOffsetY": 16.5,
+        "targetWidth": 684,
+        "targetHeight": 474.296875
+      }
+    },
+    {
+      "id": 243,
+      "type": "event",
+      "at": 20978.199999999255,
+      "timeOffsetMs": 6313.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 641,
+        "y": 410,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 220.5,
+        "targetOffsetY": 266,
+        "targetWidth": 1384,
+        "targetHeight": 741.796875
+      }
+    },
+    {
+      "id": 244,
+      "type": "event",
+      "at": 20994.599999999627,
+      "timeOffsetMs": 6330.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 638,
+        "y": 391,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 217.5,
+        "targetOffsetY": 247,
+        "targetWidth": 1384,
+        "targetHeight": 251.5
+      }
+    },
+    {
+      "id": 245,
+      "type": "event",
+      "at": 21011.299999998882,
+      "timeOffsetMs": 6346.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 637,
+        "y": 373,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 198.5,
+        "targetOffsetY": 91.5,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 246,
+      "type": "event",
+      "at": 21027.900000000373,
+      "timeOffsetMs": 6363.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 637,
+        "y": 354,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 198.5,
+        "targetOffsetY": 72.5,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 247,
+      "type": "event",
+      "at": 21044.5,
+      "timeOffsetMs": 6380,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 639,
+        "y": 347,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 200.5,
+        "targetOffsetY": 65.5,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 248,
+      "type": "event",
+      "at": 21061.299999998882,
+      "timeOffsetMs": 6396.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 640,
+        "y": 344,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 201.5,
+        "targetOffsetY": 62.5,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 249,
+      "type": "event",
+      "at": 21077.900000000373,
+      "timeOffsetMs": 6413.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 641,
+        "y": 341,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 202.5,
+        "targetOffsetY": 59.5,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 250,
+      "type": "event",
+      "at": 21095.400000000373,
+      "timeOffsetMs": 6430.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 642,
+        "y": 336,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 203.5,
+        "targetOffsetY": 54.5,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 251,
+      "type": "event",
+      "at": 21128,
+      "timeOffsetMs": 6463.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 645,
+        "y": 329,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 206.5,
+        "targetOffsetY": 47.5,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 252,
+      "type": "event",
+      "at": 21144.599999999627,
+      "timeOffsetMs": 6480.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 646,
+        "y": 328,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 207.5,
+        "targetOffsetY": 46.5,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 253,
+      "type": "event",
+      "at": 21161.400000000373,
+      "timeOffsetMs": 6496.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 647,
+        "y": 324,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 208.5,
+        "targetOffsetY": 42.5,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 254,
+      "type": "event",
+      "at": 21177.900000000373,
+      "timeOffsetMs": 6513.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 647,
+        "y": 320,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 208.5,
+        "targetOffsetY": 38.5,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 255,
+      "type": "event",
+      "at": 21194.599999999627,
+      "timeOffsetMs": 6530.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 648,
+        "y": 313,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 209.5,
+        "targetOffsetY": 31.5,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 256,
+      "type": "event",
+      "at": 21211.599999999627,
+      "timeOffsetMs": 6547.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 648,
+        "y": 307,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 209.5,
+        "targetOffsetY": 25.5,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 257,
+      "type": "event",
+      "at": 21228.400000000373,
+      "timeOffsetMs": 6563.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 649,
+        "y": 302,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 210.5,
+        "targetOffsetY": 20.5,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 258,
+      "type": "event",
+      "at": 21244.799999998882,
+      "timeOffsetMs": 6580.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 650,
+        "y": 298,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 211.5,
+        "targetOffsetY": 16.5,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 259,
+      "type": "event",
+      "at": 21261.199999999255,
+      "timeOffsetMs": 6596.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 650,
+        "y": 296,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 211.5,
+        "targetOffsetY": 14.5,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 260,
+      "type": "event",
+      "at": 21278,
+      "timeOffsetMs": 6613.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 650,
+        "y": 292,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 211.5,
+        "targetOffsetY": 10.5,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 261,
+      "type": "event",
+      "at": 21295.5,
+      "timeOffsetMs": 6631,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 650,
+        "y": 290,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 211.5,
+        "targetOffsetY": 8.5,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 262,
+      "type": "event",
+      "at": 21327.900000000373,
+      "timeOffsetMs": 6663.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 651,
+        "y": 281,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 212.5,
+        "targetOffsetY": -0.5,
+        "targetWidth": 1348,
+        "targetHeight": 96
+      }
+    },
+    {
+      "id": 263,
+      "type": "event",
+      "at": 21344.599999999627,
+      "timeOffsetMs": 6680.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 651,
+        "y": 280,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 230.5,
+        "targetOffsetY": 136,
+        "targetWidth": 1384,
+        "targetHeight": 251.5
+      }
+    },
+    {
+      "id": 264,
+      "type": "event",
+      "at": 21361.199999999255,
+      "timeOffsetMs": 6696.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 651,
+        "y": 280,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 230.5,
+        "targetOffsetY": 136,
+        "targetWidth": 1384,
+        "targetHeight": 251.5
+      }
+    },
+    {
+      "id": 265,
+      "type": "event",
+      "at": 21378,
+      "timeOffsetMs": 6713.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 652,
+        "y": 278,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 231.5,
+        "targetOffsetY": 134,
+        "targetWidth": 1384,
+        "targetHeight": 251.5
+      }
+    },
+    {
+      "id": 266,
+      "type": "event",
+      "at": 21394.699999999255,
+      "timeOffsetMs": 6730.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 652,
+        "y": 276,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 231.5,
+        "targetOffsetY": 132,
+        "targetWidth": 1384,
+        "targetHeight": 251.5
+      }
+    },
+    {
+      "id": 267,
+      "type": "event",
+      "at": 21411.199999999255,
+      "timeOffsetMs": 6746.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 653,
+        "y": 273,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 232.5,
+        "targetOffsetY": 129,
+        "targetWidth": 1384,
+        "targetHeight": 251.5
+      }
+    },
+    {
+      "id": 268,
+      "type": "event",
+      "at": 21427.900000000373,
+      "timeOffsetMs": 6763.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 653,
+        "y": 273,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 232.5,
+        "targetOffsetY": 129,
+        "targetWidth": 1384,
+        "targetHeight": 251.5
+      }
+    },
+    {
+      "id": 269,
+      "type": "event",
+      "at": 21532.199999999255,
+      "timeOffsetMs": 6867.7,
+      "data": {
+        "eventType": "click",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 653,
+        "y": 273,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 232.5,
+        "targetOffsetY": 129,
+        "targetWidth": 1384,
+        "targetHeight": 251.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 270,
+      "type": "event",
+      "at": 21649.099999999627,
+      "timeOffsetMs": 6984.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 654,
+        "y": 272,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 233.5,
+        "targetOffsetY": 128,
+        "targetWidth": 1384,
+        "targetHeight": 251.5
+      }
+    },
+    {
+      "id": 271,
+      "type": "event",
+      "at": 21679,
+      "timeOffsetMs": 7014.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 654,
+        "y": 271,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 233.5,
+        "targetOffsetY": 127,
+        "targetWidth": 1384,
+        "targetHeight": 251.5
+      }
+    },
+    {
+      "id": 272,
+      "type": "event",
+      "at": 21711.199999999255,
+      "timeOffsetMs": 7046.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 658,
+        "y": 265,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 83.5078125,
+        "targetOffsetY": 31,
+        "targetWidth": 127.234375,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 273,
+      "type": "event",
+      "at": 21728.799999998882,
+      "timeOffsetMs": 7064.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 660,
+        "y": 260,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 85.5078125,
+        "targetOffsetY": 26,
+        "targetWidth": 127.234375,
+        "targetHeight": 35.5
+      }
+    },
+    {
+      "id": 274,
+      "type": "event",
+      "at": 21845,
+      "timeOffsetMs": 7180.5,
+      "data": {
+        "eventType": "click",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 662,
+        "y": 256,
+        "viewportWidth": 2240,
+        "viewportHeight": 1058,
+        "targetOffsetX": 87.5078125,
+        "targetOffsetY": 22,
+        "targetWidth": 127.234375,
+        "targetHeight": 35.5,
+        "button": 0
+      }
+    },
+    {
+      "id": 275,
+      "type": "meta",
+      "at": 21845.299999998882,
+      "timeOffsetMs": 7180.8,
+      "data": {
+        "action": "recording_stopped"
+      }
+    }
+  ]
+}

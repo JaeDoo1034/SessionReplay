@@ -1,0 +1,6173 @@
+{
+  "version": 1,
+  "createdAt": "2026-02-17T16:50:11.435Z",
+  "page": {
+    "href": "http://127.0.0.1:5500/index.html",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"
+  },
+  "eventCount": 434,
+  "events": [
+    {
+      "id": 1,
+      "type": "snapshot",
+      "at": 14145.099999999627,
+      "timeOffsetMs": 0.3,
+      "data": {
+        "url": "http://127.0.0.1:5500/index.html",
+        "viewport": {
+          "width": 2240,
+          "height": 1058
+        },
+        "html": "<html lang=\"ko\"><head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Session Replay MVP</title>\n    <style>\n      :root {\n        --bg: #f3f6fb;\n        --surface: #ffffff;\n        --text: #1f2937;\n        --muted: #64748b;\n        --primary: #0f766e;\n        --primary-2: #0ea5a4;\n        --danger: #be123c;\n        --line: #d2dce8;\n      }\n\n      * {\n        box-sizing: border-box;\n      }\n\n      body {\n        margin: 0;\n        min-height: 100vh;\n        font-family: \"Segoe UI\", \"Apple SD Gothic Neo\", sans-serif;\n        color: var(--text);\n        background: radial-gradient(circle at top right, #dff4f1, var(--bg));\n      }\n\n      .app {\n        width: min(1440px, 100vw);\n        margin: 0 auto;\n        padding: 16px clamp(12px, 2vw, 28px) 20px;\n      }\n\n      .card {\n        background: var(--surface);\n        border-radius: 14px;\n        padding: 18px;\n        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);\n      }\n\n      h1 {\n        margin: 0 0 8px;\n        font-size: 1.35rem;\n      }\n\n      h2 {\n        margin: 0 0 8px;\n      }\n\n      p {\n        margin: 0;\n        color: var(--muted);\n      }\n\n      .tabs-shell {\n        margin-top: 12px;\n      }\n\n      .tabs {\n        display: flex;\n        gap: 8px;\n        margin-bottom: 12px;\n      }\n\n      .tab-btn {\n        border: 1px solid #b8c4d7;\n        background: #f7fafc;\n        color: #0f172a;\n        border-radius: 999px;\n        padding: 10px 14px;\n        font-weight: 700;\n        cursor: pointer;\n      }\n\n      .tab-btn.active {\n        background: var(--primary);\n        border-color: var(--primary);\n        color: #fff;\n      }\n\n      .tab-stage {\n        min-height: calc(100vh - 164px);\n      }\n\n      .tab-panel[hidden] {\n        display: none;\n      }\n\n      .panel-grid {\n        display: grid;\n        grid-template-columns: 1fr;\n        gap: 16px;\n        min-height: inherit;\n      }\n\n      @media (min-width: 920px) {\n        .panel-grid.split {\n          grid-template-columns: 1fr 1fr;\n        }\n      }\n\n      .controls {\n        display: flex;\n        gap: 8px;\n        flex-wrap: wrap;\n        margin-top: 16px;\n      }\n\n      .controls label {\n        min-width: 160px;\n        flex: 1 1 180px;\n      }\n\n      button {\n        border: none;\n        border-radius: 10px;\n        padding: 10px 14px;\n        color: white;\n        background: var(--primary);\n        cursor: pointer;\n        font-weight: 600;\n      }\n\n      button.secondary {\n        background: var(--primary-2);\n      }\n\n      button.danger {\n        background: var(--danger);\n      }\n\n      button:disabled {\n        opacity: 0.45;\n        cursor: not-allowed;\n      }\n\n      label {\n        font-size: 0.92rem;\n        font-weight: 600;\n      }\n\n      input,\n      textarea,\n      select {\n        width: 100%;\n        margin-top: 6px;\n        padding: 10px;\n        border-radius: 10px;\n        border: 1px solid #cbd5e1;\n        font: inherit;\n      }\n\n      .scroll-area {\n        margin-top: 12px;\n        border: 1px dashed #94a3b8;\n        border-radius: 10px;\n        height: clamp(240px, 35vh, 420px);\n        overflow: auto;\n        padding: 10px;\n        background: #f8fafc;\n      }\n\n      .log {\n        margin-top: 12px;\n        background: #0b1220;\n        color: #d6e2ff;\n        border-radius: 10px;\n        padding: 12px;\n        min-height: 96px;\n        white-space: pre-wrap;\n        font-size: 0.85rem;\n      }\n\n      .replay-shell {\n        margin-top: 12px;\n        border: 1px solid var(--line);\n        border-radius: 10px;\n        overflow: hidden;\n        height: clamp(520px, calc(100vh - 260px), 900px);\n      }\n\n      iframe {\n        width: 100%;\n        height: 100%;\n        border: 0;\n        background: white;\n      }\n\n      ul {\n        margin: 8px 0 0;\n        padding-left: 18px;\n      }\n\n      @media (max-width: 760px) {\n        .tab-stage {\n          min-height: auto;\n        }\n\n        .replay-shell {\n          height: 62vh;\n          min-height: 420px;\n        }\n      }\n    </style>\n  </head>\n  <body>\n    <main class=\"app\">\n      <section class=\"card\">\n        <h1>Session Replay Recorder &amp; Replayer</h1>\n        <p>탭 전환으로 설정화면과 시연화면을 동일한 폭/높이 기준에서 확인합니다.</p>\n      </section>\n\n      <section class=\"tabs-shell\">\n        <div class=\"tabs\" role=\"tablist\" aria-label=\"Session Replay Workspace Tabs\">\n          <button class=\"tab-btn active\" id=\"tab-settings\" data-tab=\"settings\" role=\"tab\" aria-selected=\"true\" aria-controls=\"panel-settings\">\n            설정화면\n          </button>\n          <button class=\"tab-btn\" id=\"tab-demo\" data-tab=\"demo\" role=\"tab\" aria-selected=\"false\" aria-controls=\"panel-demo\">\n            시연화면\n          </button>\n        </div>\n\n        <section class=\"tab-stage\">\n          <div id=\"panel-settings\" data-tab-panel=\"settings\" role=\"tabpanel\" aria-labelledby=\"tab-settings\">\n            <div class=\"panel-grid\">\n              <section class=\"card\">\n                <h2>Recorder Controls</h2>\n                <p>이벤트를 생성하고 로컬 JSON으로 저장합니다.</p>\n                <div class=\"controls\">\n                  <button id=\"start-btn\">Start Recording</button>\n                  <button id=\"stop-btn\" class=\"danger\" disabled=\"\">Stop Recording</button>\n                  <button id=\"download-btn\" class=\"secondary\" disabled=\"\">Download JSON</button>\n                </div>\n                <div id=\"status\" class=\"log\">Idle</div>\n              </section>\n\n              <section class=\"panel-grid split\">\n                <article class=\"card\" id=\"interaction-zone\">\n                  <h2>Interaction Zone</h2>\n                  <form id=\"sample-form\">\n                    <label>\n                      Name\n                      <input id=\"name-input\" name=\"name\" placeholder=\"type here\">\n                    </label>\n                    <label>\n                      Role\n                      <select id=\"role-select\" name=\"role\">\n                        <option value=\"frontend\">Frontend</option>\n                        <option value=\"backend\">Backend</option>\n                        <option value=\"product\">Product</option>\n                      </select>\n                    </label>\n                    <label>\n                      Note\n                      <textarea id=\"note-input\" name=\"note\" rows=\"3\"></textarea>\n                    </label>\n                    <div class=\"controls\">\n                      <button type=\"submit\">Submit Form</button>\n                      <button type=\"button\" id=\"add-item-btn\" class=\"secondary\">Append Item</button>\n                    </div>\n                  </form>\n                </article>\n\n                <article class=\"card\">\n                  <h2>Scrollable &amp; Mutable Area</h2>\n                  <p>스크롤/DOM 변화 기록 테스트 영역입니다.</p>\n                  <div class=\"scroll-area\" id=\"scroll-area\">\n                    <ul id=\"item-list\">\n                      <li>seed item 1</li>\n                      <li>seed item 2</li>\n                      <li>seed item 3</li>\n                      <li>seed item 4</li>\n                      <li>seed item 5</li>\n                      <li>seed item 6</li>\n                      <li>seed item 7</li>\n                      <li>seed item 8</li>\n                      <li>seed item 9</li>\n                      <li>seed item 10</li>\n                    </ul>\n                  </div>\n                </article>\n              </section>\n            </div>\n          </div>\n\n          <div id=\"panel-demo\" data-tab-panel=\"demo\" role=\"tabpanel\" aria-labelledby=\"tab-demo\" hidden=\"\">\n            <div class=\"panel-grid\">\n              <section class=\"card\">\n                <h2>Replay Controls</h2>\n                <p>저장한 JSON을 불러와 동일한 크기 뷰에서 재생합니다.</p>\n                <div class=\"controls\">\n                  <label>\n                    Replay JSON\n                    <input id=\"replay-file\" type=\"file\" accept=\"application/json\">\n                  </label>\n                  <label>\n                    Speed\n                    <select id=\"replay-speed\">\n                      <option value=\"0.5\">0.5x</option>\n                      <option value=\"1\" selected=\"\">1x</option>\n                      <option value=\"2\">2x</option>\n                      <option value=\"4\">4x</option>\n                    </select>\n                  </label>\n                  <button id=\"replay-play-btn\" class=\"secondary\" disabled=\"\">Play Replay</button>\n                  <button id=\"replay-stop-btn\" class=\"danger\" disabled=\"\">Stop Replay</button>\n                </div>\n                <div id=\"replay-status\" class=\"log\">Replay idle</div>\n                <div class=\"replay-shell\">\n                  <iframe id=\"replay-frame\" sandbox=\"allow-same-origin\"></iframe>\n                </div>\n              </section>\n            </div>\n          </div>\n        </section>\n      </section>\n    </main>\n\n    <script type=\"module\" src=\"./src/main.js\"></script>\n  <!-- Code injected by live-server -->\n<script>\n\t// <![CDATA[  <-- For SVG support\n\tif ('WebSocket' in window) {\n\t\t(function () {\n\t\t\tfunction refreshCSS() {\n\t\t\t\tvar sheets = [].slice.call(document.getElementsByTagName(\"link\"));\n\t\t\t\tvar head = document.getElementsByTagName(\"head\")[0];\n\t\t\t\tfor (var i = 0; i < sheets.length; ++i) {\n\t\t\t\t\tvar elem = sheets[i];\n\t\t\t\t\tvar parent = elem.parentElement || head;\n\t\t\t\t\tparent.removeChild(elem);\n\t\t\t\t\tvar rel = elem.rel;\n\t\t\t\t\tif (elem.href && typeof rel != \"string\" || rel.length == 0 || rel.toLowerCase() == \"stylesheet\") {\n\t\t\t\t\t\tvar url = elem.href.replace(/(&|\\?)_cacheOverride=\\d+/, '');\n\t\t\t\t\t\telem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());\n\t\t\t\t\t}\n\t\t\t\t\tparent.appendChild(elem);\n\t\t\t\t}\n\t\t\t}\n\t\t\tvar protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';\n\t\t\tvar address = protocol + window.location.host + window.location.pathname + '/ws';\n\t\t\tvar socket = new WebSocket(address);\n\t\t\tsocket.onmessage = function (msg) {\n\t\t\t\tif (msg.data == 'reload') window.location.reload();\n\t\t\t\telse if (msg.data == 'refreshcss') refreshCSS();\n\t\t\t};\n\t\t\tif (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {\n\t\t\t\tconsole.log('Live reload enabled.');\n\t\t\t\tsessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);\n\t\t\t}\n\t\t})();\n\t}\n\telse {\n\t\tconsole.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');\n\t}\n\t// ]]>\n</script>\n\n\n</body></html>"
+      }
+    },
+    {
+      "id": 2,
+      "type": "mutation",
+      "at": 14146.099999999627,
+      "timeOffsetMs": 1.3,
+      "data": {
+        "mutationType": "attributes",
+        "target": "#start-btn",
+        "attributeName": "disabled",
+        "oldValue": null,
+        "newValue": "",
+        "targetInnerHTML": null,
+        "addedNodes": [],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "mutation",
+      "at": 14146.199999999255,
+      "timeOffsetMs": 1.4,
+      "data": {
+        "mutationType": "attributes",
+        "target": "#stop-btn",
+        "attributeName": "disabled",
+        "oldValue": "",
+        "newValue": null,
+        "targetInnerHTML": null,
+        "addedNodes": [],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "mutation",
+      "at": 14146.199999999255,
+      "timeOffsetMs": 1.4,
+      "data": {
+        "mutationType": "attributes",
+        "target": "#download-btn",
+        "attributeName": "disabled",
+        "oldValue": "",
+        "newValue": "",
+        "targetInnerHTML": null,
+        "addedNodes": [],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "mutation",
+      "at": 14146.299999998882,
+      "timeOffsetMs": 1.5,
+      "data": {
+        "mutationType": "childList",
+        "target": "#status",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "Recording started. 상호작용 후 Stop 버튼을 누르세요.",
+        "addedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "Recording started. 상호작용 후 Stop 버튼을 누르세요."
+          }
+        ],
+        "removedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "Idle"
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "type": "event",
+      "at": 14261.799999998882,
+      "timeOffsetMs": 117,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#start-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 524,
+        "y": 283
+      }
+    },
+    {
+      "id": 7,
+      "type": "event",
+      "at": 14283.099999999627,
+      "timeOffsetMs": 138.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#start-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 523,
+        "y": 285
+      }
+    },
+    {
+      "id": 8,
+      "type": "event",
+      "at": 14300.099999999627,
+      "timeOffsetMs": 155.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 523,
+        "y": 293
+      }
+    },
+    {
+      "id": 9,
+      "type": "event",
+      "at": 14316.5,
+      "timeOffsetMs": 171.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 526,
+        "y": 298
+      }
+    },
+    {
+      "id": 10,
+      "type": "event",
+      "at": 14333.099999999627,
+      "timeOffsetMs": 188.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 532,
+        "y": 309
+      }
+    },
+    {
+      "id": 11,
+      "type": "event",
+      "at": 14350.5,
+      "timeOffsetMs": 205.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 542,
+        "y": 328
+      }
+    },
+    {
+      "id": 12,
+      "type": "event",
+      "at": 14382.799999998882,
+      "timeOffsetMs": 238,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 567,
+        "y": 379
+      }
+    },
+    {
+      "id": 13,
+      "type": "event",
+      "at": 14399.699999999255,
+      "timeOffsetMs": 254.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 579,
+        "y": 410
+      }
+    },
+    {
+      "id": 14,
+      "type": "event",
+      "at": 14416.199999999255,
+      "timeOffsetMs": 271.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 587,
+        "y": 442
+      }
+    },
+    {
+      "id": 15,
+      "type": "event",
+      "at": 14433.199999999255,
+      "timeOffsetMs": 288.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 589,
+        "y": 456
+      }
+    },
+    {
+      "id": 16,
+      "type": "event",
+      "at": 14449.599999999627,
+      "timeOffsetMs": 304.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 589,
+        "y": 465
+      }
+    },
+    {
+      "id": 17,
+      "type": "event",
+      "at": 14466.299999998882,
+      "timeOffsetMs": 321.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 589,
+        "y": 472
+      }
+    },
+    {
+      "id": 18,
+      "type": "event",
+      "at": 14482.89999999851,
+      "timeOffsetMs": 338.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 588,
+        "y": 476
+      }
+    },
+    {
+      "id": 19,
+      "type": "event",
+      "at": 14499.599999999627,
+      "timeOffsetMs": 354.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 586,
+        "y": 478
+      }
+    },
+    {
+      "id": 20,
+      "type": "event",
+      "at": 14516.299999998882,
+      "timeOffsetMs": 371.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > h2:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 585,
+        "y": 481
+      }
+    },
+    {
+      "id": 21,
+      "type": "event",
+      "at": 14532.89999999851,
+      "timeOffsetMs": 388.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 583,
+        "y": 484
+      }
+    },
+    {
+      "id": 22,
+      "type": "event",
+      "at": 14549.599999999627,
+      "timeOffsetMs": 404.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 581,
+        "y": 487
+      }
+    },
+    {
+      "id": 23,
+      "type": "event",
+      "at": 14566.39999999851,
+      "timeOffsetMs": 421.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 579,
+        "y": 493
+      }
+    },
+    {
+      "id": 24,
+      "type": "event",
+      "at": 14583.099999999627,
+      "timeOffsetMs": 438.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 578,
+        "y": 496
+      }
+    },
+    {
+      "id": 25,
+      "type": "event",
+      "at": 14599.89999999851,
+      "timeOffsetMs": 455.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 575,
+        "y": 500
+      }
+    },
+    {
+      "id": 26,
+      "type": "event",
+      "at": 14616.199999999255,
+      "timeOffsetMs": 471.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 571,
+        "y": 507
+      }
+    },
+    {
+      "id": 27,
+      "type": "event",
+      "at": 14633,
+      "timeOffsetMs": 488.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 570,
+        "y": 510
+      }
+    },
+    {
+      "id": 28,
+      "type": "event",
+      "at": 14649.599999999627,
+      "timeOffsetMs": 504.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 569,
+        "y": 512
+      }
+    },
+    {
+      "id": 29,
+      "type": "event",
+      "at": 14666.199999999255,
+      "timeOffsetMs": 521.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 569,
+        "y": 513
+      }
+    },
+    {
+      "id": 30,
+      "type": "event",
+      "at": 14682.799999998882,
+      "timeOffsetMs": 538,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 569,
+        "y": 513
+      }
+    },
+    {
+      "id": 31,
+      "type": "event",
+      "at": 14699.5,
+      "timeOffsetMs": 554.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 569,
+        "y": 514
+      }
+    },
+    {
+      "id": 32,
+      "type": "event",
+      "at": 14716.39999999851,
+      "timeOffsetMs": 571.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 569,
+        "y": 515
+      }
+    },
+    {
+      "id": 33,
+      "type": "event",
+      "at": 14732.89999999851,
+      "timeOffsetMs": 588.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 568,
+        "y": 518
+      }
+    },
+    {
+      "id": 34,
+      "type": "event",
+      "at": 14749.5,
+      "timeOffsetMs": 604.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 568,
+        "y": 522
+      }
+    },
+    {
+      "id": 35,
+      "type": "event",
+      "at": 14766.099999999627,
+      "timeOffsetMs": 621.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 567,
+        "y": 530
+      }
+    },
+    {
+      "id": 36,
+      "type": "event",
+      "at": 14782.89999999851,
+      "timeOffsetMs": 638.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 564,
+        "y": 544
+      }
+    },
+    {
+      "id": 37,
+      "type": "event",
+      "at": 14800.5,
+      "timeOffsetMs": 655.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 562,
+        "y": 558
+      }
+    },
+    {
+      "id": 38,
+      "type": "event",
+      "at": 14832.89999999851,
+      "timeOffsetMs": 688.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 561,
+        "y": 562
+      }
+    },
+    {
+      "id": 39,
+      "type": "event",
+      "at": 14849.5,
+      "timeOffsetMs": 704.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 561,
+        "y": 563
+      }
+    },
+    {
+      "id": 40,
+      "type": "event",
+      "at": 14872.299999998882,
+      "timeOffsetMs": 727.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 561,
+        "y": 563
+      }
+    },
+    {
+      "id": 41,
+      "type": "event",
+      "at": 14948.39999999851,
+      "timeOffsetMs": 803.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 561,
+        "y": 562
+      }
+    },
+    {
+      "id": 42,
+      "type": "event",
+      "at": 14966.299999998882,
+      "timeOffsetMs": 821.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 559,
+        "y": 562
+      }
+    },
+    {
+      "id": 43,
+      "type": "event",
+      "at": 14983,
+      "timeOffsetMs": 838.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 558,
+        "y": 560
+      }
+    },
+    {
+      "id": 44,
+      "type": "event",
+      "at": 14999.599999999627,
+      "timeOffsetMs": 854.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 557,
+        "y": 559
+      }
+    },
+    {
+      "id": 45,
+      "type": "event",
+      "at": 15016.199999999255,
+      "timeOffsetMs": 871.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 556,
+        "y": 554
+      }
+    },
+    {
+      "id": 46,
+      "type": "event",
+      "at": 15033.099999999627,
+      "timeOffsetMs": 888.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 556,
+        "y": 553
+      }
+    },
+    {
+      "id": 47,
+      "type": "event",
+      "at": 15049.5,
+      "timeOffsetMs": 904.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 556,
+        "y": 551
+      }
+    },
+    {
+      "id": 48,
+      "type": "event",
+      "at": 15238.5,
+      "timeOffsetMs": 1093.7,
+      "data": {
+        "eventType": "click",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 556,
+        "y": 551,
+        "button": 0
+      }
+    },
+    {
+      "id": 49,
+      "type": "event",
+      "at": 15389.799999998882,
+      "timeOffsetMs": 1245,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 556,
+        "y": 551
+      }
+    },
+    {
+      "id": 50,
+      "type": "event",
+      "at": 15565.89999999851,
+      "timeOffsetMs": 1421.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 556,
+        "y": 550
+      }
+    },
+    {
+      "id": 51,
+      "type": "event",
+      "at": 16214,
+      "timeOffsetMs": 2069.2,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "ㄱ"
+      }
+    },
+    {
+      "id": 52,
+      "type": "event",
+      "at": 16342.799999998882,
+      "timeOffsetMs": 2198,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가"
+      }
+    },
+    {
+      "id": 53,
+      "type": "event",
+      "at": 16462.39999999851,
+      "timeOffsetMs": 2317.6,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "간"
+      }
+    },
+    {
+      "id": 54,
+      "type": "event",
+      "at": 16552.099999999627,
+      "timeOffsetMs": 2407.3,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가"
+      }
+    },
+    {
+      "id": 55,
+      "type": "event",
+      "at": 16552.5,
+      "timeOffsetMs": 2407.7,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나"
+      }
+    },
+    {
+      "id": 56,
+      "type": "event",
+      "at": 16631.299999998882,
+      "timeOffsetMs": 2486.5,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가낟"
+      }
+    },
+    {
+      "id": 57,
+      "type": "event",
+      "at": 16712.5,
+      "timeOffsetMs": 2567.7,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나"
+      }
+    },
+    {
+      "id": 58,
+      "type": "event",
+      "at": 16712.89999999851,
+      "timeOffsetMs": 2568.1,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나다"
+      }
+    },
+    {
+      "id": 59,
+      "type": "event",
+      "at": 17451.799999998882,
+      "timeOffsetMs": 3307,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 556,
+        "y": 549
+      }
+    },
+    {
+      "id": 60,
+      "type": "event",
+      "at": 17483.099999999627,
+      "timeOffsetMs": 3338.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 573,
+        "y": 555
+      }
+    },
+    {
+      "id": 61,
+      "type": "event",
+      "at": 17499.89999999851,
+      "timeOffsetMs": 3355.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 638,
+        "y": 567
+      }
+    },
+    {
+      "id": 62,
+      "type": "event",
+      "at": 17516.699999999255,
+      "timeOffsetMs": 3371.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 751,
+        "y": 588
+      }
+    },
+    {
+      "id": 63,
+      "type": "event",
+      "at": 17533.299999998882,
+      "timeOffsetMs": 3388.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 858,
+        "y": 613
+      }
+    },
+    {
+      "id": 64,
+      "type": "event",
+      "at": 17550,
+      "timeOffsetMs": 3405.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 902,
+        "y": 631
+      }
+    },
+    {
+      "id": 65,
+      "type": "event",
+      "at": 17566.599999999627,
+      "timeOffsetMs": 3421.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 912,
+        "y": 643
+      }
+    },
+    {
+      "id": 66,
+      "type": "event",
+      "at": 17583.299999998882,
+      "timeOffsetMs": 3438.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 912,
+        "y": 654
+      }
+    },
+    {
+      "id": 67,
+      "type": "event",
+      "at": 17600.099999999627,
+      "timeOffsetMs": 3455.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 907,
+        "y": 668
+      }
+    },
+    {
+      "id": 68,
+      "type": "event",
+      "at": 17616.199999999255,
+      "timeOffsetMs": 3471.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 898,
+        "y": 682
+      }
+    },
+    {
+      "id": 69,
+      "type": "event",
+      "at": 17633.299999998882,
+      "timeOffsetMs": 3488.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 887,
+        "y": 701
+      }
+    },
+    {
+      "id": 70,
+      "type": "event",
+      "at": 17650.199999999255,
+      "timeOffsetMs": 3505.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 880,
+        "y": 711
+      }
+    },
+    {
+      "id": 71,
+      "type": "event",
+      "at": 17666.299999998882,
+      "timeOffsetMs": 3521.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 874,
+        "y": 717
+      }
+    },
+    {
+      "id": 72,
+      "type": "event",
+      "at": 17682.89999999851,
+      "timeOffsetMs": 3538.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 870,
+        "y": 720
+      }
+    },
+    {
+      "id": 73,
+      "type": "event",
+      "at": 17700.799999998882,
+      "timeOffsetMs": 3556,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > label:nth-of-type(3)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 868,
+        "y": 722
+      }
+    },
+    {
+      "id": 74,
+      "type": "event",
+      "at": 17736.5,
+      "timeOffsetMs": 3591.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > label:nth-of-type(3)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 868,
+        "y": 721
+      }
+    },
+    {
+      "id": 75,
+      "type": "event",
+      "at": 17766.299999998882,
+      "timeOffsetMs": 3621.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 866,
+        "y": 716
+      }
+    },
+    {
+      "id": 76,
+      "type": "event",
+      "at": 17782.89999999851,
+      "timeOffsetMs": 3638.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 866,
+        "y": 711
+      }
+    },
+    {
+      "id": 77,
+      "type": "event",
+      "at": 17799.599999999627,
+      "timeOffsetMs": 3654.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 865,
+        "y": 708
+      }
+    },
+    {
+      "id": 78,
+      "type": "event",
+      "at": 17816.199999999255,
+      "timeOffsetMs": 3671.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 865,
+        "y": 706
+      }
+    },
+    {
+      "id": 79,
+      "type": "event",
+      "at": 17833,
+      "timeOffsetMs": 3688.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 865,
+        "y": 705
+      }
+    },
+    {
+      "id": 80,
+      "type": "event",
+      "at": 17849.599999999627,
+      "timeOffsetMs": 3704.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 865,
+        "y": 704
+      }
+    },
+    {
+      "id": 81,
+      "type": "event",
+      "at": 17866.299999998882,
+      "timeOffsetMs": 3721.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 865,
+        "y": 703
+      }
+    },
+    {
+      "id": 82,
+      "type": "event",
+      "at": 17900,
+      "timeOffsetMs": 3755.2,
+      "data": {
+        "eventType": "change",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나다"
+      }
+    },
+    {
+      "id": 83,
+      "type": "event",
+      "at": 17949.799999998882,
+      "timeOffsetMs": 3805,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 865,
+        "y": 703
+      }
+    },
+    {
+      "id": 84,
+      "type": "event",
+      "at": 18000.799999998882,
+      "timeOffsetMs": 3856,
+      "data": {
+        "eventType": "click",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 865,
+        "y": 703,
+        "button": 0
+      }
+    },
+    {
+      "id": 85,
+      "type": "event",
+      "at": 18112.89999999851,
+      "timeOffsetMs": 3968.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 864,
+        "y": 703
+      }
+    },
+    {
+      "id": 86,
+      "type": "event",
+      "at": 18132.89999999851,
+      "timeOffsetMs": 3988.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 858,
+        "y": 702
+      }
+    },
+    {
+      "id": 87,
+      "type": "event",
+      "at": 18149.5,
+      "timeOffsetMs": 4004.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 853,
+        "y": 702
+      }
+    },
+    {
+      "id": 88,
+      "type": "event",
+      "at": 18166.199999999255,
+      "timeOffsetMs": 4021.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 847,
+        "y": 702
+      }
+    },
+    {
+      "id": 89,
+      "type": "event",
+      "at": 18182.89999999851,
+      "timeOffsetMs": 4038.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 836,
+        "y": 702
+      }
+    },
+    {
+      "id": 90,
+      "type": "event",
+      "at": 18200.5,
+      "timeOffsetMs": 4055.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 815,
+        "y": 702
+      }
+    },
+    {
+      "id": 91,
+      "type": "event",
+      "at": 18230.89999999851,
+      "timeOffsetMs": 4086.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 792,
+        "y": 705
+      }
+    },
+    {
+      "id": 92,
+      "type": "event",
+      "at": 18232.099999999627,
+      "timeOffsetMs": 4087.3,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "1"
+      }
+    },
+    {
+      "id": 93,
+      "type": "event",
+      "at": 18249.799999998882,
+      "timeOffsetMs": 4105,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 764,
+        "y": 710
+      }
+    },
+    {
+      "id": 94,
+      "type": "event",
+      "at": 18266.299999998882,
+      "timeOffsetMs": 4121.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 739,
+        "y": 716
+      }
+    },
+    {
+      "id": 95,
+      "type": "event",
+      "at": 18282.89999999851,
+      "timeOffsetMs": 4138.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 723,
+        "y": 720
+      }
+    },
+    {
+      "id": 96,
+      "type": "event",
+      "at": 18300.5,
+      "timeOffsetMs": 4155.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > label:nth-of-type(3)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 709,
+        "y": 724
+      }
+    },
+    {
+      "id": 97,
+      "type": "event",
+      "at": 18317.099999999627,
+      "timeOffsetMs": 4172.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 697,
+        "y": 727
+      }
+    },
+    {
+      "id": 98,
+      "type": "event",
+      "at": 18331.39999999851,
+      "timeOffsetMs": 4186.6,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "12"
+      }
+    },
+    {
+      "id": 99,
+      "type": "event",
+      "at": 18349.799999998882,
+      "timeOffsetMs": 4205,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 679,
+        "y": 732
+      }
+    },
+    {
+      "id": 100,
+      "type": "event",
+      "at": 18366.199999999255,
+      "timeOffsetMs": 4221.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 672,
+        "y": 734
+      }
+    },
+    {
+      "id": 101,
+      "type": "event",
+      "at": 18382.89999999851,
+      "timeOffsetMs": 4238.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 668,
+        "y": 736
+      }
+    },
+    {
+      "id": 102,
+      "type": "event",
+      "at": 18391.599999999627,
+      "timeOffsetMs": 4246.8,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "123"
+      }
+    },
+    {
+      "id": 103,
+      "type": "event",
+      "at": 18399.699999999255,
+      "timeOffsetMs": 4254.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 665,
+        "y": 738
+      }
+    },
+    {
+      "id": 104,
+      "type": "event",
+      "at": 18416.599999999627,
+      "timeOffsetMs": 4271.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > div:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 660,
+        "y": 742
+      }
+    },
+    {
+      "id": 105,
+      "type": "event",
+      "at": 18433.89999999851,
+      "timeOffsetMs": 4289.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 657,
+        "y": 744
+      }
+    },
+    {
+      "id": 106,
+      "type": "event",
+      "at": 18466.199999999255,
+      "timeOffsetMs": 4321.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 653,
+        "y": 746
+      }
+    },
+    {
+      "id": 107,
+      "type": "event",
+      "at": 18482.799999998882,
+      "timeOffsetMs": 4338,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 651,
+        "y": 746
+      }
+    },
+    {
+      "id": 108,
+      "type": "event",
+      "at": 18499.599999999627,
+      "timeOffsetMs": 4354.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 649,
+        "y": 747
+      }
+    },
+    {
+      "id": 109,
+      "type": "event",
+      "at": 18517.099999999627,
+      "timeOffsetMs": 4372.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 647,
+        "y": 748
+      }
+    },
+    {
+      "id": 110,
+      "type": "event",
+      "at": 18549.599999999627,
+      "timeOffsetMs": 4404.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 643,
+        "y": 750
+      }
+    },
+    {
+      "id": 111,
+      "type": "event",
+      "at": 18566.199999999255,
+      "timeOffsetMs": 4421.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 640,
+        "y": 750
+      }
+    },
+    {
+      "id": 112,
+      "type": "event",
+      "at": 18582.89999999851,
+      "timeOffsetMs": 4438.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 637,
+        "y": 752
+      }
+    },
+    {
+      "id": 113,
+      "type": "event",
+      "at": 18599.5,
+      "timeOffsetMs": 4454.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 633,
+        "y": 752
+      }
+    },
+    {
+      "id": 114,
+      "type": "event",
+      "at": 18616.199999999255,
+      "timeOffsetMs": 4471.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 629,
+        "y": 753
+      }
+    },
+    {
+      "id": 115,
+      "type": "event",
+      "at": 18632.799999998882,
+      "timeOffsetMs": 4488,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 626,
+        "y": 753
+      }
+    },
+    {
+      "id": 116,
+      "type": "event",
+      "at": 18649.599999999627,
+      "timeOffsetMs": 4504.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 624,
+        "y": 753
+      }
+    },
+    {
+      "id": 117,
+      "type": "event",
+      "at": 18666.199999999255,
+      "timeOffsetMs": 4521.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 620,
+        "y": 754
+      }
+    },
+    {
+      "id": 118,
+      "type": "event",
+      "at": 18682.799999998882,
+      "timeOffsetMs": 4538,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 616,
+        "y": 754
+      }
+    },
+    {
+      "id": 119,
+      "type": "event",
+      "at": 18699.5,
+      "timeOffsetMs": 4554.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 612,
+        "y": 755
+      }
+    },
+    {
+      "id": 120,
+      "type": "event",
+      "at": 18716.199999999255,
+      "timeOffsetMs": 4571.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 606,
+        "y": 755
+      }
+    },
+    {
+      "id": 121,
+      "type": "event",
+      "at": 18732.89999999851,
+      "timeOffsetMs": 4588.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 601,
+        "y": 756
+      }
+    },
+    {
+      "id": 122,
+      "type": "event",
+      "at": 18749.599999999627,
+      "timeOffsetMs": 4604.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 596,
+        "y": 758
+      }
+    },
+    {
+      "id": 123,
+      "type": "event",
+      "at": 18766.199999999255,
+      "timeOffsetMs": 4621.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 591,
+        "y": 760
+      }
+    },
+    {
+      "id": 124,
+      "type": "event",
+      "at": 18782.89999999851,
+      "timeOffsetMs": 4638.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 588,
+        "y": 761
+      }
+    },
+    {
+      "id": 125,
+      "type": "event",
+      "at": 18799.699999999255,
+      "timeOffsetMs": 4654.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 588,
+        "y": 762
+      }
+    },
+    {
+      "id": 126,
+      "type": "event",
+      "at": 18816.199999999255,
+      "timeOffsetMs": 4671.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 587,
+        "y": 762
+      }
+    },
+    {
+      "id": 127,
+      "type": "event",
+      "at": 18873.39999999851,
+      "timeOffsetMs": 4728.6,
+      "data": {
+        "eventType": "change",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "123"
+      }
+    },
+    {
+      "id": 128,
+      "type": "event",
+      "at": 18955,
+      "timeOffsetMs": 4810.2,
+      "data": {
+        "eventType": "click",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 587,
+        "y": 762,
+        "button": 0
+      }
+    },
+    {
+      "id": 129,
+      "type": "mutation",
+      "at": 18955.699999999255,
+      "timeOffsetMs": 4810.9,
+      "data": {
+        "mutationType": "childList",
+        "target": "#item-list",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "\n                      <li>seed item 1</li>\n                      <li>seed item 2</li>\n                      <li>seed item 3</li>\n                      <li>seed item 4</li>\n                      <li>seed item 5</li>\n                      <li>seed item 6</li>\n                      <li>seed item 7</li>\n                      <li>seed item 8</li>\n                      <li>seed item 9</li>\n                      <li>seed item 10</li>\n                    <li>appended at 오전 1:50:03</li>",
+        "addedNodes": [
+          {
+            "nodeType": "element",
+            "tagName": "LI",
+            "path": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > div:nth-of-type(1) > ul:nth-of-type(1) > li:nth-of-type(11)",
+            "outerHTML": "<li>appended at 오전 1:50:03</li>"
+          }
+        ],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 130,
+      "type": "event",
+      "at": 19149.699999999255,
+      "timeOffsetMs": 5004.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 588,
+        "y": 762
+      }
+    },
+    {
+      "id": 131,
+      "type": "event",
+      "at": 19166.199999999255,
+      "timeOffsetMs": 5021.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 589,
+        "y": 762
+      }
+    },
+    {
+      "id": 132,
+      "type": "event",
+      "at": 19182.699999999255,
+      "timeOffsetMs": 5037.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 592,
+        "y": 762
+      }
+    },
+    {
+      "id": 133,
+      "type": "event",
+      "at": 19199.5,
+      "timeOffsetMs": 5054.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 595,
+        "y": 762
+      }
+    },
+    {
+      "id": 134,
+      "type": "event",
+      "at": 19216.39999999851,
+      "timeOffsetMs": 5071.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 598,
+        "y": 762
+      }
+    },
+    {
+      "id": 135,
+      "type": "event",
+      "at": 19233,
+      "timeOffsetMs": 5088.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 600,
+        "y": 762
+      }
+    },
+    {
+      "id": 136,
+      "type": "event",
+      "at": 19249.5,
+      "timeOffsetMs": 5104.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 601,
+        "y": 763
+      }
+    },
+    {
+      "id": 137,
+      "type": "event",
+      "at": 19266.099999999627,
+      "timeOffsetMs": 5121.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 602,
+        "y": 763
+      }
+    },
+    {
+      "id": 138,
+      "type": "event",
+      "at": 19282.799999998882,
+      "timeOffsetMs": 5138,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 604,
+        "y": 761
+      }
+    },
+    {
+      "id": 139,
+      "type": "event",
+      "at": 19299.5,
+      "timeOffsetMs": 5154.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 606,
+        "y": 758
+      }
+    },
+    {
+      "id": 140,
+      "type": "event",
+      "at": 19316.199999999255,
+      "timeOffsetMs": 5171.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 607,
+        "y": 752
+      }
+    },
+    {
+      "id": 141,
+      "type": "event",
+      "at": 19332.89999999851,
+      "timeOffsetMs": 5188.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 607,
+        "y": 742
+      }
+    },
+    {
+      "id": 142,
+      "type": "event",
+      "at": 19349.5,
+      "timeOffsetMs": 5204.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 608,
+        "y": 734
+      }
+    },
+    {
+      "id": 143,
+      "type": "event",
+      "at": 19366.199999999255,
+      "timeOffsetMs": 5221.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 609,
+        "y": 727
+      }
+    },
+    {
+      "id": 144,
+      "type": "event",
+      "at": 19382.89999999851,
+      "timeOffsetMs": 5238.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 609,
+        "y": 717
+      }
+    },
+    {
+      "id": 145,
+      "type": "event",
+      "at": 19399.599999999627,
+      "timeOffsetMs": 5254.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 609,
+        "y": 710
+      }
+    },
+    {
+      "id": 146,
+      "type": "event",
+      "at": 19417.199999999255,
+      "timeOffsetMs": 5272.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 609,
+        "y": 705
+      }
+    },
+    {
+      "id": 147,
+      "type": "event",
+      "at": 19553.699999999255,
+      "timeOffsetMs": 5408.9,
+      "data": {
+        "eventType": "click",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 609,
+        "y": 705,
+        "button": 0
+      }
+    },
+    {
+      "id": 148,
+      "type": "event",
+      "at": 19554.299999998882,
+      "timeOffsetMs": 5409.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 609,
+        "y": 706
+      }
+    },
+    {
+      "id": 149,
+      "type": "event",
+      "at": 19582.89999999851,
+      "timeOffsetMs": 5438.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 609,
+        "y": 714
+      }
+    },
+    {
+      "id": 150,
+      "type": "event",
+      "at": 19599.89999999851,
+      "timeOffsetMs": 5455.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > label:nth-of-type(3)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 609,
+        "y": 723
+      }
+    },
+    {
+      "id": 151,
+      "type": "event",
+      "at": 19616.299999998882,
+      "timeOffsetMs": 5471.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 610,
+        "y": 742
+      }
+    },
+    {
+      "id": 152,
+      "type": "event",
+      "at": 19632.89999999851,
+      "timeOffsetMs": 5488.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 612,
+        "y": 757
+      }
+    },
+    {
+      "id": 153,
+      "type": "event",
+      "at": 19649.5,
+      "timeOffsetMs": 5504.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 615,
+        "y": 770
+      }
+    },
+    {
+      "id": 154,
+      "type": "event",
+      "at": 19666.299999998882,
+      "timeOffsetMs": 5521.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 619,
+        "y": 779
+      }
+    },
+    {
+      "id": 155,
+      "type": "event",
+      "at": 19683,
+      "timeOffsetMs": 5538.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 619,
+        "y": 780
+      }
+    },
+    {
+      "id": 156,
+      "type": "event",
+      "at": 19699.5,
+      "timeOffsetMs": 5554.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 619,
+        "y": 780
+      }
+    },
+    {
+      "id": 157,
+      "type": "event",
+      "at": 19722.39999999851,
+      "timeOffsetMs": 5577.6,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "1233"
+      }
+    },
+    {
+      "id": 158,
+      "type": "event",
+      "at": 19766.39999999851,
+      "timeOffsetMs": 5621.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 620,
+        "y": 780
+      }
+    },
+    {
+      "id": 159,
+      "type": "event",
+      "at": 19783.199999999255,
+      "timeOffsetMs": 5638.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 620,
+        "y": 779
+      }
+    },
+    {
+      "id": 160,
+      "type": "event",
+      "at": 19799.599999999627,
+      "timeOffsetMs": 5654.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 622,
+        "y": 778
+      }
+    },
+    {
+      "id": 161,
+      "type": "event",
+      "at": 19816.39999999851,
+      "timeOffsetMs": 5671.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 623,
+        "y": 776
+      }
+    },
+    {
+      "id": 162,
+      "type": "event",
+      "at": 19832.89999999851,
+      "timeOffsetMs": 5688.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 623,
+        "y": 775
+      }
+    },
+    {
+      "id": 163,
+      "type": "event",
+      "at": 19849.5,
+      "timeOffsetMs": 5704.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 623,
+        "y": 774
+      }
+    },
+    {
+      "id": 164,
+      "type": "event",
+      "at": 19866.099999999627,
+      "timeOffsetMs": 5721.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 623,
+        "y": 771
+      }
+    },
+    {
+      "id": 165,
+      "type": "event",
+      "at": 19882.89999999851,
+      "timeOffsetMs": 5738.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 623,
+        "y": 769
+      }
+    },
+    {
+      "id": 166,
+      "type": "event",
+      "at": 19899.5,
+      "timeOffsetMs": 5754.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 623,
+        "y": 768
+      }
+    },
+    {
+      "id": 167,
+      "type": "event",
+      "at": 19916.099999999627,
+      "timeOffsetMs": 5771.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 623,
+        "y": 768
+      }
+    },
+    {
+      "id": 168,
+      "type": "event",
+      "at": 19945.299999998882,
+      "timeOffsetMs": 5800.5,
+      "data": {
+        "eventType": "change",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "1233"
+      }
+    },
+    {
+      "id": 169,
+      "type": "event",
+      "at": 20042.39999999851,
+      "timeOffsetMs": 5897.6,
+      "data": {
+        "eventType": "click",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 623,
+        "y": 768,
+        "button": 0
+      }
+    },
+    {
+      "id": 170,
+      "type": "mutation",
+      "at": 20042.699999999255,
+      "timeOffsetMs": 5897.9,
+      "data": {
+        "mutationType": "childList",
+        "target": "#item-list",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "\n                      <li>seed item 1</li>\n                      <li>seed item 2</li>\n                      <li>seed item 3</li>\n                      <li>seed item 4</li>\n                      <li>seed item 5</li>\n                      <li>seed item 6</li>\n                      <li>seed item 7</li>\n                      <li>seed item 8</li>\n                      <li>seed item 9</li>\n                      <li>seed item 10</li>\n                    <li>appended at 오전 1:50:03</li><li>appended at 오전 1:50:04</li>",
+        "addedNodes": [
+          {
+            "nodeType": "element",
+            "tagName": "LI",
+            "path": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > div:nth-of-type(1) > ul:nth-of-type(1) > li:nth-of-type(12)",
+            "outerHTML": "<li>appended at 오전 1:50:04</li>"
+          }
+        ],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 171,
+      "type": "event",
+      "at": 20301,
+      "timeOffsetMs": 6156.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 624,
+        "y": 768
+      }
+    },
+    {
+      "id": 172,
+      "type": "event",
+      "at": 20333.199999999255,
+      "timeOffsetMs": 6188.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 625,
+        "y": 765
+      }
+    },
+    {
+      "id": 173,
+      "type": "event",
+      "at": 20349.799999998882,
+      "timeOffsetMs": 6205,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 628,
+        "y": 760
+      }
+    },
+    {
+      "id": 174,
+      "type": "event",
+      "at": 20366.299999998882,
+      "timeOffsetMs": 6221.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 630,
+        "y": 751
+      }
+    },
+    {
+      "id": 175,
+      "type": "event",
+      "at": 20383.099999999627,
+      "timeOffsetMs": 6238.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 636,
+        "y": 729
+      }
+    },
+    {
+      "id": 176,
+      "type": "event",
+      "at": 20399.599999999627,
+      "timeOffsetMs": 6254.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 642,
+        "y": 706
+      }
+    },
+    {
+      "id": 177,
+      "type": "event",
+      "at": 20416.39999999851,
+      "timeOffsetMs": 6271.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 646,
+        "y": 687
+      }
+    },
+    {
+      "id": 178,
+      "type": "event",
+      "at": 20432.89999999851,
+      "timeOffsetMs": 6288.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 646,
+        "y": 686
+      }
+    },
+    {
+      "id": 179,
+      "type": "event",
+      "at": 20552.39999999851,
+      "timeOffsetMs": 6407.6,
+      "data": {
+        "eventType": "click",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 646,
+        "y": 686,
+        "button": 0
+      }
+    },
+    {
+      "id": 180,
+      "type": "event",
+      "at": 20564.199999999255,
+      "timeOffsetMs": 6419.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 646,
+        "y": 686
+      }
+    },
+    {
+      "id": 181,
+      "type": "event",
+      "at": 20583.099999999627,
+      "timeOffsetMs": 6438.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 646,
+        "y": 690
+      }
+    },
+    {
+      "id": 182,
+      "type": "event",
+      "at": 20599.89999999851,
+      "timeOffsetMs": 6455.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 642,
+        "y": 696
+      }
+    },
+    {
+      "id": 183,
+      "type": "event",
+      "at": 20616.39999999851,
+      "timeOffsetMs": 6471.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 635,
+        "y": 712
+      }
+    },
+    {
+      "id": 184,
+      "type": "event",
+      "at": 20633.199999999255,
+      "timeOffsetMs": 6488.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > label:nth-of-type(3)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 632,
+        "y": 724
+      }
+    },
+    {
+      "id": 185,
+      "type": "event",
+      "at": 20649.89999999851,
+      "timeOffsetMs": 6505.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 630,
+        "y": 729
+      }
+    },
+    {
+      "id": 186,
+      "type": "event",
+      "at": 20651.199999999255,
+      "timeOffsetMs": 6506.4,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "12334"
+      }
+    },
+    {
+      "id": 187,
+      "type": "event",
+      "at": 20666.799999998882,
+      "timeOffsetMs": 6522,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 627,
+        "y": 738
+      }
+    },
+    {
+      "id": 188,
+      "type": "event",
+      "at": 20683.099999999627,
+      "timeOffsetMs": 6538.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 627,
+        "y": 740
+      }
+    },
+    {
+      "id": 189,
+      "type": "event",
+      "at": 20699.89999999851,
+      "timeOffsetMs": 6555.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 627,
+        "y": 742
+      }
+    },
+    {
+      "id": 190,
+      "type": "event",
+      "at": 20721.099999999627,
+      "timeOffsetMs": 6576.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 627,
+        "y": 742
+      }
+    },
+    {
+      "id": 191,
+      "type": "event",
+      "at": 20825,
+      "timeOffsetMs": 6680.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 627,
+        "y": 743
+      }
+    },
+    {
+      "id": 192,
+      "type": "event",
+      "at": 20849.599999999627,
+      "timeOffsetMs": 6704.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 627,
+        "y": 745
+      }
+    },
+    {
+      "id": 193,
+      "type": "event",
+      "at": 20867.099999999627,
+      "timeOffsetMs": 6722.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 627,
+        "y": 746
+      }
+    },
+    {
+      "id": 194,
+      "type": "event",
+      "at": 20899.5,
+      "timeOffsetMs": 6754.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 627,
+        "y": 750
+      }
+    },
+    {
+      "id": 195,
+      "type": "event",
+      "at": 20916.199999999255,
+      "timeOffsetMs": 6771.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 628,
+        "y": 751
+      }
+    },
+    {
+      "id": 196,
+      "type": "event",
+      "at": 20932.799999998882,
+      "timeOffsetMs": 6788,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 628,
+        "y": 752
+      }
+    },
+    {
+      "id": 197,
+      "type": "event",
+      "at": 20993.799999998882,
+      "timeOffsetMs": 6849,
+      "data": {
+        "eventType": "change",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "12334"
+      }
+    },
+    {
+      "id": 198,
+      "type": "event",
+      "at": 21083.099999999627,
+      "timeOffsetMs": 6938.3,
+      "data": {
+        "eventType": "click",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 628,
+        "y": 752,
+        "button": 0
+      }
+    },
+    {
+      "id": 199,
+      "type": "mutation",
+      "at": 21083.5,
+      "timeOffsetMs": 6938.7,
+      "data": {
+        "mutationType": "childList",
+        "target": "#item-list",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "\n                      <li>seed item 1</li>\n                      <li>seed item 2</li>\n                      <li>seed item 3</li>\n                      <li>seed item 4</li>\n                      <li>seed item 5</li>\n                      <li>seed item 6</li>\n                      <li>seed item 7</li>\n                      <li>seed item 8</li>\n                      <li>seed item 9</li>\n                      <li>seed item 10</li>\n                    <li>appended at 오전 1:50:03</li><li>appended at 오전 1:50:04</li><li>appended at 오전 1:50:05</li>",
+        "addedNodes": [
+          {
+            "nodeType": "element",
+            "tagName": "LI",
+            "path": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > div:nth-of-type(1) > ul:nth-of-type(1) > li:nth-of-type(13)",
+            "outerHTML": "<li>appended at 오전 1:50:05</li>"
+          }
+        ],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 200,
+      "type": "event",
+      "at": 21105.5,
+      "timeOffsetMs": 6960.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 628,
+        "y": 751
+      }
+    },
+    {
+      "id": 201,
+      "type": "event",
+      "at": 21132.89999999851,
+      "timeOffsetMs": 6988.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 629,
+        "y": 745
+      }
+    },
+    {
+      "id": 202,
+      "type": "event",
+      "at": 21149.599999999627,
+      "timeOffsetMs": 7004.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 630,
+        "y": 734
+      }
+    },
+    {
+      "id": 203,
+      "type": "event",
+      "at": 21166.39999999851,
+      "timeOffsetMs": 7021.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > label:nth-of-type(3)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 631,
+        "y": 722
+      }
+    },
+    {
+      "id": 204,
+      "type": "event",
+      "at": 21182.89999999851,
+      "timeOffsetMs": 7038.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 632,
+        "y": 706
+      }
+    },
+    {
+      "id": 205,
+      "type": "event",
+      "at": 21199.5,
+      "timeOffsetMs": 7054.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 632,
+        "y": 692
+      }
+    },
+    {
+      "id": 206,
+      "type": "event",
+      "at": 21216.099999999627,
+      "timeOffsetMs": 7071.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 632,
+        "y": 680
+      }
+    },
+    {
+      "id": 207,
+      "type": "event",
+      "at": 21232.799999998882,
+      "timeOffsetMs": 7088,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 632,
+        "y": 676
+      }
+    },
+    {
+      "id": 208,
+      "type": "event",
+      "at": 21249.5,
+      "timeOffsetMs": 7104.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 632,
+        "y": 675
+      }
+    },
+    {
+      "id": 209,
+      "type": "event",
+      "at": 21425,
+      "timeOffsetMs": 7280.2,
+      "data": {
+        "eventType": "click",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 632,
+        "y": 675,
+        "button": 0
+      }
+    },
+    {
+      "id": 210,
+      "type": "event",
+      "at": 21448.89999999851,
+      "timeOffsetMs": 7304.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 632,
+        "y": 676
+      }
+    },
+    {
+      "id": 211,
+      "type": "event",
+      "at": 21466.39999999851,
+      "timeOffsetMs": 7321.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 632,
+        "y": 682
+      }
+    },
+    {
+      "id": 212,
+      "type": "event",
+      "at": 21482.799999998882,
+      "timeOffsetMs": 7338,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 631,
+        "y": 693
+      }
+    },
+    {
+      "id": 213,
+      "type": "event",
+      "at": 21499.5,
+      "timeOffsetMs": 7354.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 629,
+        "y": 705
+      }
+    },
+    {
+      "id": 214,
+      "type": "event",
+      "at": 21516.099999999627,
+      "timeOffsetMs": 7371.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 627,
+        "y": 717
+      }
+    },
+    {
+      "id": 215,
+      "type": "event",
+      "at": 21533,
+      "timeOffsetMs": 7388.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 625,
+        "y": 726
+      }
+    },
+    {
+      "id": 216,
+      "type": "event",
+      "at": 21549.799999998882,
+      "timeOffsetMs": 7405,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 624,
+        "y": 733
+      }
+    },
+    {
+      "id": 217,
+      "type": "event",
+      "at": 21566.39999999851,
+      "timeOffsetMs": 7421.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 624,
+        "y": 739
+      }
+    },
+    {
+      "id": 218,
+      "type": "event",
+      "at": 21583.299999998882,
+      "timeOffsetMs": 7438.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 623,
+        "y": 742
+      }
+    },
+    {
+      "id": 219,
+      "type": "event",
+      "at": 21599.699999999255,
+      "timeOffsetMs": 7454.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 623,
+        "y": 743
+      }
+    },
+    {
+      "id": 220,
+      "type": "event",
+      "at": 21616.39999999851,
+      "timeOffsetMs": 7471.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 623,
+        "y": 743
+      }
+    },
+    {
+      "id": 221,
+      "type": "event",
+      "at": 21696.5,
+      "timeOffsetMs": 7551.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 623,
+        "y": 744
+      }
+    },
+    {
+      "id": 222,
+      "type": "event",
+      "at": 21713,
+      "timeOffsetMs": 7568.2,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "123345"
+      }
+    },
+    {
+      "id": 223,
+      "type": "event",
+      "at": 21716.299999998882,
+      "timeOffsetMs": 7571.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 623,
+        "y": 744
+      }
+    },
+    {
+      "id": 224,
+      "type": "event",
+      "at": 21738,
+      "timeOffsetMs": 7593.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 623,
+        "y": 745
+      }
+    },
+    {
+      "id": 225,
+      "type": "event",
+      "at": 21769,
+      "timeOffsetMs": 7624.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 622,
+        "y": 745
+      }
+    },
+    {
+      "id": 226,
+      "type": "event",
+      "at": 21799.39999999851,
+      "timeOffsetMs": 7654.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 621,
+        "y": 747
+      }
+    },
+    {
+      "id": 227,
+      "type": "event",
+      "at": 21816.099999999627,
+      "timeOffsetMs": 7671.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 621,
+        "y": 750
+      }
+    },
+    {
+      "id": 228,
+      "type": "event",
+      "at": 21832.89999999851,
+      "timeOffsetMs": 7688.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 621,
+        "y": 752
+      }
+    },
+    {
+      "id": 229,
+      "type": "event",
+      "at": 21850.39999999851,
+      "timeOffsetMs": 7705.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 621,
+        "y": 753
+      }
+    },
+    {
+      "id": 230,
+      "type": "event",
+      "at": 21882.89999999851,
+      "timeOffsetMs": 7738.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 621,
+        "y": 755
+      }
+    },
+    {
+      "id": 231,
+      "type": "event",
+      "at": 21899.5,
+      "timeOffsetMs": 7754.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 621,
+        "y": 755
+      }
+    },
+    {
+      "id": 232,
+      "type": "event",
+      "at": 21916.599999999627,
+      "timeOffsetMs": 7771.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 621,
+        "y": 755
+      }
+    },
+    {
+      "id": 233,
+      "type": "event",
+      "at": 21932.89999999851,
+      "timeOffsetMs": 7788.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 621,
+        "y": 755
+      }
+    },
+    {
+      "id": 234,
+      "type": "event",
+      "at": 22025.5,
+      "timeOffsetMs": 7880.7,
+      "data": {
+        "eventType": "change",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "123345"
+      }
+    },
+    {
+      "id": 235,
+      "type": "event",
+      "at": 22123.199999999255,
+      "timeOffsetMs": 7978.4,
+      "data": {
+        "eventType": "click",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 621,
+        "y": 755,
+        "button": 0
+      }
+    },
+    {
+      "id": 236,
+      "type": "mutation",
+      "at": 22123.599999999627,
+      "timeOffsetMs": 7978.8,
+      "data": {
+        "mutationType": "childList",
+        "target": "#item-list",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "\n                      <li>seed item 1</li>\n                      <li>seed item 2</li>\n                      <li>seed item 3</li>\n                      <li>seed item 4</li>\n                      <li>seed item 5</li>\n                      <li>seed item 6</li>\n                      <li>seed item 7</li>\n                      <li>seed item 8</li>\n                      <li>seed item 9</li>\n                      <li>seed item 10</li>\n                    <li>appended at 오전 1:50:03</li><li>appended at 오전 1:50:04</li><li>appended at 오전 1:50:05</li><li>appended at 오전 1:50:06</li>",
+        "addedNodes": [
+          {
+            "nodeType": "element",
+            "tagName": "LI",
+            "path": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > div:nth-of-type(1) > ul:nth-of-type(1) > li:nth-of-type(14)",
+            "outerHTML": "<li>appended at 오전 1:50:06</li>"
+          }
+        ],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 237,
+      "type": "event",
+      "at": 22137.099999999627,
+      "timeOffsetMs": 7992.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 621,
+        "y": 755
+      }
+    },
+    {
+      "id": 238,
+      "type": "event",
+      "at": 22166.199999999255,
+      "timeOffsetMs": 8021.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 621,
+        "y": 748
+      }
+    },
+    {
+      "id": 239,
+      "type": "event",
+      "at": 22183,
+      "timeOffsetMs": 8038.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 621,
+        "y": 743
+      }
+    },
+    {
+      "id": 240,
+      "type": "event",
+      "at": 22199.5,
+      "timeOffsetMs": 8054.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 621,
+        "y": 732
+      }
+    },
+    {
+      "id": 241,
+      "type": "event",
+      "at": 22216.39999999851,
+      "timeOffsetMs": 8071.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 622,
+        "y": 711
+      }
+    },
+    {
+      "id": 242,
+      "type": "event",
+      "at": 22232.89999999851,
+      "timeOffsetMs": 8088.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 624,
+        "y": 698
+      }
+    },
+    {
+      "id": 243,
+      "type": "event",
+      "at": 22249.5,
+      "timeOffsetMs": 8104.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 625,
+        "y": 689
+      }
+    },
+    {
+      "id": 244,
+      "type": "event",
+      "at": 22266.199999999255,
+      "timeOffsetMs": 8121.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 626,
+        "y": 686
+      }
+    },
+    {
+      "id": 245,
+      "type": "event",
+      "at": 22282.799999998882,
+      "timeOffsetMs": 8138,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 626,
+        "y": 685
+      }
+    },
+    {
+      "id": 246,
+      "type": "event",
+      "at": 22299.5,
+      "timeOffsetMs": 8154.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 627,
+        "y": 685
+      }
+    },
+    {
+      "id": 247,
+      "type": "event",
+      "at": 22432,
+      "timeOffsetMs": 8287.2,
+      "data": {
+        "eventType": "click",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 627,
+        "y": 685,
+        "button": 0
+      }
+    },
+    {
+      "id": 248,
+      "type": "event",
+      "at": 22501.699999999255,
+      "timeOffsetMs": 8356.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 626,
+        "y": 686
+      }
+    },
+    {
+      "id": 249,
+      "type": "event",
+      "at": 22532.89999999851,
+      "timeOffsetMs": 8388.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 622,
+        "y": 700
+      }
+    },
+    {
+      "id": 250,
+      "type": "event",
+      "at": 22542.299999998882,
+      "timeOffsetMs": 8397.5,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "1233456"
+      }
+    },
+    {
+      "id": 251,
+      "type": "event",
+      "at": 22549.699999999255,
+      "timeOffsetMs": 8404.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 621,
+        "y": 709
+      }
+    },
+    {
+      "id": 252,
+      "type": "event",
+      "at": 22566.299999998882,
+      "timeOffsetMs": 8421.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 620,
+        "y": 717
+      }
+    },
+    {
+      "id": 253,
+      "type": "event",
+      "at": 22583.199999999255,
+      "timeOffsetMs": 8438.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 619,
+        "y": 726
+      }
+    },
+    {
+      "id": 254,
+      "type": "event",
+      "at": 22599.599999999627,
+      "timeOffsetMs": 8454.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 618,
+        "y": 731
+      }
+    },
+    {
+      "id": 255,
+      "type": "event",
+      "at": 22616.099999999627,
+      "timeOffsetMs": 8471.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 618,
+        "y": 733
+      }
+    },
+    {
+      "id": 256,
+      "type": "event",
+      "at": 22632.799999998882,
+      "timeOffsetMs": 8488,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 618,
+        "y": 734
+      }
+    },
+    {
+      "id": 257,
+      "type": "event",
+      "at": 22649.5,
+      "timeOffsetMs": 8504.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 618,
+        "y": 735
+      }
+    },
+    {
+      "id": 258,
+      "type": "event",
+      "at": 22666.199999999255,
+      "timeOffsetMs": 8521.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 618,
+        "y": 736
+      }
+    },
+    {
+      "id": 259,
+      "type": "event",
+      "at": 22682.89999999851,
+      "timeOffsetMs": 8538.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 618,
+        "y": 737
+      }
+    },
+    {
+      "id": 260,
+      "type": "event",
+      "at": 22699.5,
+      "timeOffsetMs": 8554.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 617,
+        "y": 738
+      }
+    },
+    {
+      "id": 261,
+      "type": "event",
+      "at": 22716.099999999627,
+      "timeOffsetMs": 8571.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 617,
+        "y": 740
+      }
+    },
+    {
+      "id": 262,
+      "type": "event",
+      "at": 22732.799999998882,
+      "timeOffsetMs": 8588,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 617,
+        "y": 741
+      }
+    },
+    {
+      "id": 263,
+      "type": "event",
+      "at": 22749.5,
+      "timeOffsetMs": 8604.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 617,
+        "y": 741
+      }
+    },
+    {
+      "id": 264,
+      "type": "event",
+      "at": 22766.099999999627,
+      "timeOffsetMs": 8621.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 617,
+        "y": 741
+      }
+    },
+    {
+      "id": 265,
+      "type": "event",
+      "at": 22782.89999999851,
+      "timeOffsetMs": 8638.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 617,
+        "y": 742
+      }
+    },
+    {
+      "id": 266,
+      "type": "event",
+      "at": 22817.299999998882,
+      "timeOffsetMs": 8672.5,
+      "data": {
+        "eventType": "change",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "1233456"
+      }
+    },
+    {
+      "id": 267,
+      "type": "event",
+      "at": 22930.89999999851,
+      "timeOffsetMs": 8786.1,
+      "data": {
+        "eventType": "click",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 617,
+        "y": 742,
+        "button": 0
+      }
+    },
+    {
+      "id": 268,
+      "type": "mutation",
+      "at": 22931.299999998882,
+      "timeOffsetMs": 8786.5,
+      "data": {
+        "mutationType": "childList",
+        "target": "#item-list",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "\n                      <li>seed item 1</li>\n                      <li>seed item 2</li>\n                      <li>seed item 3</li>\n                      <li>seed item 4</li>\n                      <li>seed item 5</li>\n                      <li>seed item 6</li>\n                      <li>seed item 7</li>\n                      <li>seed item 8</li>\n                      <li>seed item 9</li>\n                      <li>seed item 10</li>\n                    <li>appended at 오전 1:50:03</li><li>appended at 오전 1:50:04</li><li>appended at 오전 1:50:05</li><li>appended at 오전 1:50:06</li><li>appended at 오전 1:50:07</li>",
+        "addedNodes": [
+          {
+            "nodeType": "element",
+            "tagName": "LI",
+            "path": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > div:nth-of-type(1) > ul:nth-of-type(1) > li:nth-of-type(15)",
+            "outerHTML": "<li>appended at 오전 1:50:07</li>"
+          }
+        ],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 269,
+      "type": "event",
+      "at": 22932.299999998882,
+      "timeOffsetMs": 8787.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 617,
+        "y": 742
+      }
+    },
+    {
+      "id": 270,
+      "type": "event",
+      "at": 22949.89999999851,
+      "timeOffsetMs": 8805.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 618,
+        "y": 741
+      }
+    },
+    {
+      "id": 271,
+      "type": "event",
+      "at": 22966.39999999851,
+      "timeOffsetMs": 8821.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 621,
+        "y": 736
+      }
+    },
+    {
+      "id": 272,
+      "type": "event",
+      "at": 22982.89999999851,
+      "timeOffsetMs": 8838.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 625,
+        "y": 729
+      }
+    },
+    {
+      "id": 273,
+      "type": "event",
+      "at": 22999.5,
+      "timeOffsetMs": 8854.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 630,
+        "y": 717
+      }
+    },
+    {
+      "id": 274,
+      "type": "event",
+      "at": 23016.199999999255,
+      "timeOffsetMs": 8871.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 637,
+        "y": 700
+      }
+    },
+    {
+      "id": 275,
+      "type": "event",
+      "at": 23032.799999998882,
+      "timeOffsetMs": 8888,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 641,
+        "y": 691
+      }
+    },
+    {
+      "id": 276,
+      "type": "event",
+      "at": 23049.5,
+      "timeOffsetMs": 8904.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 643,
+        "y": 685
+      }
+    },
+    {
+      "id": 277,
+      "type": "event",
+      "at": 23066.199999999255,
+      "timeOffsetMs": 8921.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 643,
+        "y": 681
+      }
+    },
+    {
+      "id": 278,
+      "type": "event",
+      "at": 23082.89999999851,
+      "timeOffsetMs": 8938.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 643,
+        "y": 680
+      }
+    },
+    {
+      "id": 279,
+      "type": "event",
+      "at": 23217.099999999627,
+      "timeOffsetMs": 9072.3,
+      "data": {
+        "eventType": "click",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 643,
+        "y": 680,
+        "button": 0
+      }
+    },
+    {
+      "id": 280,
+      "type": "event",
+      "at": 23217.5,
+      "timeOffsetMs": 9072.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 643,
+        "y": 680
+      }
+    },
+    {
+      "id": 281,
+      "type": "event",
+      "at": 23249.599999999627,
+      "timeOffsetMs": 9104.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 642,
+        "y": 689
+      }
+    },
+    {
+      "id": 282,
+      "type": "event",
+      "at": 23266.39999999851,
+      "timeOffsetMs": 9121.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 641,
+        "y": 692
+      }
+    },
+    {
+      "id": 283,
+      "type": "event",
+      "at": 23282.89999999851,
+      "timeOffsetMs": 9138.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 639,
+        "y": 699
+      }
+    },
+    {
+      "id": 284,
+      "type": "event",
+      "at": 23299.599999999627,
+      "timeOffsetMs": 9154.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 637,
+        "y": 706
+      }
+    },
+    {
+      "id": 285,
+      "type": "event",
+      "at": 23311.799999998882,
+      "timeOffsetMs": 9167,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "12334567"
+      }
+    },
+    {
+      "id": 286,
+      "type": "event",
+      "at": 23316.299999998882,
+      "timeOffsetMs": 9171.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 635,
+        "y": 714
+      }
+    },
+    {
+      "id": 287,
+      "type": "event",
+      "at": 23333.099999999627,
+      "timeOffsetMs": 9188.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 634,
+        "y": 721
+      }
+    },
+    {
+      "id": 288,
+      "type": "event",
+      "at": 23350.5,
+      "timeOffsetMs": 9205.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 633,
+        "y": 726
+      }
+    },
+    {
+      "id": 289,
+      "type": "event",
+      "at": 23382.89999999851,
+      "timeOffsetMs": 9238.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 631,
+        "y": 734
+      }
+    },
+    {
+      "id": 290,
+      "type": "event",
+      "at": 23399.5,
+      "timeOffsetMs": 9254.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 630,
+        "y": 737
+      }
+    },
+    {
+      "id": 291,
+      "type": "event",
+      "at": 23416.199999999255,
+      "timeOffsetMs": 9271.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 630,
+        "y": 739
+      }
+    },
+    {
+      "id": 292,
+      "type": "event",
+      "at": 23432.89999999851,
+      "timeOffsetMs": 9288.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 629,
+        "y": 742
+      }
+    },
+    {
+      "id": 293,
+      "type": "event",
+      "at": 23449.5,
+      "timeOffsetMs": 9304.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 628,
+        "y": 744
+      }
+    },
+    {
+      "id": 294,
+      "type": "event",
+      "at": 23466.199999999255,
+      "timeOffsetMs": 9321.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 628,
+        "y": 747
+      }
+    },
+    {
+      "id": 295,
+      "type": "event",
+      "at": 23482.799999998882,
+      "timeOffsetMs": 9338,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 627,
+        "y": 749
+      }
+    },
+    {
+      "id": 296,
+      "type": "event",
+      "at": 23500.39999999851,
+      "timeOffsetMs": 9355.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 627,
+        "y": 752
+      }
+    },
+    {
+      "id": 297,
+      "type": "event",
+      "at": 23585.799999998882,
+      "timeOffsetMs": 9441,
+      "data": {
+        "eventType": "change",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "12334567"
+      }
+    },
+    {
+      "id": 298,
+      "type": "event",
+      "at": 23691.099999999627,
+      "timeOffsetMs": 9546.3,
+      "data": {
+        "eventType": "click",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 626,
+        "y": 752,
+        "button": 0
+      }
+    },
+    {
+      "id": 299,
+      "type": "mutation",
+      "at": 23691.39999999851,
+      "timeOffsetMs": 9546.6,
+      "data": {
+        "mutationType": "childList",
+        "target": "#item-list",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "\n                      <li>seed item 1</li>\n                      <li>seed item 2</li>\n                      <li>seed item 3</li>\n                      <li>seed item 4</li>\n                      <li>seed item 5</li>\n                      <li>seed item 6</li>\n                      <li>seed item 7</li>\n                      <li>seed item 8</li>\n                      <li>seed item 9</li>\n                      <li>seed item 10</li>\n                    <li>appended at 오전 1:50:03</li><li>appended at 오전 1:50:04</li><li>appended at 오전 1:50:05</li><li>appended at 오전 1:50:06</li><li>appended at 오전 1:50:07</li><li>appended at 오전 1:50:08</li>",
+        "addedNodes": [
+          {
+            "nodeType": "element",
+            "tagName": "LI",
+            "path": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > div:nth-of-type(1) > ul:nth-of-type(1) > li:nth-of-type(16)",
+            "outerHTML": "<li>appended at 오전 1:50:08</li>"
+          }
+        ],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 300,
+      "type": "event",
+      "at": 23692.799999998882,
+      "timeOffsetMs": 9548,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 627,
+        "y": 752
+      }
+    },
+    {
+      "id": 301,
+      "type": "event",
+      "at": 23716.5,
+      "timeOffsetMs": 9571.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 632,
+        "y": 743
+      }
+    },
+    {
+      "id": 302,
+      "type": "event",
+      "at": 23733,
+      "timeOffsetMs": 9588.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 637,
+        "y": 731
+      }
+    },
+    {
+      "id": 303,
+      "type": "event",
+      "at": 23749.599999999627,
+      "timeOffsetMs": 9604.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 641,
+        "y": 718
+      }
+    },
+    {
+      "id": 304,
+      "type": "event",
+      "at": 23766.199999999255,
+      "timeOffsetMs": 9621.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 644,
+        "y": 708
+      }
+    },
+    {
+      "id": 305,
+      "type": "event",
+      "at": 23782.799999998882,
+      "timeOffsetMs": 9638,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 647,
+        "y": 701
+      }
+    },
+    {
+      "id": 306,
+      "type": "event",
+      "at": 23799.5,
+      "timeOffsetMs": 9654.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 648,
+        "y": 695
+      }
+    },
+    {
+      "id": 307,
+      "type": "event",
+      "at": 23816.199999999255,
+      "timeOffsetMs": 9671.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 648,
+        "y": 693
+      }
+    },
+    {
+      "id": 308,
+      "type": "event",
+      "at": 23957.099999999627,
+      "timeOffsetMs": 9812.3,
+      "data": {
+        "eventType": "click",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 648,
+        "y": 693,
+        "button": 0
+      }
+    },
+    {
+      "id": 309,
+      "type": "event",
+      "at": 23976.299999998882,
+      "timeOffsetMs": 9831.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 647,
+        "y": 694
+      }
+    },
+    {
+      "id": 310,
+      "type": "event",
+      "at": 23999.799999998882,
+      "timeOffsetMs": 9855,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 644,
+        "y": 699
+      }
+    },
+    {
+      "id": 311,
+      "type": "event",
+      "at": 24016.199999999255,
+      "timeOffsetMs": 9871.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 640,
+        "y": 706
+      }
+    },
+    {
+      "id": 312,
+      "type": "event",
+      "at": 24033.799999998882,
+      "timeOffsetMs": 9889,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 637,
+        "y": 714
+      }
+    },
+    {
+      "id": 313,
+      "type": "event",
+      "at": 24053.099999999627,
+      "timeOffsetMs": 9908.3,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "123345678"
+      }
+    },
+    {
+      "id": 314,
+      "type": "event",
+      "at": 24066.699999999255,
+      "timeOffsetMs": 9921.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 630,
+        "y": 732
+      }
+    },
+    {
+      "id": 315,
+      "type": "event",
+      "at": 24099.5,
+      "timeOffsetMs": 9954.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 626,
+        "y": 744
+      }
+    },
+    {
+      "id": 316,
+      "type": "event",
+      "at": 24116.199999999255,
+      "timeOffsetMs": 9971.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 626,
+        "y": 746
+      }
+    },
+    {
+      "id": 317,
+      "type": "event",
+      "at": 24132.89999999851,
+      "timeOffsetMs": 9988.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 626,
+        "y": 747
+      }
+    },
+    {
+      "id": 318,
+      "type": "event",
+      "at": 24166.199999999255,
+      "timeOffsetMs": 10021.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 625,
+        "y": 749
+      }
+    },
+    {
+      "id": 319,
+      "type": "event",
+      "at": 24182.89999999851,
+      "timeOffsetMs": 10038.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 625,
+        "y": 749
+      }
+    },
+    {
+      "id": 320,
+      "type": "event",
+      "at": 24199.599999999627,
+      "timeOffsetMs": 10054.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 624,
+        "y": 750
+      }
+    },
+    {
+      "id": 321,
+      "type": "event",
+      "at": 24216.199999999255,
+      "timeOffsetMs": 10071.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 624,
+        "y": 751
+      }
+    },
+    {
+      "id": 322,
+      "type": "event",
+      "at": 24232.799999998882,
+      "timeOffsetMs": 10088,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 624,
+        "y": 751
+      }
+    },
+    {
+      "id": 323,
+      "type": "event",
+      "at": 24249.5,
+      "timeOffsetMs": 10104.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 624,
+        "y": 751
+      }
+    },
+    {
+      "id": 324,
+      "type": "event",
+      "at": 24266.099999999627,
+      "timeOffsetMs": 10121.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 624,
+        "y": 752
+      }
+    },
+    {
+      "id": 325,
+      "type": "event",
+      "at": 24282.799999998882,
+      "timeOffsetMs": 10138,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 624,
+        "y": 752
+      }
+    },
+    {
+      "id": 326,
+      "type": "event",
+      "at": 24305.39999999851,
+      "timeOffsetMs": 10160.6,
+      "data": {
+        "eventType": "change",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "123345678"
+      }
+    },
+    {
+      "id": 327,
+      "type": "event",
+      "at": 24395.299999998882,
+      "timeOffsetMs": 10250.5,
+      "data": {
+        "eventType": "click",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 624,
+        "y": 752,
+        "button": 0
+      }
+    },
+    {
+      "id": 328,
+      "type": "mutation",
+      "at": 24395.699999999255,
+      "timeOffsetMs": 10250.9,
+      "data": {
+        "mutationType": "childList",
+        "target": "#item-list",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "\n                      <li>seed item 1</li>\n                      <li>seed item 2</li>\n                      <li>seed item 3</li>\n                      <li>seed item 4</li>\n                      <li>seed item 5</li>\n                      <li>seed item 6</li>\n                      <li>seed item 7</li>\n                      <li>seed item 8</li>\n                      <li>seed item 9</li>\n                      <li>seed item 10</li>\n                    <li>appended at 오전 1:50:03</li><li>appended at 오전 1:50:04</li><li>appended at 오전 1:50:05</li><li>appended at 오전 1:50:06</li><li>appended at 오전 1:50:07</li><li>appended at 오전 1:50:08</li><li>appended at 오전 1:50:08</li>",
+        "addedNodes": [
+          {
+            "nodeType": "element",
+            "tagName": "LI",
+            "path": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > div:nth-of-type(1) > ul:nth-of-type(1) > li:nth-of-type(17)",
+            "outerHTML": "<li>appended at 오전 1:50:08</li>"
+          }
+        ],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 329,
+      "type": "event",
+      "at": 24400.599999999627,
+      "timeOffsetMs": 10255.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 624,
+        "y": 752
+      }
+    },
+    {
+      "id": 330,
+      "type": "event",
+      "at": 24433,
+      "timeOffsetMs": 10288.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 633,
+        "y": 740
+      }
+    },
+    {
+      "id": 331,
+      "type": "event",
+      "at": 24449.5,
+      "timeOffsetMs": 10304.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 640,
+        "y": 726
+      }
+    },
+    {
+      "id": 332,
+      "type": "event",
+      "at": 24467,
+      "timeOffsetMs": 10322.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 647,
+        "y": 709
+      }
+    },
+    {
+      "id": 333,
+      "type": "event",
+      "at": 24499.5,
+      "timeOffsetMs": 10354.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 655,
+        "y": 689
+      }
+    },
+    {
+      "id": 334,
+      "type": "event",
+      "at": 24516.199999999255,
+      "timeOffsetMs": 10371.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 657,
+        "y": 688
+      }
+    },
+    {
+      "id": 335,
+      "type": "event",
+      "at": 24532.799999998882,
+      "timeOffsetMs": 10388,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 657,
+        "y": 687
+      }
+    },
+    {
+      "id": 336,
+      "type": "event",
+      "at": 24661,
+      "timeOffsetMs": 10516.2,
+      "data": {
+        "eventType": "click",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 657,
+        "y": 687,
+        "button": 0
+      }
+    },
+    {
+      "id": 337,
+      "type": "event",
+      "at": 24671.699999999255,
+      "timeOffsetMs": 10526.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 657,
+        "y": 688
+      }
+    },
+    {
+      "id": 338,
+      "type": "event",
+      "at": 24699.39999999851,
+      "timeOffsetMs": 10554.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 655,
+        "y": 694
+      }
+    },
+    {
+      "id": 339,
+      "type": "event",
+      "at": 24716.199999999255,
+      "timeOffsetMs": 10571.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 652,
+        "y": 703
+      }
+    },
+    {
+      "id": 340,
+      "type": "event",
+      "at": 24732.89999999851,
+      "timeOffsetMs": 10588.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 646,
+        "y": 715
+      }
+    },
+    {
+      "id": 341,
+      "type": "event",
+      "at": 24749.5,
+      "timeOffsetMs": 10604.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 640,
+        "y": 726
+      }
+    },
+    {
+      "id": 342,
+      "type": "event",
+      "at": 24766.199999999255,
+      "timeOffsetMs": 10621.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 636,
+        "y": 734
+      }
+    },
+    {
+      "id": 343,
+      "type": "event",
+      "at": 24782.89999999851,
+      "timeOffsetMs": 10638.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 633,
+        "y": 740
+      }
+    },
+    {
+      "id": 344,
+      "type": "event",
+      "at": 24790.799999998882,
+      "timeOffsetMs": 10646,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "1233456789"
+      }
+    },
+    {
+      "id": 345,
+      "type": "event",
+      "at": 24799.699999999255,
+      "timeOffsetMs": 10654.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 632,
+        "y": 743
+      }
+    },
+    {
+      "id": 346,
+      "type": "event",
+      "at": 24816,
+      "timeOffsetMs": 10671.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 631,
+        "y": 745
+      }
+    },
+    {
+      "id": 347,
+      "type": "event",
+      "at": 24833,
+      "timeOffsetMs": 10688.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 631,
+        "y": 746
+      }
+    },
+    {
+      "id": 348,
+      "type": "event",
+      "at": 24849.5,
+      "timeOffsetMs": 10704.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 630,
+        "y": 747
+      }
+    },
+    {
+      "id": 349,
+      "type": "event",
+      "at": 24872.099999999627,
+      "timeOffsetMs": 10727.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 630,
+        "y": 747
+      }
+    },
+    {
+      "id": 350,
+      "type": "event",
+      "at": 24900.39999999851,
+      "timeOffsetMs": 10755.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 629,
+        "y": 750
+      }
+    },
+    {
+      "id": 351,
+      "type": "event",
+      "at": 24916.699999999255,
+      "timeOffsetMs": 10771.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 628,
+        "y": 752
+      }
+    },
+    {
+      "id": 352,
+      "type": "event",
+      "at": 24949.299999998882,
+      "timeOffsetMs": 10804.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 627,
+        "y": 755
+      }
+    },
+    {
+      "id": 353,
+      "type": "event",
+      "at": 24966.39999999851,
+      "timeOffsetMs": 10821.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 627,
+        "y": 757
+      }
+    },
+    {
+      "id": 354,
+      "type": "event",
+      "at": 24983,
+      "timeOffsetMs": 10838.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 627,
+        "y": 758
+      }
+    },
+    {
+      "id": 355,
+      "type": "event",
+      "at": 25041.39999999851,
+      "timeOffsetMs": 10896.6,
+      "data": {
+        "eventType": "change",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "1233456789"
+      }
+    },
+    {
+      "id": 356,
+      "type": "event",
+      "at": 25115.39999999851,
+      "timeOffsetMs": 10970.6,
+      "data": {
+        "eventType": "click",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 627,
+        "y": 758,
+        "button": 0
+      }
+    },
+    {
+      "id": 357,
+      "type": "mutation",
+      "at": 25115.89999999851,
+      "timeOffsetMs": 10971.1,
+      "data": {
+        "mutationType": "childList",
+        "target": "#item-list",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "\n                      <li>seed item 1</li>\n                      <li>seed item 2</li>\n                      <li>seed item 3</li>\n                      <li>seed item 4</li>\n                      <li>seed item 5</li>\n                      <li>seed item 6</li>\n                      <li>seed item 7</li>\n                      <li>seed item 8</li>\n                      <li>seed item 9</li>\n                      <li>seed item 10</li>\n                    <li>appended at 오전 1:50:03</li><li>appended at 오전 1:50:04</li><li>appended at 오전 1:50:05</li><li>appended at 오전 1:50:06</li><li>appended at 오전 1:50:07</li><li>appended at 오전 1:50:08</li><li>appended at 오전 1:50:08</li><li>appended at 오전 1:50:09</li>",
+        "addedNodes": [
+          {
+            "nodeType": "element",
+            "tagName": "LI",
+            "path": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > div:nth-of-type(1) > ul:nth-of-type(1) > li:nth-of-type(18)",
+            "outerHTML": "<li>appended at 오전 1:50:09</li>"
+          }
+        ],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 358,
+      "type": "event",
+      "at": 25117.099999999627,
+      "timeOffsetMs": 10972.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 628,
+        "y": 758
+      }
+    },
+    {
+      "id": 359,
+      "type": "event",
+      "at": 25149.699999999255,
+      "timeOffsetMs": 11004.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 637,
+        "y": 749
+      }
+    },
+    {
+      "id": 360,
+      "type": "event",
+      "at": 25167.5,
+      "timeOffsetMs": 11022.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 644,
+        "y": 737
+      }
+    },
+    {
+      "id": 361,
+      "type": "event",
+      "at": 25199.799999998882,
+      "timeOffsetMs": 11055,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 663,
+        "y": 701
+      }
+    },
+    {
+      "id": 362,
+      "type": "event",
+      "at": 25216.299999998882,
+      "timeOffsetMs": 11071.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 671,
+        "y": 683
+      }
+    },
+    {
+      "id": 363,
+      "type": "event",
+      "at": 25232.799999998882,
+      "timeOffsetMs": 11088,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 672,
+        "y": 679
+      }
+    },
+    {
+      "id": 364,
+      "type": "event",
+      "at": 25361,
+      "timeOffsetMs": 11216.2,
+      "data": {
+        "eventType": "click",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 672,
+        "y": 679,
+        "button": 0
+      }
+    },
+    {
+      "id": 365,
+      "type": "event",
+      "at": 25378,
+      "timeOffsetMs": 11233.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 672,
+        "y": 680
+      }
+    },
+    {
+      "id": 366,
+      "type": "event",
+      "at": 25399.599999999627,
+      "timeOffsetMs": 11254.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 671,
+        "y": 683
+      }
+    },
+    {
+      "id": 367,
+      "type": "event",
+      "at": 25416.5,
+      "timeOffsetMs": 11271.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 665,
+        "y": 696
+      }
+    },
+    {
+      "id": 368,
+      "type": "event",
+      "at": 25432.89999999851,
+      "timeOffsetMs": 11288.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 660,
+        "y": 704
+      }
+    },
+    {
+      "id": 369,
+      "type": "event",
+      "at": 25449.5,
+      "timeOffsetMs": 11304.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 656,
+        "y": 710
+      }
+    },
+    {
+      "id": 370,
+      "type": "event",
+      "at": 25466.199999999255,
+      "timeOffsetMs": 11321.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 653,
+        "y": 716
+      }
+    },
+    {
+      "id": 371,
+      "type": "event",
+      "at": 25483.199999999255,
+      "timeOffsetMs": 11338.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > label:nth-of-type(3)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 650,
+        "y": 721
+      }
+    },
+    {
+      "id": 372,
+      "type": "event",
+      "at": 25499.799999998882,
+      "timeOffsetMs": 11355,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > label:nth-of-type(3)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 650,
+        "y": 724
+      }
+    },
+    {
+      "id": 373,
+      "type": "event",
+      "at": 25516.5,
+      "timeOffsetMs": 11371.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > label:nth-of-type(3)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 649,
+        "y": 725
+      }
+    },
+    {
+      "id": 374,
+      "type": "event",
+      "at": 25533.099999999627,
+      "timeOffsetMs": 11388.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 648,
+        "y": 726
+      }
+    },
+    {
+      "id": 375,
+      "type": "event",
+      "at": 25549.699999999255,
+      "timeOffsetMs": 11404.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 648,
+        "y": 727
+      }
+    },
+    {
+      "id": 376,
+      "type": "event",
+      "at": 25566.299999998882,
+      "timeOffsetMs": 11421.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 647,
+        "y": 728
+      }
+    },
+    {
+      "id": 377,
+      "type": "event",
+      "at": 25572.799999998882,
+      "timeOffsetMs": 11428,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "12334567890"
+      }
+    },
+    {
+      "id": 378,
+      "type": "event",
+      "at": 25583.099999999627,
+      "timeOffsetMs": 11438.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 646,
+        "y": 728
+      }
+    },
+    {
+      "id": 379,
+      "type": "event",
+      "at": 25599.89999999851,
+      "timeOffsetMs": 11455.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 646,
+        "y": 729
+      }
+    },
+    {
+      "id": 380,
+      "type": "event",
+      "at": 25616.299999998882,
+      "timeOffsetMs": 11471.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 643,
+        "y": 732
+      }
+    },
+    {
+      "id": 381,
+      "type": "event",
+      "at": 25632.89999999851,
+      "timeOffsetMs": 11488.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 641,
+        "y": 735
+      }
+    },
+    {
+      "id": 382,
+      "type": "event",
+      "at": 25649.5,
+      "timeOffsetMs": 11504.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 640,
+        "y": 736
+      }
+    },
+    {
+      "id": 383,
+      "type": "event",
+      "at": 25666.199999999255,
+      "timeOffsetMs": 11521.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 639,
+        "y": 738
+      }
+    },
+    {
+      "id": 384,
+      "type": "event",
+      "at": 25682.799999998882,
+      "timeOffsetMs": 11538,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 638,
+        "y": 740
+      }
+    },
+    {
+      "id": 385,
+      "type": "event",
+      "at": 25699.5,
+      "timeOffsetMs": 11554.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 638,
+        "y": 740
+      }
+    },
+    {
+      "id": 386,
+      "type": "event",
+      "at": 25716.199999999255,
+      "timeOffsetMs": 11571.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 637,
+        "y": 740
+      }
+    },
+    {
+      "id": 387,
+      "type": "event",
+      "at": 25732.89999999851,
+      "timeOffsetMs": 11588.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 637,
+        "y": 741
+      }
+    },
+    {
+      "id": 388,
+      "type": "event",
+      "at": 25749.5,
+      "timeOffsetMs": 11604.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 636,
+        "y": 741
+      }
+    },
+    {
+      "id": 389,
+      "type": "event",
+      "at": 25865.299999998882,
+      "timeOffsetMs": 11720.5,
+      "data": {
+        "eventType": "change",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "12334567890"
+      }
+    },
+    {
+      "id": 390,
+      "type": "event",
+      "at": 25963,
+      "timeOffsetMs": 11818.2,
+      "data": {
+        "eventType": "click",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 636,
+        "y": 741,
+        "button": 0
+      }
+    },
+    {
+      "id": 391,
+      "type": "event",
+      "at": 25963.5,
+      "timeOffsetMs": 11818.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 636,
+        "y": 742
+      }
+    },
+    {
+      "id": 392,
+      "type": "event",
+      "at": 25999.699999999255,
+      "timeOffsetMs": 11854.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 636,
+        "y": 742
+      }
+    },
+    {
+      "id": 393,
+      "type": "event",
+      "at": 26016.099999999627,
+      "timeOffsetMs": 11871.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 636,
+        "y": 742
+      }
+    },
+    {
+      "id": 394,
+      "type": "event",
+      "at": 26032.89999999851,
+      "timeOffsetMs": 11888.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 636,
+        "y": 743
+      }
+    },
+    {
+      "id": 395,
+      "type": "event",
+      "at": 26049.599999999627,
+      "timeOffsetMs": 11904.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 636,
+        "y": 745
+      }
+    },
+    {
+      "id": 396,
+      "type": "event",
+      "at": 26066.099999999627,
+      "timeOffsetMs": 11921.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 636,
+        "y": 746
+      }
+    },
+    {
+      "id": 397,
+      "type": "event",
+      "at": 26082.699999999255,
+      "timeOffsetMs": 11937.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 636,
+        "y": 747
+      }
+    },
+    {
+      "id": 398,
+      "type": "event",
+      "at": 26099.599999999627,
+      "timeOffsetMs": 11954.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 636,
+        "y": 747
+      }
+    },
+    {
+      "id": 399,
+      "type": "event",
+      "at": 26116.099999999627,
+      "timeOffsetMs": 11971.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 636,
+        "y": 748
+      }
+    },
+    {
+      "id": 400,
+      "type": "event",
+      "at": 26132.799999998882,
+      "timeOffsetMs": 11988,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 637,
+        "y": 750
+      }
+    },
+    {
+      "id": 401,
+      "type": "event",
+      "at": 26149.5,
+      "timeOffsetMs": 12004.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 637,
+        "y": 752
+      }
+    },
+    {
+      "id": 402,
+      "type": "event",
+      "at": 26166.099999999627,
+      "timeOffsetMs": 12021.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 637,
+        "y": 752
+      }
+    },
+    {
+      "id": 403,
+      "type": "event",
+      "at": 26289.39999999851,
+      "timeOffsetMs": 12144.6,
+      "data": {
+        "eventType": "click",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 637,
+        "y": 752,
+        "button": 0
+      }
+    },
+    {
+      "id": 404,
+      "type": "mutation",
+      "at": 26289.799999998882,
+      "timeOffsetMs": 12145,
+      "data": {
+        "mutationType": "childList",
+        "target": "#item-list",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "\n                      <li>seed item 1</li>\n                      <li>seed item 2</li>\n                      <li>seed item 3</li>\n                      <li>seed item 4</li>\n                      <li>seed item 5</li>\n                      <li>seed item 6</li>\n                      <li>seed item 7</li>\n                      <li>seed item 8</li>\n                      <li>seed item 9</li>\n                      <li>seed item 10</li>\n                    <li>appended at 오전 1:50:03</li><li>appended at 오전 1:50:04</li><li>appended at 오전 1:50:05</li><li>appended at 오전 1:50:06</li><li>appended at 오전 1:50:07</li><li>appended at 오전 1:50:08</li><li>appended at 오전 1:50:08</li><li>appended at 오전 1:50:09</li><li>appended at 오전 1:50:10</li>",
+        "addedNodes": [
+          {
+            "nodeType": "element",
+            "tagName": "LI",
+            "path": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > div:nth-of-type(1) > ul:nth-of-type(1) > li:nth-of-type(19)",
+            "outerHTML": "<li>appended at 오전 1:50:10</li>"
+          }
+        ],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 405,
+      "type": "event",
+      "at": 26333.599999999627,
+      "timeOffsetMs": 12188.8,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 638,
+        "y": 752
+      }
+    },
+    {
+      "id": 406,
+      "type": "event",
+      "at": 26366.299999998882,
+      "timeOffsetMs": 12221.5,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 645,
+        "y": 733
+      }
+    },
+    {
+      "id": 407,
+      "type": "event",
+      "at": 26382.89999999851,
+      "timeOffsetMs": 12238.1,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 662,
+        "y": 661
+      }
+    },
+    {
+      "id": 408,
+      "type": "event",
+      "at": 26399.699999999255,
+      "timeOffsetMs": 12254.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 681,
+        "y": 581
+      }
+    },
+    {
+      "id": 409,
+      "type": "event",
+      "at": 26416.199999999255,
+      "timeOffsetMs": 12271.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 700,
+        "y": 487
+      }
+    },
+    {
+      "id": 410,
+      "type": "event",
+      "at": 26433,
+      "timeOffsetMs": 12288.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 708,
+        "y": 443
+      }
+    },
+    {
+      "id": 411,
+      "type": "event",
+      "at": 26449.699999999255,
+      "timeOffsetMs": 12304.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 712,
+        "y": 412
+      }
+    },
+    {
+      "id": 412,
+      "type": "event",
+      "at": 26466.199999999255,
+      "timeOffsetMs": 12321.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 715,
+        "y": 388
+      }
+    },
+    {
+      "id": 413,
+      "type": "event",
+      "at": 26482.799999998882,
+      "timeOffsetMs": 12338,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 715,
+        "y": 374
+      }
+    },
+    {
+      "id": 414,
+      "type": "event",
+      "at": 26499.39999999851,
+      "timeOffsetMs": 12354.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 715,
+        "y": 364
+      }
+    },
+    {
+      "id": 415,
+      "type": "event",
+      "at": 26517,
+      "timeOffsetMs": 12372.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 715,
+        "y": 358
+      }
+    },
+    {
+      "id": 416,
+      "type": "event",
+      "at": 26549.39999999851,
+      "timeOffsetMs": 12404.6,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 713,
+        "y": 348
+      }
+    },
+    {
+      "id": 417,
+      "type": "event",
+      "at": 26567.099999999627,
+      "timeOffsetMs": 12422.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 712,
+        "y": 345
+      }
+    },
+    {
+      "id": 418,
+      "type": "event",
+      "at": 26599.5,
+      "timeOffsetMs": 12454.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 708,
+        "y": 340
+      }
+    },
+    {
+      "id": 419,
+      "type": "event",
+      "at": 26616.199999999255,
+      "timeOffsetMs": 12471.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 703,
+        "y": 337
+      }
+    },
+    {
+      "id": 420,
+      "type": "event",
+      "at": 26633.099999999627,
+      "timeOffsetMs": 12488.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 701,
+        "y": 335
+      }
+    },
+    {
+      "id": 421,
+      "type": "event",
+      "at": 26649.699999999255,
+      "timeOffsetMs": 12504.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 697,
+        "y": 334
+      }
+    },
+    {
+      "id": 422,
+      "type": "event",
+      "at": 26666.099999999627,
+      "timeOffsetMs": 12521.3,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 693,
+        "y": 330
+      }
+    },
+    {
+      "id": 423,
+      "type": "event",
+      "at": 26682.799999998882,
+      "timeOffsetMs": 12538,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 689,
+        "y": 325
+      }
+    },
+    {
+      "id": 424,
+      "type": "event",
+      "at": 26699.5,
+      "timeOffsetMs": 12554.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 685,
+        "y": 317
+      }
+    },
+    {
+      "id": 425,
+      "type": "event",
+      "at": 26716.199999999255,
+      "timeOffsetMs": 12571.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 679,
+        "y": 307
+      }
+    },
+    {
+      "id": 426,
+      "type": "event",
+      "at": 26732.799999998882,
+      "timeOffsetMs": 12588,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 674,
+        "y": 298
+      }
+    },
+    {
+      "id": 427,
+      "type": "event",
+      "at": 26749.5,
+      "timeOffsetMs": 12604.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > section:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 671,
+        "y": 294
+      }
+    },
+    {
+      "id": 428,
+      "type": "event",
+      "at": 26766,
+      "timeOffsetMs": 12621.2,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 670,
+        "y": 292
+      }
+    },
+    {
+      "id": 429,
+      "type": "event",
+      "at": 26783.699999999255,
+      "timeOffsetMs": 12638.9,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 669,
+        "y": 290
+      }
+    },
+    {
+      "id": 430,
+      "type": "event",
+      "at": 26816.199999999255,
+      "timeOffsetMs": 12671.4,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 668,
+        "y": 289
+      }
+    },
+    {
+      "id": 431,
+      "type": "event",
+      "at": 26832.799999998882,
+      "timeOffsetMs": 12688,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 668,
+        "y": 289
+      }
+    },
+    {
+      "id": 432,
+      "type": "event",
+      "at": 26849.5,
+      "timeOffsetMs": 12704.7,
+      "data": {
+        "eventType": "mousemove",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 668,
+        "y": 288
+      }
+    },
+    {
+      "id": 433,
+      "type": "event",
+      "at": 26976.39999999851,
+      "timeOffsetMs": 12831.6,
+      "data": {
+        "eventType": "click",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 668,
+        "y": 288,
+        "button": 0
+      }
+    },
+    {
+      "id": 434,
+      "type": "meta",
+      "at": 26976.799999998882,
+      "timeOffsetMs": 12832,
+      "data": {
+        "action": "recording_stopped"
+      }
+    }
+  ]
+}

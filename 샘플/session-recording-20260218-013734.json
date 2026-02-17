@@ -1,0 +1,2675 @@
+{
+  "version": 1,
+  "createdAt": "2026-02-17T16:37:33.175Z",
+  "page": {
+    "href": "http://127.0.0.1:5500/index.html",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"
+  },
+  "eventCount": 189,
+  "events": [
+    {
+      "id": 1,
+      "type": "snapshot",
+      "at": 2197.800000000745,
+      "timeOffsetMs": 0.3,
+      "data": {
+        "url": "http://127.0.0.1:5500/index.html",
+        "viewport": {
+          "width": 2240,
+          "height": 1058
+        },
+        "html": "<html lang=\"ko\"><head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Session Replay MVP</title>\n    <style>\n      :root {\n        --bg: #f3f6fb;\n        --surface: #ffffff;\n        --text: #1f2937;\n        --muted: #64748b;\n        --primary: #0f766e;\n        --primary-2: #0ea5a4;\n        --danger: #be123c;\n      }\n\n      * {\n        box-sizing: border-box;\n      }\n\n      body {\n        margin: 0;\n        font-family: \"Segoe UI\", \"Apple SD Gothic Neo\", sans-serif;\n        color: var(--text);\n        background: radial-gradient(circle at top right, #dff4f1, var(--bg));\n      }\n\n      .app {\n        max-width: 1040px;\n        margin: 32px auto;\n        padding: 0 16px;\n      }\n\n      .card {\n        background: var(--surface);\n        border-radius: 14px;\n        padding: 18px;\n        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);\n        margin-bottom: 16px;\n      }\n\n      h1 {\n        margin: 0 0 8px;\n        font-size: 1.5rem;\n      }\n\n      h2 {\n        margin: 0 0 8px;\n      }\n\n      p {\n        margin: 0;\n        color: var(--muted);\n      }\n\n      .controls {\n        display: flex;\n        gap: 8px;\n        flex-wrap: wrap;\n        margin-top: 16px;\n      }\n\n      button {\n        border: none;\n        border-radius: 10px;\n        padding: 10px 14px;\n        color: white;\n        background: var(--primary);\n        cursor: pointer;\n        font-weight: 600;\n      }\n\n      button.secondary {\n        background: var(--primary-2);\n      }\n\n      button.danger {\n        background: var(--danger);\n      }\n\n      button:disabled {\n        opacity: 0.45;\n        cursor: not-allowed;\n      }\n\n      .grid {\n        display: grid;\n        grid-template-columns: 1fr;\n        gap: 16px;\n      }\n\n      @media (min-width: 860px) {\n        .grid {\n          grid-template-columns: 1fr 1fr;\n        }\n      }\n\n      label {\n        font-size: 0.92rem;\n        font-weight: 600;\n      }\n\n      input,\n      textarea,\n      select {\n        width: 100%;\n        margin-top: 6px;\n        padding: 10px;\n        border-radius: 10px;\n        border: 1px solid #cbd5e1;\n        font: inherit;\n      }\n\n      .scroll-area {\n        margin-top: 12px;\n        border: 1px dashed #94a3b8;\n        border-radius: 10px;\n        height: 160px;\n        overflow: auto;\n        padding: 10px;\n        background: #f8fafc;\n      }\n\n      .log {\n        margin-top: 12px;\n        background: #0b1220;\n        color: #d6e2ff;\n        border-radius: 10px;\n        padding: 12px;\n        min-height: 90px;\n        white-space: pre-wrap;\n        font-size: 0.85rem;\n      }\n\n      .replay-shell {\n        margin-top: 12px;\n        border: 1px solid #d2dce8;\n        border-radius: 10px;\n        overflow: hidden;\n        height: 420px;\n      }\n\n      iframe {\n        width: 100%;\n        height: 100%;\n        border: 0;\n        background: white;\n      }\n\n      ul {\n        margin: 8px 0 0;\n        padding-left: 18px;\n      }\n    </style>\n  </head>\n  <body>\n    <main class=\"app\">\n      <section class=\"card\">\n        <h1>Session Replay Recorder &amp; Replayer MVP</h1>\n        <p>DOM mutation과 사용자 이벤트를 기록해 로컬 JSON으로 저장하고 다시 재생합니다.</p>\n        <div class=\"controls\">\n          <button id=\"start-btn\">Start Recording</button>\n          <button id=\"stop-btn\" class=\"danger\" disabled=\"\">Stop Recording</button>\n          <button id=\"download-btn\" class=\"secondary\" disabled=\"\">Download JSON</button>\n        </div>\n        <div id=\"status\" class=\"log\">Idle</div>\n      </section>\n\n      <section class=\"card\">\n        <h2>Replay Controls</h2>\n        <div class=\"controls\">\n          <label>\n            Replay JSON\n            <input id=\"replay-file\" type=\"file\" accept=\"application/json\">\n          </label>\n          <label>\n            Speed\n            <select id=\"replay-speed\">\n              <option value=\"0.5\">0.5x</option>\n              <option value=\"1\" selected=\"\">1x</option>\n              <option value=\"2\">2x</option>\n              <option value=\"4\">4x</option>\n            </select>\n          </label>\n          <button id=\"replay-play-btn\" class=\"secondary\" disabled=\"\">Play Replay</button>\n          <button id=\"replay-stop-btn\" class=\"danger\" disabled=\"\">Stop Replay</button>\n        </div>\n        <div id=\"replay-status\" class=\"log\">Replay idle</div>\n        <div class=\"replay-shell\">\n          <iframe id=\"replay-frame\" sandbox=\"allow-same-origin\"></iframe>\n        </div>\n      </section>\n\n      <section class=\"grid\">\n        <article class=\"card\" id=\"interaction-zone\">\n          <h2>Interaction Zone</h2>\n          <form id=\"sample-form\">\n            <label>\n              Name\n              <input id=\"name-input\" name=\"name\" placeholder=\"type here\">\n            </label>\n            <label>\n              Role\n              <select id=\"role-select\" name=\"role\">\n                <option value=\"frontend\">Frontend</option>\n                <option value=\"backend\">Backend</option>\n                <option value=\"product\">Product</option>\n              </select>\n            </label>\n            <label>\n              Note\n              <textarea id=\"note-input\" name=\"note\" rows=\"3\"></textarea>\n            </label>\n            <div class=\"controls\">\n              <button type=\"submit\">Submit Form</button>\n              <button type=\"button\" id=\"add-item-btn\" class=\"secondary\">Append Item</button>\n            </div>\n          </form>\n        </article>\n\n        <article class=\"card\">\n          <h2>Scrollable &amp; Mutable Area</h2>\n          <p>스크롤/DOM 변화 기록 테스트 영역입니다.</p>\n          <div class=\"scroll-area\" id=\"scroll-area\">\n            <ul id=\"item-list\">\n              <li>seed item 1</li>\n              <li>seed item 2</li>\n              <li>seed item 3</li>\n              <li>seed item 4</li>\n              <li>seed item 5</li>\n              <li>seed item 6</li>\n              <li>seed item 7</li>\n              <li>seed item 8</li>\n              <li>seed item 9</li>\n              <li>seed item 10</li>\n            </ul>\n          </div>\n        </article>\n      </section>\n    </main>\n\n    <script type=\"module\" src=\"./src/main.js\"></script>\n  <!-- Code injected by live-server -->\n<script>\n\t// <![CDATA[  <-- For SVG support\n\tif ('WebSocket' in window) {\n\t\t(function () {\n\t\t\tfunction refreshCSS() {\n\t\t\t\tvar sheets = [].slice.call(document.getElementsByTagName(\"link\"));\n\t\t\t\tvar head = document.getElementsByTagName(\"head\")[0];\n\t\t\t\tfor (var i = 0; i < sheets.length; ++i) {\n\t\t\t\t\tvar elem = sheets[i];\n\t\t\t\t\tvar parent = elem.parentElement || head;\n\t\t\t\t\tparent.removeChild(elem);\n\t\t\t\t\tvar rel = elem.rel;\n\t\t\t\t\tif (elem.href && typeof rel != \"string\" || rel.length == 0 || rel.toLowerCase() == \"stylesheet\") {\n\t\t\t\t\t\tvar url = elem.href.replace(/(&|\\?)_cacheOverride=\\d+/, '');\n\t\t\t\t\t\telem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());\n\t\t\t\t\t}\n\t\t\t\t\tparent.appendChild(elem);\n\t\t\t\t}\n\t\t\t}\n\t\t\tvar protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';\n\t\t\tvar address = protocol + window.location.host + window.location.pathname + '/ws';\n\t\t\tvar socket = new WebSocket(address);\n\t\t\tsocket.onmessage = function (msg) {\n\t\t\t\tif (msg.data == 'reload') window.location.reload();\n\t\t\t\telse if (msg.data == 'refreshcss') refreshCSS();\n\t\t\t};\n\t\t\tif (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {\n\t\t\t\tconsole.log('Live reload enabled.');\n\t\t\t\tsessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);\n\t\t\t}\n\t\t})();\n\t}\n\telse {\n\t\tconsole.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');\n\t}\n\t// ]]>\n</script>\n\n\n</body></html>"
+      }
+    },
+    {
+      "id": 2,
+      "type": "mutation",
+      "at": 2199.2000000011176,
+      "timeOffsetMs": 1.7,
+      "data": {
+        "mutationType": "attributes",
+        "target": "#start-btn",
+        "attributeName": "disabled",
+        "oldValue": null,
+        "newValue": "",
+        "targetInnerHTML": null,
+        "addedNodes": [],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "mutation",
+      "at": 2199.300000000745,
+      "timeOffsetMs": 1.8,
+      "data": {
+        "mutationType": "attributes",
+        "target": "#stop-btn",
+        "attributeName": "disabled",
+        "oldValue": "",
+        "newValue": null,
+        "targetInnerHTML": null,
+        "addedNodes": [],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "mutation",
+      "at": 2199.300000000745,
+      "timeOffsetMs": 1.8,
+      "data": {
+        "mutationType": "attributes",
+        "target": "#download-btn",
+        "attributeName": "disabled",
+        "oldValue": "",
+        "newValue": "",
+        "targetInnerHTML": null,
+        "addedNodes": [],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "mutation",
+      "at": 2199.5,
+      "timeOffsetMs": 2,
+      "data": {
+        "mutationType": "childList",
+        "target": "#status",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "Recording started. 상호작용 후 Stop 버튼을 누르세요.",
+        "addedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "Recording started. 상호작용 후 Stop 버튼을 누르세요."
+          }
+        ],
+        "removedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "Idle"
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "type": "event",
+      "at": 3708,
+      "timeOffsetMs": 1510.5,
+      "data": {
+        "eventType": "scroll",
+        "target": "document",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 0.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 7,
+      "type": "event",
+      "at": 3724.4000000003725,
+      "timeOffsetMs": 1526.9,
+      "data": {
+        "eventType": "scroll",
+        "target": "document",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 4,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 8,
+      "type": "event",
+      "at": 3746.800000000745,
+      "timeOffsetMs": 1549.3,
+      "data": {
+        "eventType": "scroll",
+        "target": "document",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 19,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 9,
+      "type": "event",
+      "at": 3757.800000000745,
+      "timeOffsetMs": 1560.3,
+      "data": {
+        "eventType": "scroll",
+        "target": "document",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 48.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 10,
+      "type": "event",
+      "at": 3780.5999999996275,
+      "timeOffsetMs": 1583.1,
+      "data": {
+        "eventType": "scroll",
+        "target": "document",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 95,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 11,
+      "type": "event",
+      "at": 3796.9000000003725,
+      "timeOffsetMs": 1599.4,
+      "data": {
+        "eventType": "scroll",
+        "target": "document",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 160,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 12,
+      "type": "event",
+      "at": 3812.4000000003725,
+      "timeOffsetMs": 1614.9,
+      "data": {
+        "eventType": "scroll",
+        "target": "document",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 237.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 13,
+      "type": "event",
+      "at": 3830.5999999996275,
+      "timeOffsetMs": 1633.1,
+      "data": {
+        "eventType": "scroll",
+        "target": "document",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 300.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 14,
+      "type": "event",
+      "at": 3847.300000000745,
+      "timeOffsetMs": 1649.8,
+      "data": {
+        "eventType": "scroll",
+        "target": "document",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 336,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 15,
+      "type": "event",
+      "at": 3864.4000000003725,
+      "timeOffsetMs": 1666.9,
+      "data": {
+        "eventType": "scroll",
+        "target": "document",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 344.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 16,
+      "type": "event",
+      "at": 4572.0999999996275,
+      "timeOffsetMs": 2374.6,
+      "data": {
+        "eventType": "click",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 890,
+        "y": 756,
+        "button": 0
+      }
+    },
+    {
+      "id": 17,
+      "type": "event",
+      "at": 5566.0999999996275,
+      "timeOffsetMs": 3368.6,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "ㄱ"
+      }
+    },
+    {
+      "id": 18,
+      "type": "event",
+      "at": 6225,
+      "timeOffsetMs": 4027.5,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가"
+      }
+    },
+    {
+      "id": 19,
+      "type": "event",
+      "at": 6344.4000000003725,
+      "timeOffsetMs": 4146.9,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "간"
+      }
+    },
+    {
+      "id": 20,
+      "type": "event",
+      "at": 6427.0999999996275,
+      "timeOffsetMs": 4229.6,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가"
+      }
+    },
+    {
+      "id": 21,
+      "type": "event",
+      "at": 6427.700000001118,
+      "timeOffsetMs": 4230.2,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나"
+      }
+    },
+    {
+      "id": 22,
+      "type": "event",
+      "at": 6475,
+      "timeOffsetMs": 4277.5,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가낟"
+      }
+    },
+    {
+      "id": 23,
+      "type": "event",
+      "at": 6595.300000000745,
+      "timeOffsetMs": 4397.8,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나"
+      }
+    },
+    {
+      "id": 24,
+      "type": "event",
+      "at": 6595.9000000003725,
+      "timeOffsetMs": 4398.4,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나다"
+      }
+    },
+    {
+      "id": 25,
+      "type": "event",
+      "at": 6694.5999999996275,
+      "timeOffsetMs": 4497.1,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나달"
+      }
+    },
+    {
+      "id": 26,
+      "type": "event",
+      "at": 6757,
+      "timeOffsetMs": 4559.5,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나다"
+      }
+    },
+    {
+      "id": 27,
+      "type": "event",
+      "at": 6757.700000001118,
+      "timeOffsetMs": 4560.2,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나다라"
+      }
+    },
+    {
+      "id": 28,
+      "type": "event",
+      "at": 6864.4000000003725,
+      "timeOffsetMs": 4666.9,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나다람"
+      }
+    },
+    {
+      "id": 29,
+      "type": "event",
+      "at": 6917.700000001118,
+      "timeOffsetMs": 4720.2,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나다라"
+      }
+    },
+    {
+      "id": 30,
+      "type": "event",
+      "at": 6918.4000000003725,
+      "timeOffsetMs": 4720.9,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나다라마"
+      }
+    },
+    {
+      "id": 31,
+      "type": "event",
+      "at": 7154.700000001118,
+      "timeOffsetMs": 4957.2,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나다라마"
+      }
+    },
+    {
+      "id": 32,
+      "type": "event",
+      "at": 7154.800000000745,
+      "timeOffsetMs": 4957.3,
+      "data": {
+        "eventType": "change",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나다라마"
+      }
+    },
+    {
+      "id": 33,
+      "type": "event",
+      "at": 7155.200000001118,
+      "timeOffsetMs": 4957.7,
+      "data": {
+        "eventType": "click",
+        "target": "main:nth-of-type(1) > section:nth-of-type(3) > article:nth-of-type(1) > form:nth-of-type(1) > div:nth-of-type(1) > button:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 0,
+        "y": 0,
+        "button": 0
+      }
+    },
+    {
+      "id": 34,
+      "type": "event",
+      "at": 7155.700000001118,
+      "timeOffsetMs": 4958.2,
+      "data": {
+        "eventType": "submit",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "prevented": false
+      }
+    },
+    {
+      "id": 35,
+      "type": "mutation",
+      "at": 7155.9000000003725,
+      "timeOffsetMs": 4958.4,
+      "data": {
+        "mutationType": "childList",
+        "target": "#status",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "폼 submit 이벤트가 발생했습니다.",
+        "addedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "폼 submit 이벤트가 발생했습니다."
+          }
+        ],
+        "removedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "Recording started. 상호작용 후 Stop 버튼을 누르세요."
+          }
+        ]
+      }
+    },
+    {
+      "id": 36,
+      "type": "event",
+      "at": 8525,
+      "timeOffsetMs": 6327.5,
+      "data": {
+        "eventType": "click",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 840,
+        "y": 890,
+        "button": 0
+      }
+    },
+    {
+      "id": 37,
+      "type": "event",
+      "at": 8963.700000001118,
+      "timeOffsetMs": 6766.2,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "ㄱ"
+      }
+    },
+    {
+      "id": 38,
+      "type": "event",
+      "at": 9104.099999999627,
+      "timeOffsetMs": 6906.6,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가"
+      }
+    },
+    {
+      "id": 39,
+      "type": "event",
+      "at": 9214.800000000745,
+      "timeOffsetMs": 7017.3,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "간"
+      }
+    },
+    {
+      "id": 40,
+      "type": "event",
+      "at": 9302.400000000373,
+      "timeOffsetMs": 7104.9,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "간"
+      }
+    },
+    {
+      "id": 41,
+      "type": "event",
+      "at": 9302.700000001118,
+      "timeOffsetMs": 7105.2,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "간ㄷ"
+      }
+    },
+    {
+      "id": 42,
+      "type": "event",
+      "at": 9307.099999999627,
+      "timeOffsetMs": 7109.6,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "간다"
+      }
+    },
+    {
+      "id": 43,
+      "type": "event",
+      "at": 9465.900000000373,
+      "timeOffsetMs": 7268.4,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "간다"
+      }
+    },
+    {
+      "id": 44,
+      "type": "event",
+      "at": 9466.599999999627,
+      "timeOffsetMs": 7269.1,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "간다ㅏ"
+      }
+    },
+    {
+      "id": 45,
+      "type": "event",
+      "at": 9635.200000001118,
+      "timeOffsetMs": 7437.7,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "간다ㅏ"
+      }
+    },
+    {
+      "id": 46,
+      "type": "event",
+      "at": 9635.900000000373,
+      "timeOffsetMs": 7438.4,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "간다ㅏㄹ"
+      }
+    },
+    {
+      "id": 47,
+      "type": "event",
+      "at": 9640.800000000745,
+      "timeOffsetMs": 7443.3,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "간다ㅏ라"
+      }
+    },
+    {
+      "id": 48,
+      "type": "event",
+      "at": 9855.200000001118,
+      "timeOffsetMs": 7657.7,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "간다ㅏㄹ"
+      }
+    },
+    {
+      "id": 49,
+      "type": "event",
+      "at": 9966.200000001118,
+      "timeOffsetMs": 7768.7,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "간다ㅏㄹ"
+      }
+    },
+    {
+      "id": 50,
+      "type": "event",
+      "at": 9967,
+      "timeOffsetMs": 7769.5,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "간다ㅏ"
+      }
+    },
+    {
+      "id": 51,
+      "type": "event",
+      "at": 10083,
+      "timeOffsetMs": 7885.5,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "간다"
+      }
+    },
+    {
+      "id": 52,
+      "type": "event",
+      "at": 10202.099999999627,
+      "timeOffsetMs": 8004.6,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "간"
+      }
+    },
+    {
+      "id": 53,
+      "type": "event",
+      "at": 10322.599999999627,
+      "timeOffsetMs": 8125.1,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": ""
+      }
+    },
+    {
+      "id": 54,
+      "type": "event",
+      "at": 10473.599999999627,
+      "timeOffsetMs": 8276.1,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "ㄱ"
+      }
+    },
+    {
+      "id": 55,
+      "type": "event",
+      "at": 10555.800000000745,
+      "timeOffsetMs": 8358.3,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가"
+      }
+    },
+    {
+      "id": 56,
+      "type": "event",
+      "at": 10652.5,
+      "timeOffsetMs": 8455,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "간"
+      }
+    },
+    {
+      "id": 57,
+      "type": "event",
+      "at": 10716.800000000745,
+      "timeOffsetMs": 8519.3,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가"
+      }
+    },
+    {
+      "id": 58,
+      "type": "event",
+      "at": 10717.300000000745,
+      "timeOffsetMs": 8519.8,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나"
+      }
+    },
+    {
+      "id": 59,
+      "type": "event",
+      "at": 10814.300000000745,
+      "timeOffsetMs": 8616.8,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가낟"
+      }
+    },
+    {
+      "id": 60,
+      "type": "event",
+      "at": 10875.900000000373,
+      "timeOffsetMs": 8678.4,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나"
+      }
+    },
+    {
+      "id": 61,
+      "type": "event",
+      "at": 10876.200000001118,
+      "timeOffsetMs": 8678.7,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나다"
+      }
+    },
+    {
+      "id": 62,
+      "type": "event",
+      "at": 10994.200000001118,
+      "timeOffsetMs": 8796.7,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나달"
+      }
+    },
+    {
+      "id": 63,
+      "type": "event",
+      "at": 11042,
+      "timeOffsetMs": 8844.5,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나다"
+      }
+    },
+    {
+      "id": 64,
+      "type": "event",
+      "at": 11042.099999999627,
+      "timeOffsetMs": 8844.6,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나다라"
+      }
+    },
+    {
+      "id": 65,
+      "type": "event",
+      "at": 11150.700000001118,
+      "timeOffsetMs": 8953.2,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나다람"
+      }
+    },
+    {
+      "id": 66,
+      "type": "event",
+      "at": 11976.599999999627,
+      "timeOffsetMs": 9779.1,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나다라"
+      }
+    },
+    {
+      "id": 67,
+      "type": "event",
+      "at": 11977,
+      "timeOffsetMs": 9779.5,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나다라마"
+      }
+    },
+    {
+      "id": 68,
+      "type": "event",
+      "at": 12511,
+      "timeOffsetMs": 10313.5,
+      "data": {
+        "eventType": "change",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "가나다라마"
+      }
+    },
+    {
+      "id": 69,
+      "type": "event",
+      "at": 12614.200000001118,
+      "timeOffsetMs": 10416.7,
+      "data": {
+        "eventType": "click",
+        "target": "main:nth-of-type(1) > section:nth-of-type(3) > article:nth-of-type(1) > form:nth-of-type(1) > div:nth-of-type(1) > button:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 684,
+        "y": 975,
+        "button": 0
+      }
+    },
+    {
+      "id": 70,
+      "type": "event",
+      "at": 12614.700000001118,
+      "timeOffsetMs": 10417.2,
+      "data": {
+        "eventType": "submit",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "prevented": false
+      }
+    },
+    {
+      "id": 71,
+      "type": "mutation",
+      "at": 12614.900000000373,
+      "timeOffsetMs": 10417.4,
+      "data": {
+        "mutationType": "childList",
+        "target": "#status",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "폼 submit 이벤트가 발생했습니다.",
+        "addedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "폼 submit 이벤트가 발생했습니다."
+          }
+        ],
+        "removedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "폼 submit 이벤트가 발생했습니다."
+          }
+        ]
+      }
+    },
+    {
+      "id": 72,
+      "type": "event",
+      "at": 13215.700000001118,
+      "timeOffsetMs": 11018.2,
+      "data": {
+        "eventType": "click",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 880,
+        "y": 892,
+        "button": 0
+      }
+    },
+    {
+      "id": 73,
+      "type": "event",
+      "at": 14264.300000000745,
+      "timeOffsetMs": 12066.8,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": ""
+      }
+    },
+    {
+      "id": 74,
+      "type": "event",
+      "at": 15341.099999999627,
+      "timeOffsetMs": 13143.6,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 0.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 75,
+      "type": "event",
+      "at": 15357.599999999627,
+      "timeOffsetMs": 13160.1,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 2.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 76,
+      "type": "event",
+      "at": 15374.599999999627,
+      "timeOffsetMs": 13177.1,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 6,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 77,
+      "type": "event",
+      "at": 15391.300000000745,
+      "timeOffsetMs": 13193.8,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 11,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 78,
+      "type": "event",
+      "at": 15407.900000000373,
+      "timeOffsetMs": 13210.4,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 17.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 79,
+      "type": "event",
+      "at": 15430.599999999627,
+      "timeOffsetMs": 13233.1,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 25,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 80,
+      "type": "event",
+      "at": 15446.900000000373,
+      "timeOffsetMs": 13249.4,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 34,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 81,
+      "type": "event",
+      "at": 15463.5,
+      "timeOffsetMs": 13266,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 42.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 82,
+      "type": "event",
+      "at": 15480.300000000745,
+      "timeOffsetMs": 13282.8,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 50,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 83,
+      "type": "event",
+      "at": 15497.5,
+      "timeOffsetMs": 13300,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 56.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 84,
+      "type": "event",
+      "at": 15514.200000001118,
+      "timeOffsetMs": 13316.7,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 61,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 85,
+      "type": "event",
+      "at": 15530.200000001118,
+      "timeOffsetMs": 13332.7,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 64,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 86,
+      "type": "event",
+      "at": 15547,
+      "timeOffsetMs": 13349.5,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 65,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 87,
+      "type": "event",
+      "at": 16076.700000001118,
+      "timeOffsetMs": 13879.2,
+      "data": {
+        "eventType": "change",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": ""
+      }
+    },
+    {
+      "id": 88,
+      "type": "event",
+      "at": 16165.900000000373,
+      "timeOffsetMs": 13968.4,
+      "data": {
+        "eventType": "click",
+        "target": "main:nth-of-type(1) > section:nth-of-type(3) > article:nth-of-type(2) > div:nth-of-type(1) > ul:nth-of-type(1) > li:nth-of-type(8)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1222,
+        "y": 844,
+        "button": 0
+      }
+    },
+    {
+      "id": 89,
+      "type": "event",
+      "at": 16356.300000000745,
+      "timeOffsetMs": 14158.8,
+      "data": {
+        "eventType": "click",
+        "target": "main:nth-of-type(1) > section:nth-of-type(3) > article:nth-of-type(2) > div:nth-of-type(1) > ul:nth-of-type(1) > li:nth-of-type(9)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 1208,
+        "y": 847,
+        "button": 0
+      }
+    },
+    {
+      "id": 90,
+      "type": "event",
+      "at": 16766.700000001118,
+      "timeOffsetMs": 14569.2,
+      "data": {
+        "eventType": "click",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 761,
+        "y": 825,
+        "button": 0
+      }
+    },
+    {
+      "id": 91,
+      "type": "event",
+      "at": 17760.300000000745,
+      "timeOffsetMs": 15562.8,
+      "data": {
+        "eventType": "input",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "product"
+      }
+    },
+    {
+      "id": 92,
+      "type": "event",
+      "at": 17760.800000000745,
+      "timeOffsetMs": 15563.3,
+      "data": {
+        "eventType": "change",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "product"
+      }
+    },
+    {
+      "id": 93,
+      "type": "event",
+      "at": 17760.800000000745,
+      "timeOffsetMs": 15563.3,
+      "data": {
+        "eventType": "click",
+        "target": "#role-select",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 626,
+        "y": 794,
+        "button": -1
+      }
+    },
+    {
+      "id": 94,
+      "type": "event",
+      "at": 18804.200000001118,
+      "timeOffsetMs": 16606.7,
+      "data": {
+        "eventType": "click",
+        "target": "",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 521,
+        "y": 729,
+        "button": 0
+      }
+    },
+    {
+      "id": 95,
+      "type": "event",
+      "at": 19516.599999999627,
+      "timeOffsetMs": 17319.1,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "ㅁ"
+      }
+    },
+    {
+      "id": 96,
+      "type": "event",
+      "at": 19585.5,
+      "timeOffsetMs": 17388,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "마"
+      }
+    },
+    {
+      "id": 97,
+      "type": "event",
+      "at": 19682.700000001118,
+      "timeOffsetMs": 17485.2,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "맘"
+      }
+    },
+    {
+      "id": 98,
+      "type": "event",
+      "at": 19757.099999999627,
+      "timeOffsetMs": 17559.6,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "마"
+      }
+    },
+    {
+      "id": 99,
+      "type": "event",
+      "at": 19757.700000001118,
+      "timeOffsetMs": 17560.2,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "마마"
+      }
+    },
+    {
+      "id": 100,
+      "type": "event",
+      "at": 19844.400000000373,
+      "timeOffsetMs": 17646.9,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "마맘"
+      }
+    },
+    {
+      "id": 101,
+      "type": "event",
+      "at": 19885.099999999627,
+      "timeOffsetMs": 17687.6,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "마마"
+      }
+    },
+    {
+      "id": 102,
+      "type": "event",
+      "at": 19885.5,
+      "timeOffsetMs": 17688,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "마마마"
+      }
+    },
+    {
+      "id": 103,
+      "type": "event",
+      "at": 20983.5,
+      "timeOffsetMs": 18786,
+      "data": {
+        "eventType": "change",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "마마마"
+      }
+    },
+    {
+      "id": 104,
+      "type": "event",
+      "at": 21044.599999999627,
+      "timeOffsetMs": 18847.1,
+      "data": {
+        "eventType": "click",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 906,
+        "y": 901,
+        "button": 0
+      }
+    },
+    {
+      "id": 105,
+      "type": "event",
+      "at": 21474.200000001118,
+      "timeOffsetMs": 19276.7,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "ㅁ"
+      }
+    },
+    {
+      "id": 106,
+      "type": "event",
+      "at": 21582.5,
+      "timeOffsetMs": 19385,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "마"
+      }
+    },
+    {
+      "id": 107,
+      "type": "event",
+      "at": 21653.700000001118,
+      "timeOffsetMs": 19456.2,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "맘"
+      }
+    },
+    {
+      "id": 108,
+      "type": "event",
+      "at": 21716.400000000373,
+      "timeOffsetMs": 19518.9,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "마"
+      }
+    },
+    {
+      "id": 109,
+      "type": "event",
+      "at": 21716.700000001118,
+      "timeOffsetMs": 19519.2,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "마마"
+      }
+    },
+    {
+      "id": 110,
+      "type": "event",
+      "at": 21812.800000000745,
+      "timeOffsetMs": 19615.3,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "마맘"
+      }
+    },
+    {
+      "id": 111,
+      "type": "event",
+      "at": 21876.300000000745,
+      "timeOffsetMs": 19678.8,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "마마"
+      }
+    },
+    {
+      "id": 112,
+      "type": "event",
+      "at": 21876.800000000745,
+      "timeOffsetMs": 19679.3,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "마마마"
+      }
+    },
+    {
+      "id": 113,
+      "type": "event",
+      "at": 22931.599999999627,
+      "timeOffsetMs": 20734.1,
+      "data": {
+        "eventType": "change",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "마마마"
+      }
+    },
+    {
+      "id": 114,
+      "type": "event",
+      "at": 22994.800000000745,
+      "timeOffsetMs": 20797.3,
+      "data": {
+        "eventType": "click",
+        "target": "main:nth-of-type(1) > section:nth-of-type(3) > article:nth-of-type(1) > form:nth-of-type(1) > div:nth-of-type(1) > button:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 681,
+        "y": 975,
+        "button": 0
+      }
+    },
+    {
+      "id": 115,
+      "type": "event",
+      "at": 22995.400000000373,
+      "timeOffsetMs": 20797.9,
+      "data": {
+        "eventType": "submit",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "prevented": false
+      }
+    },
+    {
+      "id": 116,
+      "type": "mutation",
+      "at": 22995.5,
+      "timeOffsetMs": 20798,
+      "data": {
+        "mutationType": "childList",
+        "target": "#status",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "폼 submit 이벤트가 발생했습니다.",
+        "addedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "폼 submit 이벤트가 발생했습니다."
+          }
+        ],
+        "removedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "폼 submit 이벤트가 발생했습니다."
+          }
+        ]
+      }
+    },
+    {
+      "id": 117,
+      "type": "event",
+      "at": 23676.900000000373,
+      "timeOffsetMs": 21479.4,
+      "data": {
+        "eventType": "click",
+        "target": "#interaction-zone",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 621,
+        "y": 866,
+        "button": 0
+      }
+    },
+    {
+      "id": 118,
+      "type": "event",
+      "at": 24264.700000001118,
+      "timeOffsetMs": 22067.2,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": ""
+      }
+    },
+    {
+      "id": 119,
+      "type": "event",
+      "at": 24411.800000000745,
+      "timeOffsetMs": 22214.3,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "1"
+      }
+    },
+    {
+      "id": 120,
+      "type": "event",
+      "at": 24493.599999999627,
+      "timeOffsetMs": 22296.1,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "12"
+      }
+    },
+    {
+      "id": 121,
+      "type": "event",
+      "at": 24563.400000000373,
+      "timeOffsetMs": 22365.9,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "123"
+      }
+    },
+    {
+      "id": 122,
+      "type": "event",
+      "at": 25436.700000001118,
+      "timeOffsetMs": 23239.2,
+      "data": {
+        "eventType": "change",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "123"
+      }
+    },
+    {
+      "id": 123,
+      "type": "event",
+      "at": 25501.700000001118,
+      "timeOffsetMs": 23304.2,
+      "data": {
+        "eventType": "click",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 823,
+        "y": 967,
+        "button": 0
+      }
+    },
+    {
+      "id": 124,
+      "type": "mutation",
+      "at": 25502.300000000745,
+      "timeOffsetMs": 23304.8,
+      "data": {
+        "mutationType": "childList",
+        "target": "#item-list",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "\n              <li>seed item 1</li>\n              <li>seed item 2</li>\n              <li>seed item 3</li>\n              <li>seed item 4</li>\n              <li>seed item 5</li>\n              <li>seed item 6</li>\n              <li>seed item 7</li>\n              <li>seed item 8</li>\n              <li>seed item 9</li>\n              <li>seed item 10</li>\n            <li>appended at 오전 1:37:24</li>",
+        "addedNodes": [
+          {
+            "nodeType": "element",
+            "tagName": "LI",
+            "path": "main:nth-of-type(1) > section:nth-of-type(3) > article:nth-of-type(2) > div:nth-of-type(1) > ul:nth-of-type(1) > li:nth-of-type(11)",
+            "outerHTML": "<li>appended at 오전 1:37:24</li>"
+          }
+        ],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 125,
+      "type": "event",
+      "at": 25740,
+      "timeOffsetMs": 23542.5,
+      "data": {
+        "eventType": "click",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 823,
+        "y": 967,
+        "button": 0
+      }
+    },
+    {
+      "id": 126,
+      "type": "mutation",
+      "at": 25740.400000000373,
+      "timeOffsetMs": 23542.9,
+      "data": {
+        "mutationType": "childList",
+        "target": "#item-list",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "\n              <li>seed item 1</li>\n              <li>seed item 2</li>\n              <li>seed item 3</li>\n              <li>seed item 4</li>\n              <li>seed item 5</li>\n              <li>seed item 6</li>\n              <li>seed item 7</li>\n              <li>seed item 8</li>\n              <li>seed item 9</li>\n              <li>seed item 10</li>\n            <li>appended at 오전 1:37:24</li><li>appended at 오전 1:37:25</li>",
+        "addedNodes": [
+          {
+            "nodeType": "element",
+            "tagName": "LI",
+            "path": "main:nth-of-type(1) > section:nth-of-type(3) > article:nth-of-type(2) > div:nth-of-type(1) > ul:nth-of-type(1) > li:nth-of-type(12)",
+            "outerHTML": "<li>appended at 오전 1:37:25</li>"
+          }
+        ],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 127,
+      "type": "event",
+      "at": 26341.099999999627,
+      "timeOffsetMs": 24143.6,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 65.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 128,
+      "type": "event",
+      "at": 26357.700000001118,
+      "timeOffsetMs": 24160.2,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 66.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 129,
+      "type": "event",
+      "at": 26374.5,
+      "timeOffsetMs": 24177,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 68.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 130,
+      "type": "event",
+      "at": 26396.099999999627,
+      "timeOffsetMs": 24198.6,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 72,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 131,
+      "type": "event",
+      "at": 26413.900000000373,
+      "timeOffsetMs": 24216.4,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 76.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 132,
+      "type": "event",
+      "at": 26430.400000000373,
+      "timeOffsetMs": 24232.9,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 81.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 133,
+      "type": "event",
+      "at": 26446.800000000745,
+      "timeOffsetMs": 24249.3,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 87,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 134,
+      "type": "event",
+      "at": 26464.300000000745,
+      "timeOffsetMs": 24266.8,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 92,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 135,
+      "type": "event",
+      "at": 26480.5,
+      "timeOffsetMs": 24283,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 97,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 136,
+      "type": "event",
+      "at": 26497,
+      "timeOffsetMs": 24299.5,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 100.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 137,
+      "type": "event",
+      "at": 26513.700000001118,
+      "timeOffsetMs": 24316.2,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 102.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 138,
+      "type": "event",
+      "at": 26530.400000000373,
+      "timeOffsetMs": 24332.9,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 104,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 139,
+      "type": "event",
+      "at": 27820.5,
+      "timeOffsetMs": 25623,
+      "data": {
+        "eventType": "click",
+        "target": "",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 498,
+        "y": 714,
+        "button": 0
+      }
+    },
+    {
+      "id": 140,
+      "type": "event",
+      "at": 28024.400000000373,
+      "timeOffsetMs": 25826.9,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "3"
+      }
+    },
+    {
+      "id": 141,
+      "type": "event",
+      "at": 28162.800000000745,
+      "timeOffsetMs": 25965.3,
+      "data": {
+        "eventType": "input",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "33"
+      }
+    },
+    {
+      "id": 142,
+      "type": "event",
+      "at": 28532.700000001118,
+      "timeOffsetMs": 26335.2,
+      "data": {
+        "eventType": "change",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "33"
+      }
+    },
+    {
+      "id": 143,
+      "type": "event",
+      "at": 28622.400000000373,
+      "timeOffsetMs": 26424.9,
+      "data": {
+        "eventType": "click",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 803,
+        "y": 965,
+        "button": 0
+      }
+    },
+    {
+      "id": 144,
+      "type": "mutation",
+      "at": 28622.800000000745,
+      "timeOffsetMs": 26425.3,
+      "data": {
+        "mutationType": "childList",
+        "target": "#item-list",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "\n              <li>seed item 1</li>\n              <li>seed item 2</li>\n              <li>seed item 3</li>\n              <li>seed item 4</li>\n              <li>seed item 5</li>\n              <li>seed item 6</li>\n              <li>seed item 7</li>\n              <li>seed item 8</li>\n              <li>seed item 9</li>\n              <li>seed item 10</li>\n            <li>appended at 오전 1:37:24</li><li>appended at 오전 1:37:25</li><li>appended at 오전 1:37:27</li>",
+        "addedNodes": [
+          {
+            "nodeType": "element",
+            "tagName": "LI",
+            "path": "main:nth-of-type(1) > section:nth-of-type(3) > article:nth-of-type(2) > div:nth-of-type(1) > ul:nth-of-type(1) > li:nth-of-type(13)",
+            "outerHTML": "<li>appended at 오전 1:37:27</li>"
+          }
+        ],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 145,
+      "type": "event",
+      "at": 29224.300000000745,
+      "timeOffsetMs": 27026.8,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 104.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 146,
+      "type": "event",
+      "at": 29240.900000000373,
+      "timeOffsetMs": 27043.4,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 105,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 147,
+      "type": "event",
+      "at": 29257.599999999627,
+      "timeOffsetMs": 27060.1,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 106,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 148,
+      "type": "event",
+      "at": 29275.599999999627,
+      "timeOffsetMs": 27078.1,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 107.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 149,
+      "type": "event",
+      "at": 29296.400000000373,
+      "timeOffsetMs": 27098.9,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 110,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 150,
+      "type": "event",
+      "at": 29313.900000000373,
+      "timeOffsetMs": 27116.4,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 112.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 151,
+      "type": "event",
+      "at": 29330.800000000745,
+      "timeOffsetMs": 27133.3,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 115,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 152,
+      "type": "event",
+      "at": 29347.400000000373,
+      "timeOffsetMs": 27149.9,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 117.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 153,
+      "type": "event",
+      "at": 29364,
+      "timeOffsetMs": 27166.5,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 120,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 154,
+      "type": "event",
+      "at": 29380.700000001118,
+      "timeOffsetMs": 27183.2,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 121.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 155,
+      "type": "event",
+      "at": 29397.300000000745,
+      "timeOffsetMs": 27199.8,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 123,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 156,
+      "type": "event",
+      "at": 29414.200000001118,
+      "timeOffsetMs": 27216.7,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 123.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 157,
+      "type": "event",
+      "at": 30116.099999999627,
+      "timeOffsetMs": 27918.6,
+      "data": {
+        "eventType": "click",
+        "target": "",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 585,
+        "y": 842,
+        "button": 0
+      }
+    },
+    {
+      "id": 158,
+      "type": "event",
+      "at": 30483.599999999627,
+      "timeOffsetMs": 28286.1,
+      "data": {
+        "eventType": "click",
+        "target": "",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 578,
+        "y": 874,
+        "button": 0
+      }
+    },
+    {
+      "id": 159,
+      "type": "event",
+      "at": 30604,
+      "timeOffsetMs": 28406.5,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "3"
+      }
+    },
+    {
+      "id": 160,
+      "type": "event",
+      "at": 30783,
+      "timeOffsetMs": 28585.5,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "33"
+      }
+    },
+    {
+      "id": 161,
+      "type": "event",
+      "at": 31001.900000000373,
+      "timeOffsetMs": 28804.4,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "333"
+      }
+    },
+    {
+      "id": 162,
+      "type": "event",
+      "at": 31172,
+      "timeOffsetMs": 28974.5,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "3333"
+      }
+    },
+    {
+      "id": 163,
+      "type": "event",
+      "at": 31333,
+      "timeOffsetMs": 29135.5,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "33333"
+      }
+    },
+    {
+      "id": 164,
+      "type": "event",
+      "at": 31472.400000000373,
+      "timeOffsetMs": 29274.9,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "333333"
+      }
+    },
+    {
+      "id": 165,
+      "type": "event",
+      "at": 31646.099999999627,
+      "timeOffsetMs": 29448.6,
+      "data": {
+        "eventType": "change",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "333333"
+      }
+    },
+    {
+      "id": 166,
+      "type": "event",
+      "at": 31710.400000000373,
+      "timeOffsetMs": 29512.9,
+      "data": {
+        "eventType": "click",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 821,
+        "y": 975,
+        "button": 0
+      }
+    },
+    {
+      "id": 167,
+      "type": "mutation",
+      "at": 31710.900000000373,
+      "timeOffsetMs": 29513.4,
+      "data": {
+        "mutationType": "childList",
+        "target": "#item-list",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "\n              <li>seed item 1</li>\n              <li>seed item 2</li>\n              <li>seed item 3</li>\n              <li>seed item 4</li>\n              <li>seed item 5</li>\n              <li>seed item 6</li>\n              <li>seed item 7</li>\n              <li>seed item 8</li>\n              <li>seed item 9</li>\n              <li>seed item 10</li>\n            <li>appended at 오전 1:37:24</li><li>appended at 오전 1:37:25</li><li>appended at 오전 1:37:27</li><li>appended at 오전 1:37:31</li>",
+        "addedNodes": [
+          {
+            "nodeType": "element",
+            "tagName": "LI",
+            "path": "main:nth-of-type(1) > section:nth-of-type(3) > article:nth-of-type(2) > div:nth-of-type(1) > ul:nth-of-type(1) > li:nth-of-type(14)",
+            "outerHTML": "<li>appended at 오전 1:37:31</li>"
+          }
+        ],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 168,
+      "type": "event",
+      "at": 32241,
+      "timeOffsetMs": 30043.5,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 123,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 169,
+      "type": "event",
+      "at": 32257.599999999627,
+      "timeOffsetMs": 30060.1,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 122,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 170,
+      "type": "event",
+      "at": 32276.200000001118,
+      "timeOffsetMs": 30078.7,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 117,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 171,
+      "type": "event",
+      "at": 32291.300000000745,
+      "timeOffsetMs": 30093.8,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 107.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 172,
+      "type": "event",
+      "at": 32312.200000001118,
+      "timeOffsetMs": 30114.7,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 93,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 173,
+      "type": "event",
+      "at": 32330.5,
+      "timeOffsetMs": 30133,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 74.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 174,
+      "type": "event",
+      "at": 32346.700000001118,
+      "timeOffsetMs": 30149.2,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 54.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 175,
+      "type": "event",
+      "at": 32363.700000001118,
+      "timeOffsetMs": 30166.2,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 34.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 176,
+      "type": "event",
+      "at": 32380.300000000745,
+      "timeOffsetMs": 30182.8,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 18.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 177,
+      "type": "event",
+      "at": 32397.5,
+      "timeOffsetMs": 30200,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 7.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 178,
+      "type": "event",
+      "at": 32413.800000000745,
+      "timeOffsetMs": 30216.3,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 1.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 179,
+      "type": "event",
+      "at": 32430.400000000373,
+      "timeOffsetMs": 30232.9,
+      "data": {
+        "eventType": "scroll",
+        "target": "#scroll-area",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 0,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 180,
+      "type": "event",
+      "at": 32675.599999999627,
+      "timeOffsetMs": 30478.1,
+      "data": {
+        "eventType": "scroll",
+        "target": "document",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 343.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 181,
+      "type": "event",
+      "at": 32691.5,
+      "timeOffsetMs": 30494,
+      "data": {
+        "eventType": "scroll",
+        "target": "document",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 332,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 182,
+      "type": "event",
+      "at": 32707.800000000745,
+      "timeOffsetMs": 30510.3,
+      "data": {
+        "eventType": "scroll",
+        "target": "document",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 291.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 183,
+      "type": "event",
+      "at": 32724.599999999627,
+      "timeOffsetMs": 30527.1,
+      "data": {
+        "eventType": "scroll",
+        "target": "document",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 219,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 184,
+      "type": "event",
+      "at": 32747,
+      "timeOffsetMs": 30549.5,
+      "data": {
+        "eventType": "scroll",
+        "target": "document",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 129.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 185,
+      "type": "event",
+      "at": 32757.700000001118,
+      "timeOffsetMs": 30560.2,
+      "data": {
+        "eventType": "scroll",
+        "target": "document",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 51.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 186,
+      "type": "event",
+      "at": 32780.5,
+      "timeOffsetMs": 30583,
+      "data": {
+        "eventType": "scroll",
+        "target": "document",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 8.5,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 187,
+      "type": "event",
+      "at": 32797.20000000112,
+      "timeOffsetMs": 30599.7,
+      "data": {
+        "eventType": "scroll",
+        "target": "document",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "scrollTop": 0,
+        "scrollLeft": 0
+      }
+    },
+    {
+      "id": 188,
+      "type": "event",
+      "at": 33864,
+      "timeOffsetMs": 31666.5,
+      "data": {
+        "eventType": "click",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 827,
+        "y": 152,
+        "button": 0
+      }
+    },
+    {
+      "id": 189,
+      "type": "meta",
+      "at": 33864.300000000745,
+      "timeOffsetMs": 31666.8,
+      "data": {
+        "action": "recording_stopped"
+      }
+    }
+  ]
+}

@@ -1,0 +1,517 @@
+{
+  "version": 1,
+  "createdAt": "2026-02-17T16:33:36.984Z",
+  "page": {
+    "href": "http://127.0.0.1:5500/index.html",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"
+  },
+  "eventCount": 31,
+  "events": [
+    {
+      "id": 1,
+      "type": "snapshot",
+      "at": 5524.0999999996275,
+      "timeOffsetMs": 0.4,
+      "data": {
+        "url": "http://127.0.0.1:5500/index.html",
+        "viewport": {
+          "width": 2240,
+          "height": 1058
+        },
+        "html": "<html lang=\"ko\"><head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Session Replay MVP</title>\n    <style>\n      :root {\n        --bg: #f3f6fb;\n        --surface: #ffffff;\n        --text: #1f2937;\n        --muted: #64748b;\n        --primary: #0f766e;\n        --primary-2: #0ea5a4;\n        --danger: #be123c;\n      }\n\n      * {\n        box-sizing: border-box;\n      }\n\n      body {\n        margin: 0;\n        font-family: \"Segoe UI\", \"Apple SD Gothic Neo\", sans-serif;\n        color: var(--text);\n        background: radial-gradient(circle at top right, #dff4f1, var(--bg));\n      }\n\n      .app {\n        max-width: 920px;\n        margin: 32px auto;\n        padding: 0 16px;\n      }\n\n      .card {\n        background: var(--surface);\n        border-radius: 14px;\n        padding: 18px;\n        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);\n        margin-bottom: 16px;\n      }\n\n      h1 {\n        margin: 0 0 8px;\n        font-size: 1.5rem;\n      }\n\n      p {\n        margin: 0;\n        color: var(--muted);\n      }\n\n      .controls {\n        display: flex;\n        gap: 8px;\n        flex-wrap: wrap;\n        margin-top: 16px;\n      }\n\n      button {\n        border: none;\n        border-radius: 10px;\n        padding: 10px 14px;\n        color: white;\n        background: var(--primary);\n        cursor: pointer;\n        font-weight: 600;\n      }\n\n      button.secondary {\n        background: var(--primary-2);\n      }\n\n      button.danger {\n        background: var(--danger);\n      }\n\n      button:disabled {\n        opacity: 0.45;\n        cursor: not-allowed;\n      }\n\n      .grid {\n        display: grid;\n        grid-template-columns: 1fr;\n        gap: 16px;\n      }\n\n      @media (min-width: 860px) {\n        .grid {\n          grid-template-columns: 1fr 1fr;\n        }\n      }\n\n      label {\n        font-size: 0.92rem;\n        font-weight: 600;\n      }\n\n      input,\n      textarea,\n      select {\n        width: 100%;\n        margin-top: 6px;\n        padding: 10px;\n        border-radius: 10px;\n        border: 1px solid #cbd5e1;\n        font: inherit;\n      }\n\n      .scroll-area {\n        margin-top: 12px;\n        border: 1px dashed #94a3b8;\n        border-radius: 10px;\n        height: 160px;\n        overflow: auto;\n        padding: 10px;\n        background: #f8fafc;\n      }\n\n      .log {\n        margin-top: 12px;\n        background: #0b1220;\n        color: #d6e2ff;\n        border-radius: 10px;\n        padding: 12px;\n        min-height: 90px;\n        white-space: pre-wrap;\n        font-size: 0.85rem;\n      }\n\n      ul {\n        margin: 8px 0 0;\n        padding-left: 18px;\n      }\n    </style>\n  </head>\n  <body>\n    <main class=\"app\">\n      <section class=\"card\">\n        <h1>Session Replay Recorder MVP</h1>\n        <p>DOM mutation과 사용자 이벤트를 기록해 로컬 JSON 파일로 저장합니다.</p>\n        <div class=\"controls\">\n          <button id=\"start-btn\">Start Recording</button>\n          <button id=\"stop-btn\" class=\"danger\" disabled=\"\">Stop Recording</button>\n          <button id=\"download-btn\" class=\"secondary\" disabled=\"\">Download JSON</button>\n        </div>\n        <div id=\"status\" class=\"log\">폼 submit 이벤트가 발생했습니다.</div>\n      </section>\n\n      <section class=\"grid\">\n        <article class=\"card\" id=\"interaction-zone\">\n          <h2>Interaction Zone</h2>\n          <form id=\"sample-form\">\n            <label>\n              Name\n              <input id=\"name-input\" name=\"name\" placeholder=\"type here\">\n            </label>\n            <label>\n              Role\n              <select id=\"role-select\" name=\"role\">\n                <option value=\"frontend\">Frontend</option>\n                <option value=\"backend\">Backend</option>\n                <option value=\"product\">Product</option>\n              </select>\n            </label>\n            <label>\n              Note\n              <textarea id=\"note-input\" name=\"note\" rows=\"3\"></textarea>\n            </label>\n            <div class=\"controls\">\n              <button type=\"submit\">Submit Form</button>\n              <button type=\"button\" id=\"add-item-btn\" class=\"secondary\">Append Item</button>\n            </div>\n          </form>\n        </article>\n\n        <article class=\"card\">\n          <h2>Scrollable &amp; Mutable Area</h2>\n          <p>스크롤/DOM 변화 기록 테스트 영역입니다.</p>\n          <div class=\"scroll-area\" id=\"scroll-area\">\n            <ul id=\"item-list\">\n              <li>seed item 1</li>\n              <li>seed item 2</li>\n              <li>seed item 3</li>\n              <li>seed item 4</li>\n              <li>seed item 5</li>\n              <li>seed item 6</li>\n              <li>seed item 7</li>\n              <li>seed item 8</li>\n              <li>seed item 9</li>\n              <li>seed item 10</li>\n            </ul>\n          </div>\n        </article>\n      </section>\n    </main>\n\n    <script type=\"module\" src=\"./src/main.js\"></script>\n  <!-- Code injected by live-server -->\n<script>\n\t// <![CDATA[  <-- For SVG support\n\tif ('WebSocket' in window) {\n\t\t(function () {\n\t\t\tfunction refreshCSS() {\n\t\t\t\tvar sheets = [].slice.call(document.getElementsByTagName(\"link\"));\n\t\t\t\tvar head = document.getElementsByTagName(\"head\")[0];\n\t\t\t\tfor (var i = 0; i < sheets.length; ++i) {\n\t\t\t\t\tvar elem = sheets[i];\n\t\t\t\t\tvar parent = elem.parentElement || head;\n\t\t\t\t\tparent.removeChild(elem);\n\t\t\t\t\tvar rel = elem.rel;\n\t\t\t\t\tif (elem.href && typeof rel != \"string\" || rel.length == 0 || rel.toLowerCase() == \"stylesheet\") {\n\t\t\t\t\t\tvar url = elem.href.replace(/(&|\\?)_cacheOverride=\\d+/, '');\n\t\t\t\t\t\telem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());\n\t\t\t\t\t}\n\t\t\t\t\tparent.appendChild(elem);\n\t\t\t\t}\n\t\t\t}\n\t\t\tvar protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';\n\t\t\tvar address = protocol + window.location.host + window.location.pathname + '/ws';\n\t\t\tvar socket = new WebSocket(address);\n\t\t\tsocket.onmessage = function (msg) {\n\t\t\t\tif (msg.data == 'reload') window.location.reload();\n\t\t\t\telse if (msg.data == 'refreshcss') refreshCSS();\n\t\t\t};\n\t\t\tif (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {\n\t\t\t\tconsole.log('Live reload enabled.');\n\t\t\t\tsessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);\n\t\t\t}\n\t\t})();\n\t}\n\telse {\n\t\tconsole.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');\n\t}\n\t// ]]>\n</script>\n\n\n</body></html>"
+      }
+    },
+    {
+      "id": 2,
+      "type": "mutation",
+      "at": 5525.299999998882,
+      "timeOffsetMs": 1.6,
+      "data": {
+        "mutationType": "attributes",
+        "target": "#start-btn",
+        "attributeName": "disabled",
+        "oldValue": null,
+        "newValue": "",
+        "targetInnerHTML": null,
+        "addedNodes": [],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "mutation",
+      "at": 5525.299999998882,
+      "timeOffsetMs": 1.6,
+      "data": {
+        "mutationType": "attributes",
+        "target": "#stop-btn",
+        "attributeName": "disabled",
+        "oldValue": "",
+        "newValue": null,
+        "targetInnerHTML": null,
+        "addedNodes": [],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "mutation",
+      "at": 5525.299999998882,
+      "timeOffsetMs": 1.6,
+      "data": {
+        "mutationType": "attributes",
+        "target": "#download-btn",
+        "attributeName": "disabled",
+        "oldValue": "",
+        "newValue": "",
+        "targetInnerHTML": null,
+        "addedNodes": [],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "mutation",
+      "at": 5525.39999999851,
+      "timeOffsetMs": 1.7,
+      "data": {
+        "mutationType": "childList",
+        "target": "#status",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "Recording started. 상호작용 후 Stop 버튼을 누르세요.",
+        "addedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "Recording started. 상호작용 후 Stop 버튼을 누르세요."
+          }
+        ],
+        "removedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "폼 submit 이벤트가 발생했습니다."
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "type": "event",
+      "at": 7259.0999999996275,
+      "timeOffsetMs": 1735.4,
+      "data": {
+        "eventType": "click",
+        "target": "#status",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 943,
+        "y": 221,
+        "button": 0
+      }
+    },
+    {
+      "id": 7,
+      "type": "event",
+      "at": 7850.799999998882,
+      "timeOffsetMs": 2327.1,
+      "data": {
+        "eventType": "click",
+        "target": "#name-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 813,
+        "y": 423,
+        "button": 0
+      }
+    },
+    {
+      "id": 8,
+      "type": "event",
+      "at": 8445.89999999851,
+      "timeOffsetMs": 2922.2,
+      "data": {
+        "eventType": "click",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > div:nth-of-type(1) > button:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 784,
+        "y": 647,
+        "button": 0
+      }
+    },
+    {
+      "id": 9,
+      "type": "event",
+      "at": 8446.39999999851,
+      "timeOffsetMs": 2922.7,
+      "data": {
+        "eventType": "submit",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "prevented": false
+      }
+    },
+    {
+      "id": 10,
+      "type": "mutation",
+      "at": 8446.599999999627,
+      "timeOffsetMs": 2922.9,
+      "data": {
+        "mutationType": "childList",
+        "target": "#status",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "폼 submit 이벤트가 발생했습니다.",
+        "addedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "폼 submit 이벤트가 발생했습니다."
+          }
+        ],
+        "removedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "Recording started. 상호작용 후 Stop 버튼을 누르세요."
+          }
+        ]
+      }
+    },
+    {
+      "id": 11,
+      "type": "event",
+      "at": 10251.39999999851,
+      "timeOffsetMs": 4727.7,
+      "data": {
+        "eventType": "click",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 782,
+        "y": 625,
+        "button": 0
+      }
+    },
+    {
+      "id": 12,
+      "type": "event",
+      "at": 10533.199999999255,
+      "timeOffsetMs": 5009.5,
+      "data": {
+        "eventType": "click",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 803,
+        "y": 574,
+        "button": 0
+      }
+    },
+    {
+      "id": 13,
+      "type": "event",
+      "at": 10619.199999999255,
+      "timeOffsetMs": 5095.5,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "1"
+      }
+    },
+    {
+      "id": 14,
+      "type": "event",
+      "at": 10707.099999999627,
+      "timeOffsetMs": 5183.4,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "12"
+      }
+    },
+    {
+      "id": 15,
+      "type": "event",
+      "at": 10785.799999998882,
+      "timeOffsetMs": 5262.1,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "123"
+      }
+    },
+    {
+      "id": 16,
+      "type": "event",
+      "at": 11777.199999999255,
+      "timeOffsetMs": 6253.5,
+      "data": {
+        "eventType": "input",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "123\n"
+      }
+    },
+    {
+      "id": 17,
+      "type": "event",
+      "at": 12616,
+      "timeOffsetMs": 7092.3,
+      "data": {
+        "eventType": "change",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "value": "123\n"
+      }
+    },
+    {
+      "id": 18,
+      "type": "event",
+      "at": 12723.199999999255,
+      "timeOffsetMs": 7199.5,
+      "data": {
+        "eventType": "click",
+        "target": "#add-item-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 880,
+        "y": 654,
+        "button": 0
+      }
+    },
+    {
+      "id": 19,
+      "type": "mutation",
+      "at": 12737.699999999255,
+      "timeOffsetMs": 7214,
+      "data": {
+        "mutationType": "childList",
+        "target": "#item-list",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "\n              <li>seed item 1</li>\n              <li>seed item 2</li>\n              <li>seed item 3</li>\n              <li>seed item 4</li>\n              <li>seed item 5</li>\n              <li>seed item 6</li>\n              <li>seed item 7</li>\n              <li>seed item 8</li>\n              <li>seed item 9</li>\n              <li>seed item 10</li>\n            <li>appended at 오전 1:33:33</li>",
+        "addedNodes": [
+          {
+            "nodeType": "element",
+            "tagName": "LI",
+            "path": "main:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(2) > div:nth-of-type(1) > ul:nth-of-type(1) > li:nth-of-type(11)",
+            "outerHTML": "<li>appended at 오전 1:33:33</li>"
+          }
+        ],
+        "removedNodes": []
+      }
+    },
+    {
+      "id": 20,
+      "type": "event",
+      "at": 13509.599999999627,
+      "timeOffsetMs": 7985.9,
+      "data": {
+        "eventType": "click",
+        "target": "#note-input",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 906,
+        "y": 596,
+        "button": 0
+      }
+    },
+    {
+      "id": 21,
+      "type": "event",
+      "at": 14009.299999998882,
+      "timeOffsetMs": 8485.6,
+      "data": {
+        "eventType": "click",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > div:nth-of-type(1) > button:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 759,
+        "y": 661,
+        "button": 0
+      }
+    },
+    {
+      "id": 22,
+      "type": "event",
+      "at": 14009.799999998882,
+      "timeOffsetMs": 8486.1,
+      "data": {
+        "eventType": "submit",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "prevented": false
+      }
+    },
+    {
+      "id": 23,
+      "type": "mutation",
+      "at": 14010,
+      "timeOffsetMs": 8486.3,
+      "data": {
+        "mutationType": "childList",
+        "target": "#status",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "폼 submit 이벤트가 발생했습니다.",
+        "addedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "폼 submit 이벤트가 발생했습니다."
+          }
+        ],
+        "removedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "폼 submit 이벤트가 발생했습니다."
+          }
+        ]
+      }
+    },
+    {
+      "id": 24,
+      "type": "event",
+      "at": 14399.39999999851,
+      "timeOffsetMs": 8875.7,
+      "data": {
+        "eventType": "click",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > div:nth-of-type(1) > button:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 759,
+        "y": 649,
+        "button": 0
+      }
+    },
+    {
+      "id": 25,
+      "type": "event",
+      "at": 14400,
+      "timeOffsetMs": 8876.3,
+      "data": {
+        "eventType": "submit",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "prevented": false
+      }
+    },
+    {
+      "id": 26,
+      "type": "mutation",
+      "at": 14400.199999999255,
+      "timeOffsetMs": 8876.5,
+      "data": {
+        "mutationType": "childList",
+        "target": "#status",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "폼 submit 이벤트가 발생했습니다.",
+        "addedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "폼 submit 이벤트가 발생했습니다."
+          }
+        ],
+        "removedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "폼 submit 이벤트가 발생했습니다."
+          }
+        ]
+      }
+    },
+    {
+      "id": 27,
+      "type": "event",
+      "at": 14559,
+      "timeOffsetMs": 9035.3,
+      "data": {
+        "eventType": "click",
+        "target": "main:nth-of-type(1) > section:nth-of-type(2) > article:nth-of-type(1) > form:nth-of-type(1) > div:nth-of-type(1) > button:nth-of-type(1)",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 760,
+        "y": 648,
+        "button": 0
+      }
+    },
+    {
+      "id": 28,
+      "type": "event",
+      "at": 14559.599999999627,
+      "timeOffsetMs": 9035.9,
+      "data": {
+        "eventType": "submit",
+        "target": "#sample-form",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "prevented": false
+      }
+    },
+    {
+      "id": 29,
+      "type": "mutation",
+      "at": 14559.699999999255,
+      "timeOffsetMs": 9036,
+      "data": {
+        "mutationType": "childList",
+        "target": "#status",
+        "attributeName": null,
+        "oldValue": null,
+        "newValue": null,
+        "targetInnerHTML": "폼 submit 이벤트가 발생했습니다.",
+        "addedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "폼 submit 이벤트가 발생했습니다."
+          }
+        ],
+        "removedNodes": [
+          {
+            "nodeType": "text",
+            "textContent": "폼 submit 이벤트가 발생했습니다."
+          }
+        ]
+      }
+    },
+    {
+      "id": 30,
+      "type": "event",
+      "at": 15783.799999998882,
+      "timeOffsetMs": 10260.1,
+      "data": {
+        "eventType": "click",
+        "target": "#stop-btn",
+        "currentTarget": "document",
+        "isTrusted": true,
+        "x": 885,
+        "y": 136,
+        "button": 0
+      }
+    },
+    {
+      "id": 31,
+      "type": "meta",
+      "at": 15784.099999999627,
+      "timeOffsetMs": 10260.4,
+      "data": {
+        "action": "recording_stopped"
+      }
+    }
+  ]
+}
