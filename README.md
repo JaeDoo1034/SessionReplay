@@ -94,14 +94,14 @@ npx serve . -l 4173
 ```mermaid
 flowchart TD
   A[사용자: Start Recording 클릭] --> B[recorder.start]
-  B --> C[상태 초기화\nisRecording=true\nstartedAt=performance.now\nevents=[]\nsequence=0\nlastMousemoveAt=0]
+  B --> C[상태 초기화\nisRecording=true\nstartedAt=performance.now\nevents empty\nsequence=0\nlastMousemoveAt=0]
   C --> D[초기 스냅샷 기록\nsnapshot: html/viewport/url]
   D --> E[MutationObserver attach\nhtml 전체 감시]
   E --> F[Event Listener attach\nclick/mousemove/input/change/scroll/submit]
 
   F --> G{브라우저 이벤트 발생}
   G -->|click| H[click 데이터 구성\nx,y,button,target path,viewportW/H\n+target 상대좌표 메타]
-  G -->|mousemove| I{샘플링 간격 체크\nnow-lastMousemoveAt >= mousemoveSampleMs}
+  G -->|mousemove| I{샘플링 간격 체크\n현재 시각과 마지막 mousemove 시각 차이가 샘플링 기준 이상인가}
   I -->|No| I1[드롭]
   I -->|Yes| I2[mousemove 기록\nx,y,target path,viewportW/H\n+target 상대좌표 메타]
   G -->|input/change| J[value 추출\nmask 옵션 반영]
@@ -147,7 +147,7 @@ flowchart TD
   J -->|event: click| N[좌표 매핑 후 포인터+리플\n타겟 outline]
   J -->|event: mousemove| O[좌표 매핑 후 포인터 이동\ntrail 렌더링]
 
-  N --> P[다음 이벤트 delay 계산\n(next.timeOffset-current.timeOffset)/speed]
+  N --> P[다음 이벤트 대기시간 계산\nnext offset 과 current offset 차이를 speed로 보정]
   O --> P
   K --> P
   L --> P
@@ -162,9 +162,9 @@ flowchart TD
 ```mermaid
 flowchart TD
   A[mapPointerPosition] --> B{target 상대좌표 메타 존재?}
-  B -->|Yes| C{상대좌표 사용 가능?\n- target != html/body\n- target 크기 ~= 전체 뷰포트 아님}
+  B -->|Yes| C{상대좌표 사용 가능?\n- target이 html body가 아닌가\n- target 크기가 전체 뷰포트와 거의 동일하지 않은가}
   C -->|Yes| D[target.getBoundingClientRect 기준\nx=left+width*ratio\ny=top+height*ratio]
-  C -->|No| E[뷰포트 비율 매핑\nx=(recorded x / recorded viewportW)*replayW\ny=(recorded y / recorded viewportH)*replayH]
+  C -->|No| E[뷰포트 비율 매핑\nrecorded 좌표 비율을 replay 뷰포트 크기로 변환]
   B -->|No| E
   D --> F[포인터 좌표 반환]
   E --> F
