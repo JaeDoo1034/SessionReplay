@@ -34,7 +34,7 @@
     bindUI();
 
     window.SessionReplaySnippet = {
-      version: "1.0.0-snippet",
+      version: "2.0.0-snippet",
       start,
       stop,
       getPayload: () => lastPayload,

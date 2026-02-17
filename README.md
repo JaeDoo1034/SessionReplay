@@ -105,6 +105,25 @@ npm start
   - 1차 체인: 세션 행동 분석 JSON 생성
   - 2차 체인: 1차 결과를 입력으로 한국어 고객 유형 요약 생성
 
+## DevTools Snippet 버전
+브라우저 개발자도구 `Sources > Snippets`에서 바로 실행할 수 있는 단일 파일 버전입니다.
+
+### 버전 요약
+- `Test/session-replay-snippet.js` (`1.0.0-snippet`)
+  - 기본 실행 파일
+  - Recorder + Replayer + Behavior Analyzer + 스니펫 패널 포함
+  - 페이지 이동 이벤트 추적 포함: `hashchange`, `popstate`, `beforeunload`, `pagehide`, `pageshow`, `visibilitychange`, `history_pushstate`, `history_replacestate`, `navigation_intent`
+  - Replay 창은 가독성을 위해 대형 모달 크기(`95vw x 92vh`) 적용
+- `Test/session-replay-snippet-v2.js` (`2.0.0-snippet`)
+  - `v1`과 동일 기능을 버전 태깅한 파일
+  - 팀/실험용으로 버전 분리 관리할 때 사용
+
+### 스니펫 빠른 사용
+1. 파일 내용을 복사해 DevTools Snippet으로 실행
+2. `Start` -> 사용자 행동 -> `Stop` -> `Download`
+3. 필요 시 `Analyze`, `Copy Prompt`, `Play Replay`
+4. 콘솔에서 `window.SessionReplaySnippet.help()`로 API 확인
+
 ## 동작 플로우 (Mermaid)
 
 ### Recorder 상세 플로우
