@@ -1,4 +1,4 @@
-const DEFAULT_EVENTS = ["click", "mousemove", "input", "change", "submit", "scroll"];
+const DEFAULT_EVENTS = ["click", "input", "change", "submit", "scroll"];
 
 export class SessionRecorder {
   constructor(options = {}) {

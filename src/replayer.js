@@ -98,7 +98,7 @@ export class SessionReplayer {
       throw new Error("iframe is required");
     }
 
-    const sanitized = String(rawHtml).replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+    const sanitized = sanitizeDocumentHtml(rawHtml);
     this.iframe.onload = () => {
       if (typeof onReady === "function") {
         onReady();
@@ -137,7 +137,7 @@ function applyMutation(doc, data) {
 
   if (data.mutationType === "childList") {
     if (typeof data.targetInnerHTML === "string") {
-      target.innerHTML = data.targetInnerHTML;
+      target.innerHTML = sanitizeFragmentHtml(data.targetInnerHTML);
     }
     return;
   }
@@ -425,4 +425,49 @@ function queryPath(doc, path) {
   } catch {
     return null;
   }
+}
+
+function sanitizeDocumentHtml(rawHtml) {
+  const parser = new DOMParser();
+  const parsed = parser.parseFromString(String(rawHtml || ""), "text/html");
+  sanitizeDomTree(parsed);
+  return parsed.documentElement.outerHTML;
+}
+
+function sanitizeFragmentHtml(rawHtml) {
+  const template = document.createElement("template");
+  template.innerHTML = String(rawHtml || "");
+  sanitizeDomTree(template.content);
+  return template.innerHTML;
+}
+
+function sanitizeDomTree(root) {
+  if (!root || !root.querySelectorAll) {
+    return;
+  }
+
+  root.querySelectorAll("script").forEach((node) => node.remove());
+
+  root
+    .querySelectorAll("link[rel='preload'], link[rel='modulepreload'], link[rel='prefetch']")
+    .forEach((node) => node.remove());
+
+  root.querySelectorAll("[autofocus]").forEach((node) => node.removeAttribute("autofocus"));
+
+  root.querySelectorAll("*").forEach((node) => {
+    Array.from(node.attributes || []).forEach((attr) => {
+      const name = String(attr.name || "").toLowerCase();
+      const value = String(attr.value || "").trim().toLowerCase();
+
+      if (name.startsWith("on")) {
+        node.removeAttribute(attr.name);
+        return;
+      }
+
+      const isSrcLike = name === "src" || name === "href" || name === "xlink:href";
+      if (isSrcLike && value.startsWith("javascript:")) {
+        node.removeAttribute(attr.name);
+      }
+    });
+  });
 }
