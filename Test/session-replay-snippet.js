@@ -1282,18 +1282,6 @@
     root.querySelectorAll("[autofocus]").forEach((node) => node.removeAttribute("autofocus"));
 
     root.querySelectorAll(`#${PANEL_ID}, #${REPLAY_MODAL_ID}, #${STYLE_ID}`).forEach((node) => node.remove());
-
-    root.querySelectorAll("*").forEach((node) => {
-      Array.from(node.attributes || []).forEach((attr) => {
-        const name = String(attr.name || "").toLowerCase();
-        const value = String(attr.value || "").trim().toLowerCase();
-
-        const isSrcLike = name === "src" || name === "href" || name === "xlink:href";
-        if (isSrcLike && value.startsWith("javascript:")) {
-          node.removeAttribute(attr.name);
-        }
-      });
-    });
   }
 
   function ensureBaseHref(doc, baseUrl) {

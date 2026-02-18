@@ -14,6 +14,9 @@ const replayPlayBtn = document.getElementById("replay-play-btn");
 const replayStopBtn = document.getElementById("replay-stop-btn");
 const replaySpeedSelect = document.getElementById("replay-speed");
 const replayFrame = document.getElementById("replay-frame");
+const replayControlsEl = replayPlayBtn?.closest(".controls") || null;
+const replayMutationToggleBtn = ensureReplayMutationToggleButton(replayControlsEl);
+
 const analyzeBtn = document.getElementById("analyze-btn");
 const llmAnalyzeBtn = document.getElementById("llm-analyze-btn");
 const copyPromptBtn = document.getElementById("copy-prompt-btn");
@@ -28,11 +31,14 @@ const tabPanels = Array.from(document.querySelectorAll("[data-tab-panel]"));
 
 const recorder = new SessionRecorder({
   maskInputValue: false,
-  mousemoveSampleMs: 16
+  mousemoveSampleMs: 20,
+  shouldIgnoreNode: isInternalNode
 });
 
 const replayer = new SessionReplayer({
   iframe: replayFrame,
+  stageEl: replayFrame?.parentElement,
+  applyMutationEvents: false,
   onStatus: setReplayStatus
 });
 
@@ -48,6 +54,8 @@ tabButtons.forEach((button) => {
 });
 
 activateTab("settings");
+syncReplayMutationButton();
+setReplayStatus("Replay idle (Mutation OFF)");
 
 startBtn.addEventListener("click", () => {
   recorder.start();
@@ -69,6 +77,14 @@ stopBtn.addEventListener("click", () => {
   startBtn.disabled = false;
   stopBtn.disabled = true;
   downloadBtn.disabled = false;
+
+  try {
+    replayer.load(lastPayload);
+    replayPlayBtn.disabled = false;
+    replayStopBtn.disabled = false;
+  } catch (error) {
+    setReplayStatus(`replay load 실패: ${error.message}`);
+  }
 
   setStatus(
     [
@@ -120,7 +136,14 @@ replayFileInput.addEventListener("change", async () => {
 });
 
 replayPlayBtn.addEventListener("click", () => {
+  const payload = loadedPayload || lastPayload;
+  if (!payload) {
+    setReplayStatus("재생할 payload가 없습니다. 녹화 후 Stop 하거나 JSON 파일을 로드하세요.");
+    return;
+  }
+
   try {
+    replayer.load(payload);
     replayer.play({
       speed: Number(replaySpeedSelect.value || 1)
     });
@@ -132,6 +155,14 @@ replayPlayBtn.addEventListener("click", () => {
 replayStopBtn.addEventListener("click", () => {
   replayer.stop();
 });
+
+if (replayMutationToggleBtn) {
+  replayMutationToggleBtn.addEventListener("click", () => {
+    const enabled = replayer.setApplyMutationEvents(!replayer.applyMutationEvents);
+    syncReplayMutationButton();
+    setReplayStatus(`Mutation apply is now ${enabled ? "ON" : "OFF"}.`);
+  });
+}
 
 analyzeBtn.addEventListener("click", () => {
   if (!loadedPayload) {
@@ -199,7 +230,7 @@ llmAnalyzeBtn.addEventListener("click", async () => {
         JSON.stringify(json.customerResultKo || {}, null, 2),
         "",
         "Previous Chain Result",
-        JSON.stringify(json.result, null, 2),
+        JSON.stringify(json.result || {}, null, 2),
         "",
         "Raw Model Output",
         json.raw
@@ -282,4 +313,46 @@ function resetAnalysis() {
   copyPromptBtn.disabled = true;
   setAnalysisStatus("Behavior analysis idle");
   setLLMAnalysisStatus("LLM analysis idle");
+}
+
+function isInternalNode(node) {
+  if (!node) {
+    return false;
+  }
+
+  const el = node instanceof Element ? node : node.parentElement;
+  if (!el) {
+    return false;
+  }
+
+  return Boolean(el.closest("#panel-demo"));
+}
+
+function ensureReplayMutationToggleButton(container) {
+  if (!container) {
+    return null;
+  }
+
+  const existing = document.getElementById("replay-mutation-toggle-btn");
+  if (existing) {
+    return existing;
+  }
+
+  const btn = document.createElement("button");
+  btn.id = "replay-mutation-toggle-btn";
+  btn.type = "button";
+  btn.className = "secondary";
+  btn.textContent = "Mutation OFF";
+
+  container.insertBefore(btn, replayPlayBtn);
+  return btn;
+}
+
+function syncReplayMutationButton() {
+  if (!replayMutationToggleBtn) {
+    return;
+  }
+
+  const enabled = Boolean(replayer.applyMutationEvents);
+  replayMutationToggleBtn.textContent = enabled ? "Mutation ON" : "Mutation OFF";
 }

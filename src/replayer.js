@@ -2,12 +2,81 @@ export class SessionReplayer {
   constructor(options = {}) {
     this.iframe = options.iframe;
     this.onStatus = options.onStatus || (() => {});
+    this.applyMutationEvents = Boolean(options.applyMutationEvents);
 
     this.payload = null;
     this.isPlaying = false;
     this.timerId = null;
     this.currentIndex = 0;
     this.speed = 1;
+    this.viewport = {
+      width: window.innerWidth,
+      height: window.innerHeight
+    };
+
+    this.stageEl = options.stageEl || this.iframe?.parentElement || null;
+    this.canvasEl = null;
+    this.handleWindowResize = () => this.updateViewportScale();
+
+    this.mountStage();
+  }
+
+  mountStage() {
+    if (!this.iframe) {
+      return;
+    }
+
+    if (this.iframe.hasAttribute("sandbox")) {
+      this.iframe.removeAttribute("sandbox");
+    }
+
+    if (this.stageEl) {
+      this.stageEl.style.overflow = this.stageEl.style.overflow || "auto";
+      this.stageEl.style.display = this.stageEl.style.display || "flex";
+      this.stageEl.style.justifyContent = this.stageEl.style.justifyContent || "center";
+      this.stageEl.style.alignItems = this.stageEl.style.alignItems || "flex-start";
+      this.stageEl.style.padding = this.stageEl.style.padding || "12px";
+      this.stageEl.style.background = this.stageEl.style.background || "#f8fafc";
+    }
+
+    const existingCanvas = this.iframe.closest(".sr-replay-canvas");
+    if (existingCanvas) {
+      this.canvasEl = existingCanvas;
+    } else {
+      const canvas = document.createElement("div");
+      canvas.className = "sr-replay-canvas";
+      canvas.style.position = "relative";
+      canvas.style.background = "#fff";
+      canvas.style.boxShadow = "0 0 0 1px #d1d5db";
+      canvas.style.transformOrigin = "top left";
+
+      const parent = this.stageEl || this.iframe.parentElement;
+      if (parent) {
+        parent.insertBefore(canvas, this.iframe);
+        canvas.appendChild(this.iframe);
+        this.canvasEl = canvas;
+      }
+    }
+
+    this.iframe.style.display = "block";
+    this.iframe.style.border = "0";
+    this.iframe.style.background = "#fff";
+
+    window.addEventListener("resize", this.handleWindowResize);
+  }
+
+  destroy() {
+    this.stop();
+    window.removeEventListener("resize", this.handleWindowResize);
+  }
+
+  hasPayload() {
+    return Boolean(this.payload && Array.isArray(this.payload.events));
+  }
+
+  setApplyMutationEvents(enabled) {
+    this.applyMutationEvents = Boolean(enabled);
+    return this.applyMutationEvents;
   }
 
   load(payload) {
@@ -38,14 +107,25 @@ export class SessionReplayer {
       throw new Error("snapshot event is missing");
     }
 
-    const replayEvents = this.payload.events.filter((event) => event.type === "mutation" || event.type === "event");
+    this.setViewport(snapshot.data.viewport);
+
+    const replayEvents = this.payload.events.filter((event) => {
+      if (event.type === "event") {
+        return true;
+      }
+      if (event.type === "mutation") {
+        return this.applyMutationEvents;
+      }
+      return false;
+    });
+
     if (!replayEvents.length) {
       this.onStatus("No replayable events found.");
       this.isPlaying = false;
       return;
     }
 
-    this.renderSnapshot(snapshot.data.html, () => {
+    this.renderSnapshot(snapshot.data.html, snapshot.data.url, () => {
       this.onStatus(`Replay started. speed=${this.speed}x`);
       this.runTimeline(replayEvents);
     });
@@ -54,11 +134,47 @@ export class SessionReplayer {
   stop() {
     this.isPlaying = false;
     this.currentIndex = 0;
+
     if (this.timerId) {
       clearTimeout(this.timerId);
       this.timerId = null;
     }
+
     this.onStatus("Replay stopped.");
+  }
+
+  setViewport(viewport) {
+    const width = Number(viewport && viewport.width);
+    const height = Number(viewport && viewport.height);
+
+    if (width > 0 && height > 0) {
+      this.viewport = { width, height };
+    }
+
+    this.updateViewportScale();
+  }
+
+  updateViewportScale() {
+    if (!this.iframe || !this.canvasEl || !this.stageEl) {
+      return;
+    }
+
+    const viewportWidth = Math.max(1, Number(this.viewport.width) || 1);
+    const viewportHeight = Math.max(1, Number(this.viewport.height) || 1);
+    const stageWidth = this.stageEl.clientWidth || viewportWidth;
+    const stageHeight = this.stageEl.clientHeight || viewportHeight;
+
+    const scale = Math.min(stageWidth / viewportWidth, stageHeight / viewportHeight, 1);
+    const scaledWidth = Math.max(1, Math.floor(viewportWidth * scale));
+    const scaledHeight = Math.max(1, Math.floor(viewportHeight * scale));
+
+    this.canvasEl.style.width = `${scaledWidth}px`;
+    this.canvasEl.style.height = `${scaledHeight}px`;
+
+    this.iframe.style.width = `${viewportWidth}px`;
+    this.iframe.style.height = `${viewportHeight}px`;
+    this.iframe.style.transformOrigin = "top left";
+    this.iframe.style.transform = `scale(${scale})`;
   }
 
   runTimeline(events) {
@@ -93,13 +209,14 @@ export class SessionReplayer {
     step();
   }
 
-  renderSnapshot(rawHtml, onReady) {
+  renderSnapshot(rawHtml, baseUrl, onReady) {
     if (!this.iframe) {
       throw new Error("iframe is required");
     }
 
-    const sanitized = sanitizeDocumentHtml(rawHtml);
+    const sanitized = sanitizeDocumentHtml(rawHtml, baseUrl || window.location.href);
     this.iframe.onload = () => {
+      this.updateViewportScale();
       if (typeof onReady === "function") {
         onReady();
       }
@@ -109,12 +226,19 @@ export class SessionReplayer {
   }
 
   applyEvent(event) {
+    if (!this.iframe) {
+      return;
+    }
+
     const doc = this.iframe.contentDocument;
     if (!doc) {
       return;
     }
 
     if (event.type === "mutation") {
+      if (!this.applyMutationEvents) {
+        return;
+      }
       applyMutation(doc, event.data);
       return;
     }
@@ -179,6 +303,7 @@ function applyInteractionEvent(doc, data) {
     if ("value" in target && data.value !== null && data.value !== undefined) {
       target.value = data.value;
     }
+    dispatchInputLikeEvent(doc, target, data.eventType);
     return;
   }
 
@@ -198,6 +323,111 @@ function applyInteractionEvent(doc, data) {
   if (data.eventType === "click") {
     showClickPoint(doc, data);
     markClicked(target);
+    replayNativeClick(doc, target, data);
+  }
+}
+
+function dispatchInputLikeEvent(doc, target, eventType) {
+  const win = doc && doc.defaultView;
+  if (!win || typeof win.Event !== "function") {
+    return;
+  }
+
+  try {
+    target.dispatchEvent(new win.Event(eventType, { bubbles: true, cancelable: true }));
+  } catch {
+    // no-op
+  }
+}
+
+function replayNativeClick(doc, target, data) {
+  const win = doc && doc.defaultView;
+  if (!win || !(target instanceof win.Element)) {
+    return;
+  }
+
+  const mapped = mapPointerPosition(doc, data);
+  const x = mapped ? mapped.x : Number(data && data.x) || 0;
+  const y = mapped ? mapped.y : Number(data && data.y) || 0;
+  const button = Number(data && data.button) || 0;
+
+  try {
+    if (typeof target.focus === "function") {
+      target.focus({ preventScroll: true });
+    }
+  } catch {
+    // no-op
+  }
+
+  const anchor = target.closest ? target.closest("a[href]") : null;
+  const blockDefaultNavigation = anchor instanceof win.HTMLAnchorElement;
+  const preventDefault = (event) => {
+    event.preventDefault();
+  };
+
+  if (blockDefaultNavigation) {
+    anchor.addEventListener("click", preventDefault, {
+      capture: true,
+      once: true
+    });
+  }
+
+  dispatchPointerMouseSequence(win, target, { x, y, button });
+}
+
+function dispatchPointerMouseSequence(win, target, coords) {
+  const baseMouseInit = {
+    bubbles: true,
+    cancelable: true,
+    composed: true,
+    view: win,
+    clientX: coords.x,
+    clientY: coords.y,
+    button: coords.button
+  };
+
+  if (typeof win.PointerEvent === "function") {
+    target.dispatchEvent(new win.PointerEvent("pointerdown", {
+      ...baseMouseInit,
+      pointerId: 1,
+      pointerType: "mouse",
+      isPrimary: true,
+      buttons: 1
+    }));
+  }
+
+  if (typeof win.MouseEvent === "function") {
+    target.dispatchEvent(new win.MouseEvent("mousedown", {
+      ...baseMouseInit,
+      buttons: 1
+    }));
+  }
+
+  if (typeof win.PointerEvent === "function") {
+    target.dispatchEvent(new win.PointerEvent("pointerup", {
+      ...baseMouseInit,
+      pointerId: 1,
+      pointerType: "mouse",
+      isPrimary: true,
+      buttons: 0
+    }));
+  }
+
+  if (typeof win.MouseEvent === "function") {
+    target.dispatchEvent(new win.MouseEvent("mouseup", {
+      ...baseMouseInit,
+      buttons: 0
+    }));
+    target.dispatchEvent(new win.MouseEvent("click", {
+      ...baseMouseInit,
+      detail: 1,
+      buttons: 0
+    }));
+    return;
+  }
+
+  if (typeof target.click === "function") {
+    target.click();
   }
 }
 
@@ -205,7 +435,7 @@ function markClicked(el) {
   el.style.outline = "2px solid #ef4444";
   setTimeout(() => {
     el.style.outline = "";
-  }, 250);
+  }, 220);
 }
 
 function showClickPoint(doc, data) {
@@ -225,7 +455,6 @@ function showClickPoint(doc, data) {
   pointer.style.left = `${mapped.x}px`;
   pointer.style.top = `${mapped.y}px`;
   pointer.style.opacity = "1";
-  pointer.style.transform = "translate(-50%, -50%) scale(1)";
 
   ripple.style.position = "fixed";
   ripple.style.left = `${mapped.x}px`;
@@ -243,7 +472,7 @@ function showClickPoint(doc, data) {
   layer.appendChild(ripple);
 
   requestAnimationFrame(() => {
-    ripple.style.transform = "translate(-50%, -50%) scale(2.7)";
+    ripple.style.transform = "translate(-50%, -50%) scale(2.6)";
     ripple.style.opacity = "0";
   });
 
@@ -283,7 +512,7 @@ function showMouseMovePath(doc, data) {
     segment.style.height = "2px";
     segment.style.transformOrigin = "0 0";
     segment.style.transform = `rotate(${angle}deg)`;
-    segment.style.background = "rgba(239, 68, 68, 0.45)";
+    segment.style.background = "rgba(239, 68, 68, 0.42)";
     segment.style.borderRadius = "999px";
     segment.style.pointerEvents = "none";
     segment.style.zIndex = "2147483646";
@@ -304,7 +533,6 @@ function showMouseMovePath(doc, data) {
   pointer.style.left = `${x}px`;
   pointer.style.top = `${y}px`;
   pointer.style.opacity = "1";
-  pointer.style.transform = "translate(-50%, -50%) scale(1)";
 
   layer.dataset.lastX = String(x);
   layer.dataset.lastY = String(y);
@@ -323,11 +551,12 @@ function mapPointerPosition(doc, data) {
     Number.isFinite(Number(data.targetOffsetY)) &&
     Number(data.targetWidth) > 0 &&
     Number(data.targetHeight) > 0;
+
   const recordedViewportWidth = Number(data.viewportWidth);
   const recordedViewportHeight = Number(data.viewportHeight);
 
   if (
-    target instanceof Element &&
+    isElementNode(target, doc) &&
     hasTargetMeta &&
     shouldUseTargetRelativeMapping(target, data, recordedViewportWidth, recordedViewportHeight)
   ) {
@@ -342,7 +571,6 @@ function mapPointerPosition(doc, data) {
 
   const recordedWidth = Number(data.viewportWidth);
   const recordedHeight = Number(data.viewportHeight);
-
   if (!recordedWidth || !recordedHeight) {
     return {
       x: data.x,
@@ -368,14 +596,10 @@ function shouldUseTargetRelativeMapping(target, data, viewportWidth, viewportHei
 
   const targetWidth = Number(data.targetWidth);
   const targetHeight = Number(data.targetHeight);
-
   const isNearFullWidth = targetWidth >= viewportWidth * 0.92;
   const isNearFullHeight = targetHeight >= viewportHeight * 0.92;
-  if (isNearFullWidth || isNearFullHeight) {
-    return false;
-  }
 
-  return true;
+  return !(isNearFullWidth || isNearFullHeight);
 }
 
 function ensurePointerLayer(doc) {
@@ -401,9 +625,9 @@ function ensurePointerLayer(doc) {
   pointer.style.borderRadius = "999px";
   pointer.style.background = "#ef4444";
   pointer.style.boxShadow = "0 0 0 4px rgba(239, 68, 68, 0.18)";
-  pointer.style.transform = "translate(-50%, -50%) scale(0.9)";
+  pointer.style.transform = "translate(-50%, -50%)";
   pointer.style.opacity = "0";
-  pointer.style.transition = "opacity 120ms ease, transform 120ms ease";
+  pointer.style.transition = "opacity 120ms ease";
 
   layer.appendChild(pointer);
   doc.body.appendChild(layer);
@@ -427,9 +651,10 @@ function queryPath(doc, path) {
   }
 }
 
-function sanitizeDocumentHtml(rawHtml) {
+function sanitizeDocumentHtml(rawHtml, baseUrl) {
   const parser = new DOMParser();
   const parsed = parser.parseFromString(String(rawHtml || ""), "text/html");
+  ensureBaseHref(parsed, baseUrl);
   sanitizeDomTree(parsed);
   return parsed.documentElement.outerHTML;
 }
@@ -446,28 +671,31 @@ function sanitizeDomTree(root) {
     return;
   }
 
-  root.querySelectorAll("script").forEach((node) => node.remove());
-
-  root
-    .querySelectorAll("link[rel='preload'], link[rel='modulepreload'], link[rel='prefetch']")
-    .forEach((node) => node.remove());
-
   root.querySelectorAll("[autofocus]").forEach((node) => node.removeAttribute("autofocus"));
+}
 
-  root.querySelectorAll("*").forEach((node) => {
-    Array.from(node.attributes || []).forEach((attr) => {
-      const name = String(attr.name || "").toLowerCase();
-      const value = String(attr.value || "").trim().toLowerCase();
+function ensureBaseHref(doc, baseUrl) {
+  if (!doc || !doc.head || !baseUrl) {
+    return;
+  }
 
-      if (name.startsWith("on")) {
-        node.removeAttribute(attr.name);
-        return;
-      }
+  let base = doc.querySelector("base");
+  if (!base) {
+    base = doc.createElement("base");
+    doc.head.prepend(base);
+  }
+  base.setAttribute("href", String(baseUrl));
+}
 
-      const isSrcLike = name === "src" || name === "href" || name === "xlink:href";
-      if (isSrcLike && value.startsWith("javascript:")) {
-        node.removeAttribute(attr.name);
-      }
-    });
-  });
+function isElementNode(node, doc) {
+  if (!node || node.nodeType !== Node.ELEMENT_NODE) {
+    return false;
+  }
+
+  const win = doc?.defaultView;
+  if (!win || typeof win.Element !== "function") {
+    return true;
+  }
+
+  return node instanceof win.Element;
 }

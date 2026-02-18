@@ -44,6 +44,7 @@
       analyzeWithServer,
       loadPayload,
       playReplay,
+      setReplayMutationMode: (enabled) => replayer.setApplyMutationEvents(Boolean(enabled)),
       stopReplay: () => replayer.stop(),
       openReplay: () => replayer.open(),
       closeReplay: () => replayer.close(),
@@ -53,7 +54,7 @@
 
     setStatus("Snippet loaded. Start to record.");
     setAnalysisStatus("Behavior analysis idle");
-    setReplayStatus("Replay idle");
+    setReplayStatus("Replay idle (Mutation OFF)");
 
     console.log("[SessionReplaySnippet] Ready.");
     console.log("[SessionReplaySnippet] Use window.SessionReplaySnippet.help() for API usage.");
@@ -65,6 +66,7 @@
     ui.downloadBtn.addEventListener("click", download);
     ui.analyzeBtn.addEventListener("click", analyze);
     ui.copyPromptBtn.addEventListener("click", copyPrompt);
+    ui.toggleMutationBtn.textContent = replayer.applyMutationEvents ? "Mutation ON" : "Mutation OFF";
 
     ui.openReplayBtn.addEventListener("click", () => {
       replayer.open();
@@ -76,6 +78,12 @@
 
     ui.stopReplayBtn.addEventListener("click", () => {
       replayer.stop();
+    });
+
+    ui.toggleMutationBtn.addEventListener("click", () => {
+      const enabled = replayer.setApplyMutationEvents(!replayer.applyMutationEvents);
+      ui.toggleMutationBtn.textContent = enabled ? "Mutation ON" : "Mutation OFF";
+      setReplayStatus(`Mutation apply is now ${enabled ? "ON" : "OFF"}.`);
     });
 
     ui.fileInput.addEventListener("change", async () => {
@@ -265,6 +273,7 @@
       analyzeWithServer: "POST summary/prompt to server endpoint and render customerResultKo (default /api/llm-analyze)",
       loadPayload: "Load payload object for replay",
       playReplay: "Open replay modal and play timeline",
+      setReplayMutationMode: "Enable/disable mutation event application during replay",
       stopReplay: "Stop replay",
       openReplay: "Open replay modal",
       closeReplay: "Close replay modal",
@@ -392,9 +401,22 @@
         padding: 8px 10px;
         background: #e2e8f0;
       }
+      #${REPLAY_MODAL_ID} .sr-replay-stage {
+        overflow: auto;
+        background: #f8fafc;
+        padding: 12px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+      }
+      #${REPLAY_MODAL_ID} .sr-replay-canvas {
+        position: relative;
+        background: #fff;
+        box-shadow: 0 0 0 1px #d1d5db;
+        transform-origin: top left;
+      }
       #${REPLAY_MODAL_ID} iframe {
-        width: 100%;
-        height: 100%;
+        display: block;
         border: 0;
         background: white;
       }
@@ -427,6 +449,7 @@
           <option value="2">2x</option>
           <option value="4">4x</option>
         </select>
+        <button data-id="toggle-mutation" class="ghost">Mutation OFF</button>
         <button data-id="open-replay" class="ghost">Open Replay</button>
         <button data-id="play-replay" class="secondary">Play</button>
         <button data-id="stop-replay" class="danger">Stop</button>
@@ -450,6 +473,7 @@
       copyPromptBtn: panel.querySelector("[data-id='copy-prompt']"),
       fileInput: panel.querySelector("[data-id='file']"),
       replaySpeed: panel.querySelector("[data-id='speed']"),
+      toggleMutationBtn: panel.querySelector("[data-id='toggle-mutation']"),
       openReplayBtn: panel.querySelector("[data-id='open-replay']"),
       playReplayBtn: panel.querySelector("[data-id='play-replay']"),
       stopReplayBtn: panel.querySelector("[data-id='stop-replay']"),
@@ -805,14 +829,22 @@
       this.modalId = options.modalId;
       this.shouldIgnoreNode = options.shouldIgnoreNode || (() => false);
       this.onStatus = options.onStatus || (() => {});
+      this.applyMutationEvents = Boolean(options.applyMutationEvents);
       this.payload = null;
       this.isPlaying = false;
       this.timerId = null;
       this.currentIndex = 0;
       this.speed = 1;
+      this.viewport = {
+        width: window.innerWidth,
+        height: window.innerHeight
+      };
 
       this.modalEl = null;
+      this.stageEl = null;
+      this.canvasEl = null;
       this.iframe = null;
+      this.handleWindowResize = () => this.updateViewportScale();
       this.mount();
     }
 
@@ -825,18 +857,31 @@
             <strong>Replay Viewer</strong>
             <button data-id="close">Close</button>
           </div>
-          <iframe sandbox="allow-same-origin allow-scripts allow-forms allow-modals allow-popups"></iframe>
+          <div class="sr-replay-stage">
+            <div class="sr-replay-canvas">
+              <iframe></iframe>
+            </div>
+          </div>
         </div>
       `;
 
       document.body.appendChild(modal);
       this.modalEl = modal;
+      this.stageEl = modal.querySelector(".sr-replay-stage");
+      this.canvasEl = modal.querySelector(".sr-replay-canvas");
       this.iframe = modal.querySelector("iframe");
 
       const closeBtn = modal.querySelector("[data-id='close']");
       closeBtn.addEventListener("click", () => {
         this.close();
       });
+
+      window.addEventListener("resize", this.handleWindowResize);
+    }
+
+    setApplyMutationEvents(enabled) {
+      this.applyMutationEvents = Boolean(enabled);
+      return this.applyMutationEvents;
     }
 
     hasPayload() {
@@ -855,6 +900,7 @@
     open() {
       if (this.modalEl) {
         this.modalEl.classList.add("open");
+        this.updateViewportScale();
       }
     }
 
@@ -882,8 +928,17 @@
       if (!snapshot || !snapshot.data || !snapshot.data.html) {
         throw new Error("snapshot event is missing");
       }
+      this.setViewport(snapshot.data && snapshot.data.viewport);
 
-      const replayEvents = this.payload.events.filter((event) => event.type === "mutation" || event.type === "event");
+      const replayEvents = this.payload.events.filter((event) => {
+        if (event.type === "event") {
+          return true;
+        }
+        if (event.type === "mutation") {
+          return this.applyMutationEvents;
+        }
+        return false;
+      });
       if (!replayEvents.length) {
         this.onStatus("No replayable events found.");
         this.isPlaying = false;
@@ -908,11 +963,44 @@
 
     destroy() {
       this.stop();
+      window.removeEventListener("resize", this.handleWindowResize);
       if (this.modalEl) {
         this.modalEl.remove();
         this.modalEl = null;
+        this.stageEl = null;
+        this.canvasEl = null;
         this.iframe = null;
       }
+    }
+
+    setViewport(viewport) {
+      const width = Number(viewport && viewport.width);
+      const height = Number(viewport && viewport.height);
+      if (width > 0 && height > 0) {
+        this.viewport = { width, height };
+      }
+      this.updateViewportScale();
+    }
+
+    updateViewportScale() {
+      if (!this.stageEl || !this.canvasEl || !this.iframe) {
+        return;
+      }
+
+      const viewportWidth = Math.max(1, Number(this.viewport && this.viewport.width) || 1);
+      const viewportHeight = Math.max(1, Number(this.viewport && this.viewport.height) || 1);
+      const stageWidth = this.stageEl.clientWidth || viewportWidth;
+      const stageHeight = this.stageEl.clientHeight || viewportHeight;
+      const scale = Math.min(stageWidth / viewportWidth, stageHeight / viewportHeight, 1);
+      const scaledWidth = Math.max(1, Math.floor(viewportWidth * scale));
+      const scaledHeight = Math.max(1, Math.floor(viewportHeight * scale));
+
+      this.canvasEl.style.width = `${scaledWidth}px`;
+      this.canvasEl.style.height = `${scaledHeight}px`;
+      this.iframe.style.width = `${viewportWidth}px`;
+      this.iframe.style.height = `${viewportHeight}px`;
+      this.iframe.style.transformOrigin = "top left";
+      this.iframe.style.transform = `scale(${scale})`;
     }
 
     runTimeline(events) {
@@ -969,6 +1057,9 @@
       }
 
       if (event.type === "mutation") {
+        if (!this.applyMutationEvents) {
+          return;
+        }
         applyMutation(doc, event.data);
         return;
       }
@@ -1286,18 +1377,6 @@
     root.querySelectorAll("[autofocus]").forEach((node) => node.removeAttribute("autofocus"));
 
     root.querySelectorAll(`#${PANEL_ID}, #${REPLAY_MODAL_ID}, #${STYLE_ID}`).forEach((node) => node.remove());
-
-    root.querySelectorAll("*").forEach((node) => {
-      Array.from(node.attributes || []).forEach((attr) => {
-        const name = String(attr.name || "").toLowerCase();
-        const value = String(attr.value || "").trim().toLowerCase();
-
-        const isSrcLike = name === "src" || name === "href" || name === "xlink:href";
-        if (isSrcLike && value.startsWith("javascript:")) {
-          node.removeAttribute(attr.name);
-        }
-      });
-    });
   }
 
   function ensureBaseHref(doc, baseUrl) {

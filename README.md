@@ -102,7 +102,7 @@ npm start
 - `src/replayer.js`: 재생 로직
 - `src/main.js`: UI 이벤트 연결, JSON 입출력
 - `src/behavior-analyzer.js`: 행동 피처 추출 + LLM 프롬프트 생성
-- `server.js`: Express API + LangChain/LangGraph + OpenAI 연동
+- `src/server.js`: Express API + LangChain/LangGraph + OpenAI 연동
   - 1차 체인: 세션 행동 분석 JSON 생성
   - 2차 체인: 1차 결과를 입력으로 한국어 고객 유형 요약 생성
 
