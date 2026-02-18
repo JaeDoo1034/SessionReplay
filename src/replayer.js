@@ -3,6 +3,7 @@ export class SessionReplayer {
     this.iframe = options.iframe;
     this.onStatus = options.onStatus || (() => {});
     this.applyMutationEvents = Boolean(options.applyMutationEvents);
+    this.executePageScripts = Boolean(options.executePageScripts);
 
     this.payload = null;
     this.isPlaying = false;
@@ -24,10 +25,6 @@ export class SessionReplayer {
   mountStage() {
     if (!this.iframe) {
       return;
-    }
-
-    if (this.iframe.hasAttribute("sandbox")) {
-      this.iframe.removeAttribute("sandbox");
     }
 
     if (this.stageEl) {
@@ -61,6 +58,7 @@ export class SessionReplayer {
     this.iframe.style.display = "block";
     this.iframe.style.border = "0";
     this.iframe.style.background = "#fff";
+    this.updateIframeSandbox();
 
     window.addEventListener("resize", this.handleWindowResize);
   }
@@ -70,6 +68,16 @@ export class SessionReplayer {
     window.removeEventListener("resize", this.handleWindowResize);
   }
 
+  applyConfig(config = {}) {
+    const replay = config.replay || {};
+    if (replay.scriptMode !== undefined) {
+      this.setExecutePageScripts(replay.scriptMode === "on");
+    }
+    return {
+      scriptMode: this.executePageScripts ? "on" : "off"
+    };
+  }
+
   hasPayload() {
     return Boolean(this.payload && Array.isArray(this.payload.events));
   }
@@ -77,6 +85,25 @@ export class SessionReplayer {
   setApplyMutationEvents(enabled) {
     this.applyMutationEvents = Boolean(enabled);
     return this.applyMutationEvents;
+  }
+
+  setExecutePageScripts(enabled) {
+    this.executePageScripts = Boolean(enabled);
+    this.updateIframeSandbox();
+    return this.executePageScripts;
+  }
+
+  updateIframeSandbox() {
+    if (!this.iframe) {
+      return;
+    }
+
+    const tokens = ["allow-same-origin", "allow-forms"];
+    if (this.executePageScripts) {
+      tokens.push("allow-scripts");
+    }
+
+    this.iframe.setAttribute("sandbox", tokens.join(" "));
   }
 
   load(payload) {
@@ -98,12 +125,12 @@ export class SessionReplayer {
       return;
     }
 
-    this.speed = Number(options.speed || 1);
+    this.speed = Math.max(0.1, Number(options.speed) || 1);
     this.isPlaying = true;
     this.currentIndex = 0;
 
-    const snapshot = this.payload.events.find((event) => event.type === "snapshot");
-    if (!snapshot || !snapshot.data || !snapshot.data.html) {
+    const snapshot = this.payload.events.find((event) => event.type === "snapshot" && event.data && event.data.html);
+    if (!snapshot) {
       throw new Error("snapshot event is missing");
     }
 
@@ -114,19 +141,22 @@ export class SessionReplayer {
         return true;
       }
       if (event.type === "mutation") {
-        return this.applyMutationEvents;
+        return true;
       }
       return false;
     });
 
     if (!replayEvents.length) {
-      this.onStatus("No replayable events found.");
+      this.renderSnapshot(snapshot.data.html, snapshot.data.url, snapshot.data.iframeSummary || [], () => {
+        this.onStatus("Snapshot rendered. No replayable events found.");
+      });
       this.isPlaying = false;
       return;
     }
 
-    this.renderSnapshot(snapshot.data.html, snapshot.data.url, () => {
-      this.onStatus(`Replay started. speed=${this.speed}x`);
+    this.renderSnapshot(snapshot.data.html, snapshot.data.url, snapshot.data.iframeSummary || [], () => {
+      const scriptMode = this.executePageScripts ? "ON" : "OFF";
+      this.onStatus(`Replay started. speed=${this.speed}x, Mutation ${this.applyMutationEvents ? "ON" : "OFF"}, Scripts ${scriptMode}`);
       this.runTimeline(replayEvents);
     });
   }
@@ -191,65 +221,80 @@ export class SessionReplayer {
       }
 
       const current = events[this.currentIndex];
-      this.applyEvent(current);
+      this.applyEvent(current, () => {
+        const next = events[this.currentIndex + 1];
+        this.currentIndex += 1;
 
-      const next = events[this.currentIndex + 1];
-      this.currentIndex += 1;
+        if (!next) {
+          this.timerId = setTimeout(step, 0);
+          return;
+        }
 
-      if (!next) {
-        this.timerId = setTimeout(step, 0);
-        return;
-      }
-
-      const gapMs = Math.max(0, next.timeOffsetMs - current.timeOffsetMs);
-      const delay = Math.max(0, Math.floor(gapMs / this.speed));
-      this.timerId = setTimeout(step, delay);
+        const gapMs = Math.max(0, Number(next.timeOffsetMs) - Number(current.timeOffsetMs));
+        const delay = Math.max(0, Math.floor(gapMs / this.speed));
+        this.timerId = setTimeout(step, delay);
+      });
     };
 
     step();
   }
 
-  renderSnapshot(rawHtml, baseUrl, onReady) {
+  renderSnapshot(rawHtml, baseUrl, iframeSummary = [], onReady) {
     if (!this.iframe) {
       throw new Error("iframe is required");
     }
 
-    const sanitized = sanitizeDocumentHtml(rawHtml, baseUrl || window.location.href);
+    this.updateIframeSandbox();
+    const sanitized = sanitizeDocumentHtml(rawHtml, baseUrl || window.location.href, {
+      allowScripts: this.executePageScripts
+    });
+
     this.iframe.onload = () => {
+      const doc = this.iframe && this.iframe.contentDocument;
+      if (doc) {
+        restoreIframeSources(doc, iframeSummary, baseUrl || window.location.href);
+      }
       this.updateViewportScale();
       if (typeof onReady === "function") {
         onReady();
       }
       this.iframe.onload = null;
     };
+
     this.iframe.srcdoc = sanitized;
   }
 
-  applyEvent(event) {
+  applyEvent(event, done = () => {}) {
     if (!this.iframe) {
+      done();
       return;
     }
 
     const doc = this.iframe.contentDocument;
     if (!doc) {
+      done();
       return;
     }
 
     if (event.type === "mutation") {
-      if (!this.applyMutationEvents) {
-        return;
+      if (this.applyMutationEvents) {
+        applyMutation(doc, event.data, { allowScripts: this.executePageScripts });
       }
-      applyMutation(doc, event.data);
+      done();
       return;
     }
 
     if (event.type === "event") {
       applyInteractionEvent(doc, event.data);
+      done();
+      return;
     }
+
+    done();
   }
 }
 
-function applyMutation(doc, data) {
+function applyMutation(doc, data, options = {}) {
   if (!data) {
     return;
   }
@@ -260,8 +305,17 @@ function applyMutation(doc, data) {
   }
 
   if (data.mutationType === "childList") {
-    if (typeof data.targetInnerHTML === "string") {
-      target.innerHTML = sanitizeFragmentHtml(data.targetInnerHTML);
+    if (!shouldApplyChildListMutation(target, data)) {
+      return;
+    }
+
+    const patched = applyChildListMutationPatch(doc, target, data, options);
+    if (patched) {
+      return;
+    }
+
+    if (typeof data.targetInnerHTML === "string" && data.targetInnerHTML && data.targetInnerHTML !== "[redacted]") {
+      target.innerHTML = sanitizeFragmentHtml(data.targetInnerHTML, options);
     }
     return;
   }
@@ -271,17 +325,148 @@ function applyMutation(doc, data) {
       return;
     }
 
+    if (isBlockedReplayAttribute(data.attributeName, data.newValue, options)) {
+      return;
+    }
+
     if (data.newValue === null || data.newValue === undefined) {
       target.removeAttribute(data.attributeName);
     } else {
-      target.setAttribute(data.attributeName, data.newValue);
+      target.setAttribute(data.attributeName, String(data.newValue));
     }
     return;
   }
 
   if (data.mutationType === "characterData") {
-    target.textContent = data.newValue ?? "";
+    target.textContent = data.newValue || "";
   }
+}
+
+function shouldApplyChildListMutation(target, data) {
+  if (!isElementNode(target, target.ownerDocument)) {
+    return false;
+  }
+
+  const tag = String(target.tagName || "").toLowerCase();
+  if (tag === "html" || tag === "body") {
+    return false;
+  }
+
+  const selector = String((data && data.target) || "");
+  const html = String((data && data.targetInnerHTML) || "");
+  const addedCount = Array.isArray(data && data.addedNodes) ? data.addedNodes.length : 0;
+  const removedCount = Array.isArray(data && data.removedNodes) ? data.removedNodes.length : 0;
+  const hasPatchNodes = addedCount + removedCount > 0;
+
+  if (!html && !hasPatchNodes) {
+    return false;
+  }
+
+  const idBasedPath = selector.includes("#");
+  const nthBasedPath = selector.includes(":nth-of-type(");
+  const isLargeMutation = html.length > 3500 || target.childElementCount > 20;
+  if (!idBasedPath && nthBasedPath && isLargeMutation) {
+    return false;
+  }
+
+  return true;
+}
+
+function applyChildListMutationPatch(doc, target, data, options = {}) {
+  if (!isElementNode(target, doc)) {
+    return false;
+  }
+
+  const removedNodes = Array.isArray(data && data.removedNodes) ? data.removedNodes : [];
+  const addedNodes = Array.isArray(data && data.addedNodes) ? data.addedNodes : [];
+  let changed = false;
+
+  removedNodes.forEach((nodeDesc) => {
+    if (removeSerializedNode(doc, target, nodeDesc)) {
+      changed = true;
+    }
+  });
+
+  addedNodes.forEach((nodeDesc) => {
+    if (appendSerializedNode(doc, target, nodeDesc, options)) {
+      changed = true;
+    }
+  });
+
+  return changed;
+}
+
+function removeSerializedNode(doc, target, nodeDesc) {
+  if (!nodeDesc || !isElementNode(target, doc)) {
+    return false;
+  }
+
+  if (nodeDesc.nodeType === "element" && nodeDesc.path) {
+    const candidate = queryPath(doc, nodeDesc.path);
+    if (candidate && candidate.parentNode === target) {
+      candidate.remove();
+      return true;
+    }
+  }
+
+  if (nodeDesc.nodeType === "text") {
+    const text = String(nodeDesc.textContent || "");
+    const textNode = Array.from(target.childNodes).find((node) => node.nodeType === Node.TEXT_NODE && node.textContent === text);
+    if (textNode) {
+      textNode.remove();
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function appendSerializedNode(doc, target, nodeDesc, options = {}) {
+  if (!nodeDesc || !isElementNode(target, doc)) {
+    return false;
+  }
+
+  if (nodeDesc.nodeType === "text") {
+    target.appendChild(doc.createTextNode(String(nodeDesc.textContent || "")));
+    return true;
+  }
+
+  if (nodeDesc.nodeType === "element" && typeof nodeDesc.outerHTML === "string") {
+    if (!nodeDesc.outerHTML || nodeDesc.outerHTML === "[redacted]") {
+      return false;
+    }
+
+    const template = doc.createElement("template");
+    template.innerHTML = sanitizeFragmentHtml(nodeDesc.outerHTML, { ...options, allowScripts: false });
+    const nodes = Array.from(template.content.childNodes);
+    if (!nodes.length) {
+      return false;
+    }
+
+    const fragment = doc.createDocumentFragment();
+    nodes.forEach((node) => fragment.appendChild(node));
+    target.appendChild(fragment);
+    return true;
+  }
+
+  return false;
+}
+
+function isBlockedReplayAttribute(attributeName, value, options = {}) {
+  const name = String(attributeName || "").toLowerCase();
+  if (!name) {
+    return false;
+  }
+
+  if (!options.allowScripts && name.startsWith("on")) {
+    return true;
+  }
+
+  if (!options.allowScripts && isJavascriptUrlAttribute(name, String(value || "").trim())) {
+    return true;
+  }
+
+  return false;
 }
 
 function applyInteractionEvent(doc, data) {
@@ -289,7 +474,13 @@ function applyInteractionEvent(doc, data) {
     return;
   }
 
-  if (data.eventType === "mousemove") {
+  const eventType = String(data.eventType).toLowerCase();
+
+  if (eventType === "intent_marker") {
+    return;
+  }
+
+  if (eventType === "mousemove") {
     showMouseMovePath(doc, data);
     return;
   }
@@ -299,20 +490,22 @@ function applyInteractionEvent(doc, data) {
     return;
   }
 
-  if (data.eventType === "input" || data.eventType === "change") {
+  if (eventType === "input" || eventType === "change") {
     if ("value" in target && data.value !== null && data.value !== undefined) {
       target.value = data.value;
     }
-    dispatchInputLikeEvent(doc, target, data.eventType);
+    dispatchInputLikeEvent(doc, target, eventType);
     return;
   }
 
-  if (data.eventType === "scroll") {
+  if (eventType === "scroll") {
     const top = Number(data.scrollTop || 0);
     const left = Number(data.scrollLeft || 0);
 
     if (target === doc.documentElement || target === doc.body) {
-      doc.defaultView.scrollTo(left, top);
+      if (doc.defaultView && typeof doc.defaultView.scrollTo === "function") {
+        doc.defaultView.scrollTo(left, top);
+      }
     } else if ("scrollTop" in target) {
       target.scrollTop = top;
       target.scrollLeft = left;
@@ -320,7 +513,7 @@ function applyInteractionEvent(doc, data) {
     return;
   }
 
-  if (data.eventType === "click") {
+  if (eventType === "click") {
     showClickPoint(doc, data);
     markClicked(target);
     replayNativeClick(doc, target, data);
@@ -342,7 +535,7 @@ function dispatchInputLikeEvent(doc, target, eventType) {
 
 function replayNativeClick(doc, target, data) {
   const win = doc && doc.defaultView;
-  if (!win || !(target instanceof win.Element)) {
+  if (!win || !isElementNode(target, doc)) {
     return;
   }
 
@@ -360,7 +553,7 @@ function replayNativeClick(doc, target, data) {
   }
 
   const anchor = target.closest ? target.closest("a[href]") : null;
-  const blockDefaultNavigation = anchor instanceof win.HTMLAnchorElement;
+  const blockDefaultNavigation = anchor && isAnchorNode(anchor, win);
   const preventDefault = (event) => {
     event.preventDefault();
   };
@@ -373,6 +566,13 @@ function replayNativeClick(doc, target, data) {
   }
 
   dispatchPointerMouseSequence(win, target, { x, y, button });
+}
+
+function isAnchorNode(node, win) {
+  if (!node || !win || !win.HTMLAnchorElement) {
+    return false;
+  }
+  return node instanceof win.HTMLAnchorElement;
 }
 
 function dispatchPointerMouseSequence(win, target, coords) {
@@ -630,7 +830,9 @@ function ensurePointerLayer(doc) {
   pointer.style.transition = "opacity 120ms ease";
 
   layer.appendChild(pointer);
-  doc.body.appendChild(layer);
+  if (doc.body) {
+    doc.body.appendChild(layer);
+  }
 
   return layer;
 }
@@ -651,27 +853,46 @@ function queryPath(doc, path) {
   }
 }
 
-function sanitizeDocumentHtml(rawHtml, baseUrl) {
+function sanitizeDocumentHtml(rawHtml, baseUrl, options = {}) {
   const parser = new DOMParser();
   const parsed = parser.parseFromString(String(rawHtml || ""), "text/html");
   ensureBaseHref(parsed, baseUrl);
-  sanitizeDomTree(parsed);
+  sanitizeDomTree(parsed, options);
   return parsed.documentElement.outerHTML;
 }
 
-function sanitizeFragmentHtml(rawHtml) {
+function sanitizeFragmentHtml(rawHtml, options = {}) {
   const template = document.createElement("template");
   template.innerHTML = String(rawHtml || "");
-  sanitizeDomTree(template.content);
+  sanitizeDomTree(template.content, options);
   return template.innerHTML;
 }
 
-function sanitizeDomTree(root) {
+function sanitizeDomTree(root, options = {}) {
   if (!root || !root.querySelectorAll) {
     return;
   }
 
+  const allowScripts = Boolean(options.allowScripts);
   root.querySelectorAll("[autofocus]").forEach((node) => node.removeAttribute("autofocus"));
+
+  if (!allowScripts) {
+    root.querySelectorAll("script").forEach((node) => node.remove());
+    root.querySelectorAll("*").forEach((node) => {
+      if (!node.attributes || !node.attributes.length) {
+        return;
+      }
+
+      Array.from(node.attributes).forEach((attribute) => {
+        const name = String(attribute.name || "").toLowerCase();
+        const value = String(attribute.value || "").trim();
+
+        if (name.startsWith("on") || isJavascriptUrlAttribute(name, value)) {
+          node.removeAttribute(attribute.name);
+        }
+      });
+    });
+  }
 }
 
 function ensureBaseHref(doc, baseUrl) {
@@ -687,14 +908,109 @@ function ensureBaseHref(doc, baseUrl) {
   base.setAttribute("href", String(baseUrl));
 }
 
-function isElementNode(node, doc) {
-  if (!node || node.nodeType !== Node.ELEMENT_NODE) {
+function isJavascriptUrlAttribute(name, value) {
+  if (!name || !value) {
     return false;
   }
 
-  const win = doc?.defaultView;
-  if (!win || typeof win.Element !== "function") {
+  if (!["href", "src", "xlink:href", "formaction", "action"].includes(name)) {
+    return false;
+  }
+
+  return /^javascript:/i.test(value);
+}
+
+function restoreIframeSources(doc, iframeSummary, baseUrl) {
+  if (!doc || !Array.isArray(iframeSummary) || !iframeSummary.length) {
+    return;
+  }
+
+  iframeSummary.forEach((item) => {
+    const target = queryPath(doc, item && item.target);
+    if (!target || String(target.tagName || "").toLowerCase() !== "iframe") {
+      return;
+    }
+
+    const desiredSrc = normalizeRecordedIframeSrc((item && (item.currentSrc || item.src)) || "");
+    if (!desiredSrc) {
+      return;
+    }
+
+    if (isSameOriginUrl(desiredSrc, baseUrl)) {
+      target.setAttribute("src", desiredSrc);
+      return;
+    }
+
+    renderThirdPartyFramePlaceholder(target, desiredSrc, baseUrl);
+  });
+}
+
+function normalizeRecordedIframeSrc(url) {
+  const text = String(url || "").trim();
+  if (!text || text === "about:blank") {
+    return "";
+  }
+
+  try {
+    return new URL(text, window.location.href).href;
+  } catch {
+    return text;
+  }
+}
+
+function isSameOriginUrl(url, baseUrl) {
+  const normalized = normalizeRecordedIframeSrc(url);
+  if (!normalized) {
     return true;
+  }
+
+  try {
+    const origin = new URL(normalized, baseUrl || window.location.href).origin;
+    return origin === window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
+function renderThirdPartyFramePlaceholder(iframe, desiredSrc, baseUrl) {
+  if (!iframe || !(iframe instanceof Element)) {
+    return;
+  }
+
+  const safeSrc = escapeHtml(desiredSrc || "");
+  const safeBase = escapeHtml(baseUrl || window.location.href);
+
+  iframe.removeAttribute("src");
+  iframe.setAttribute("srcdoc", [
+    "<!doctype html><html><head><meta charset='utf-8' />",
+    "<style>body{margin:0;font:13px/1.45 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;background:#f8fafc;color:#0f172a;}",
+    ".wrap{padding:16px;} .ttl{font-weight:700;margin-bottom:8px;} .muted{color:#475569;margin-bottom:10px;} .box{padding:10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;word-break:break-all;}</style>",
+    "</head><body><div class='wrap'><div class='ttl'>Third-party frame placeholder</div>",
+    "<div class='muted'>Cross-origin iframe DOM cannot be replayed directly.</div>",
+    `<div class='box'><strong>Recorded src:</strong><br/>${safeSrc}</div>`,
+    `<div class='muted' style='margin-top:8px'>Base: ${safeBase}</div>`,
+    "</div></body></html>"
+  ].join(""));
+  iframe.setAttribute("title", "Third-party frame placeholder");
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function isElementNode(node, doc) {
+  if (!node) {
+    return false;
+  }
+
+  const win = (doc && doc.defaultView) || window;
+  if (!win || !win.Element) {
+    return false;
   }
 
   return node instanceof win.Element;
