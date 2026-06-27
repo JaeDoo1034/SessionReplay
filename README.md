@@ -4,13 +4,6 @@
 
 현재 버전은 로컬 SQLite와 Supabase Postgres 저장소를 모두 지원하며, Vercel 배포 환경에서는 Supabase를 사용해 휴대폰과 데스크톱에서 같은 세션 데이터를 볼 수 있습니다.
 
-## Demo
-
-Production:
-
-- Test UI: https://session-replay-poc.vercel.app/test-ui
-- Viewer: https://session-replay-poc.vercel.app/viewer
-
 ## 주요 기능
 
 - 금융 앱 스타일 테스트 UI
