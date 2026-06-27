@@ -26,14 +26,19 @@
       maskTextSelectors: [...DEFAULT_MASK_TEXT_SELECTORS]
     },
     replay: {
-      scriptMode: "off"
+      scriptMode: "off",
+      mutationMode: "on",
+      snapshotMode: "off"
     },
     limits: {
       maxEvents: 20000,
       maxMutationHtmlBytes: 120000,
+      maxRegionSnapshotHtmlBytes: 320000,
       mousemoveSampleMs: 20,
       scrollDebounceMs: 120,
-      inputDebounceMs: 120
+      inputDebounceMs: 120,
+      navigationSnapshotDelayMs: 500,
+      navigationMutationIdleMs: 180
     }
   };
 
@@ -61,21 +66,26 @@
       mousemoveSampleMs: runtimeConfig.limits.mousemoveSampleMs,
       maxEvents: runtimeConfig.limits.maxEvents,
       maxMutationHtmlBytes: runtimeConfig.limits.maxMutationHtmlBytes,
+      maxRegionSnapshotHtmlBytes: runtimeConfig.limits.maxRegionSnapshotHtmlBytes,
       scrollDebounceMs: runtimeConfig.limits.scrollDebounceMs,
       inputDebounceMs: runtimeConfig.limits.inputDebounceMs,
+      navigationSnapshotDelayMs: runtimeConfig.limits.navigationSnapshotDelayMs,
+      navigationMutationIdleMs: runtimeConfig.limits.navigationMutationIdleMs,
       shouldIgnoreNode: shouldIgnoreNodeForRecording
     });
     replayer = new SessionReplayer({
       modalId: REPLAY_MODAL_ID,
       shouldIgnoreNode: isInternalNode,
       onStatus: setReplayStatus,
-      executePageScripts: runtimeConfig.replay.scriptMode === "on"
+      applyMutationEvents: runtimeConfig.replay.mutationMode === "on",
+      executePageScripts: runtimeConfig.replay.scriptMode === "on",
+      applySnapshotEvents: runtimeConfig.replay.snapshotMode === "on"
     });
 
     bindUI();
 
     window.SessionReplaySnippet = {
-      version: "7.0.0-snippet",
+      version: "8.0.0-snippet",
       start,
       stop,
       getPayload: () => lastPayload,
@@ -87,11 +97,20 @@
       playReplay,
       configure,
       getConfig,
-      setReplayMutationMode: (enabled) => replayer.setApplyMutationEvents(Boolean(enabled)),
+      setReplayMutationMode: (enabled) => {
+        const mode = enabled ? "on" : "off";
+        configure({ replay: { mutationMode: mode } });
+        return replayer.applyMutationEvents;
+      },
       setReplayScriptMode: (enabled) => {
         const mode = enabled ? "on" : "off";
         configure({ replay: { scriptMode: mode } });
         return replayer.executePageScripts;
+      },
+      setReplaySnapshotMode: (enabled) => {
+        const mode = enabled ? "on" : "off";
+        configure({ replay: { snapshotMode: mode } });
+        return replayer.applySnapshotEvents;
       },
       stopReplay: () => replayer.stop(),
       openReplay: () => replayer.open(),
@@ -131,8 +150,8 @@
     });
 
     ui.toggleMutationBtn.addEventListener("click", () => {
-      const enabled = replayer.setApplyMutationEvents(!replayer.applyMutationEvents);
-      ui.toggleMutationBtn.textContent = enabled ? "Mutation ON" : "Mutation OFF";
+      const enabled = !replayer.applyMutationEvents;
+      configure({ replay: { mutationMode: enabled ? "on" : "off" } });
       setReplayStatus(`Replay mode updated (${getReplayModeText()}).`);
     });
 
@@ -339,6 +358,7 @@
       getConfig: "Get current runtime config",
       setReplayMutationMode: "Enable/disable mutation event application during replay",
       setReplayScriptMode: "Enable/disable script execution in replay iframe",
+      setReplaySnapshotMode: "Enable/disable snapshot event application during replay (default OFF)",
       stopReplay: "Stop replay",
       openReplay: "Open replay modal",
       closeReplay: "Close replay modal",
@@ -365,6 +385,9 @@
   function applyConfigToUI() {
     if (!ui || !replayer) {
       return;
+    }
+    if (ui.toggleMutationBtn) {
+      ui.toggleMutationBtn.textContent = replayer.applyMutationEvents ? "Mutation ON" : "Mutation OFF";
     }
     if (ui.toggleScriptBtn) {
       ui.toggleScriptBtn.textContent = replayer.executePageScripts ? "Scripts ON" : "Scripts OFF";
@@ -407,7 +430,7 @@
   }
 
   function getReplayModeText() {
-    return `Mutation ${replayer && replayer.applyMutationEvents ? "ON" : "OFF"}, Scripts ${replayer && replayer.executePageScripts ? "ON" : "OFF"}`;
+    return `Mutation ${replayer && replayer.applyMutationEvents ? "ON" : "OFF"}, Scripts ${replayer && replayer.executePageScripts ? "ON" : "OFF"}, Snapshots ${replayer && replayer.applySnapshotEvents ? "ON" : "OFF"}`;
   }
 
   function injectStyle() {
@@ -616,11 +639,14 @@
       this.mousemoveSampleMs = Number(options.mousemoveSampleMs) || 20;
       this.shouldIgnoreNode = options.shouldIgnoreNode || (() => false);
       this.navigationEventsToRecord =
-        options.navigationEvents || ["hashchange", "popstate", "beforeunload", "pagehide", "pageshow", "visibilitychange"];
+        options.navigationEvents || ["hashchange", "popstate", "pageshow", "visibilitychange"];
       this.maxEvents = Math.max(1000, Number(options.maxEvents) || 20000);
       this.maxMutationHtmlBytes = Math.max(2000, Number(options.maxMutationHtmlBytes) || 120000);
+      this.maxRegionSnapshotHtmlBytes = Math.max(50000, Number(options.maxRegionSnapshotHtmlBytes) || 320000);
       this.scrollDebounceMs = Math.max(0, Number(options.scrollDebounceMs) || 120);
       this.inputDebounceMs = Math.max(0, Number(options.inputDebounceMs) || 120);
+      this.navigationSnapshotDelayMs = Math.max(0, Number(options.navigationSnapshotDelayMs) || 500);
+      this.navigationMutationIdleMs = Math.max(0, Number(options.navigationMutationIdleMs) || 180);
       this.maskTextSelectors = Array.isArray(options.maskTextSelectors) ? options.maskTextSelectors : [];
 
       this.isRecording = false;
@@ -634,6 +660,7 @@
         scroll: 0
       };
       this.currentIntentSeq = 0;
+      this.lastMutationAt = 0;
       this.droppedEventCount = 0;
       this.redactionStats = {
         maskedInputEvents: 0,
@@ -649,6 +676,13 @@
       this.originalPushState = null;
       this.originalReplaceState = null;
       this.historyPatched = false;
+      this.pendingNavigationSnapshotTimerId = null;
+      this.pendingRegionSnapshotTimers = new Map();
+      this.lastRegionSnapshotBySelector = new Map();
+      this.domReadyListener = null;
+      this.windowLoadListener = null;
+      this.lastSnapshotHtml = "";
+      this.lastSnapshotUrl = "";
     }
 
     applyConfig(config) {
@@ -659,9 +693,12 @@
       this.maskTextSelectors = Array.isArray(privacy.maskTextSelectors) ? privacy.maskTextSelectors : [];
       this.maxEvents = Math.max(1000, Number(limits.maxEvents) || this.maxEvents);
       this.maxMutationHtmlBytes = Math.max(2000, Number(limits.maxMutationHtmlBytes) || this.maxMutationHtmlBytes);
+      this.maxRegionSnapshotHtmlBytes = Math.max(50000, Number(limits.maxRegionSnapshotHtmlBytes) || this.maxRegionSnapshotHtmlBytes);
       this.mousemoveSampleMs = Math.max(1, Number(limits.mousemoveSampleMs) || this.mousemoveSampleMs);
       this.scrollDebounceMs = Math.max(0, Number(limits.scrollDebounceMs) || this.scrollDebounceMs);
       this.inputDebounceMs = Math.max(0, Number(limits.inputDebounceMs) || this.inputDebounceMs);
+      this.navigationSnapshotDelayMs = Math.max(0, Number(limits.navigationSnapshotDelayMs) || this.navigationSnapshotDelayMs);
+      this.navigationMutationIdleMs = Math.max(0, Number(limits.navigationMutationIdleMs) || this.navigationMutationIdleMs);
       return {
         maskAllInputs: this.shouldMaskInputValue,
         maxEvents: this.maxEvents,
@@ -681,7 +718,11 @@
       this.lastMousemoveAt = 0;
       this.lastByEventType = { input: 0, change: 0, scroll: 0 };
       this.currentIntentSeq = 0;
+      this.lastMutationAt = 0;
       this.droppedEventCount = 0;
+      this.lastSnapshotHtml = "";
+      this.lastSnapshotUrl = "";
+      this.lastRegionSnapshotBySelector = new Map();
       this.redactionStats = {
         maskedInputEvents: 0,
         maskedMutationValues: 0,
@@ -691,25 +732,13 @@
         truncatedMutationHtml: 0
       };
 
-      this.record("snapshot", {
-        reason: "initial",
-        url: window.location.href,
-        viewport: {
-          width: window.innerWidth,
-          height: window.innerHeight
-        },
-        iframeSummary: getIframeSummary(this.shouldIgnoreNode),
-        html: getSnapshotHtmlForRecording({
-          maskAllInputs: this.shouldMaskInputValue,
-          maskTextSelectors: this.maskTextSelectors,
-          blockSelectors: runtimeConfig.privacy.blockSelectors
-        })
-      });
+      this.captureSnapshot("initial", true);
 
       this.attachMutationObserver();
       this.attachEventListeners();
       this.attachNavigationListeners();
       this.patchHistoryMethods();
+      this.attachLifecycleSnapshotListeners();
     }
 
     stop() {
@@ -721,6 +750,9 @@
       this.detachEventListeners();
       this.detachNavigationListeners();
       this.unpatchHistoryMethods();
+      this.detachLifecycleSnapshotListeners();
+      this.clearPendingNavigationSnapshot();
+      this.clearPendingRegionSnapshots();
 
       this.record("meta", {
         action: "recording_stopped",
@@ -746,14 +778,19 @@
             maskTextSelectors: [...this.maskTextSelectors]
           },
           replay: {
-            scriptMode: runtimeConfig.replay.scriptMode
+            mutationMode: runtimeConfig.replay.mutationMode,
+            scriptMode: runtimeConfig.replay.scriptMode,
+            snapshotMode: runtimeConfig.replay.snapshotMode
           },
           limits: {
             maxEvents: this.maxEvents,
             maxMutationHtmlBytes: this.maxMutationHtmlBytes,
+            maxRegionSnapshotHtmlBytes: this.maxRegionSnapshotHtmlBytes,
             mousemoveSampleMs: this.mousemoveSampleMs,
             scrollDebounceMs: this.scrollDebounceMs,
-            inputDebounceMs: this.inputDebounceMs
+            inputDebounceMs: this.inputDebounceMs,
+            navigationSnapshotDelayMs: this.navigationSnapshotDelayMs,
+            navigationMutationIdleMs: this.navigationMutationIdleMs
           }
         },
         droppedEventCount: this.droppedEventCount,
@@ -783,8 +820,194 @@
       });
     }
 
+    captureSnapshot(reason, force = false) {
+      if (!this.isRecording) {
+        return false;
+      }
+
+      const html = getSnapshotHtmlForRecording({
+        maskAllInputs: this.shouldMaskInputValue,
+        maskTextSelectors: this.maskTextSelectors,
+        blockSelectors: runtimeConfig.privacy.blockSelectors
+      });
+      const url = window.location.href;
+      const hasNoVisualDiff = html === this.lastSnapshotHtml && url === this.lastSnapshotUrl;
+      if (!force && hasNoVisualDiff) {
+        return false;
+      }
+
+      this.lastSnapshotHtml = html;
+      this.lastSnapshotUrl = url;
+
+      this.record("snapshot", {
+        reason: reason || "manual",
+        url,
+        viewport: {
+          width: window.innerWidth,
+          height: window.innerHeight
+        },
+        iframeSummary: getIframeSummary(this.shouldIgnoreNode),
+        html
+      });
+
+      return true;
+    }
+
+    clearPendingNavigationSnapshot() {
+      if (!this.pendingNavigationSnapshotTimerId) {
+        return;
+      }
+      clearTimeout(this.pendingNavigationSnapshotTimerId);
+      this.pendingNavigationSnapshotTimerId = null;
+    }
+
+    clearPendingRegionSnapshots() {
+      if (!this.pendingRegionSnapshotTimers || !this.pendingRegionSnapshotTimers.size) {
+        return;
+      }
+      this.pendingRegionSnapshotTimers.forEach((timerId) => {
+        clearTimeout(timerId);
+      });
+      this.pendingRegionSnapshotTimers.clear();
+    }
+
+    scheduleRegionSnapshot(selector, reason, delayMs = 650) {
+      if (!this.isRecording || !selector) {
+        return;
+      }
+
+      const key = String(selector);
+      const prev = this.pendingRegionSnapshotTimers.get(key);
+      if (prev) {
+        clearTimeout(prev);
+      }
+
+      const timerId = setTimeout(() => {
+        this.pendingRegionSnapshotTimers.delete(key);
+        this.captureRegionSnapshot(key, reason || "region_snapshot");
+      }, Math.max(0, Number(delayMs) || 0));
+
+      this.pendingRegionSnapshotTimers.set(key, timerId);
+    }
+
+    captureRegionSnapshot(selector, reason) {
+      if (!this.isRecording || !selector) {
+        return false;
+      }
+
+      const region = document.querySelector(selector);
+      if (!(region instanceof Element)) {
+        return false;
+      }
+      if (this.shouldIgnoreNode(region)) {
+        return false;
+      }
+
+      const html = sanitizeFragmentHtml(region.outerHTML, {
+        allowScripts: false,
+        maskAllInputs: this.shouldMaskInputValue,
+        maskTextSelectors: this.maskTextSelectors,
+        blockSelectors: runtimeConfig.privacy.blockSelectors
+      });
+
+      if (!html || html === "[redacted]") {
+        return false;
+      }
+
+      if (html.length > this.maxRegionSnapshotHtmlBytes) {
+        this.redactionStats.truncatedMutationHtml += 1;
+        return false;
+      }
+
+      const previous = this.lastRegionSnapshotBySelector.get(selector);
+      if (previous === html) {
+        return false;
+      }
+      this.lastRegionSnapshotBySelector.set(selector, html);
+
+      this.record("event", {
+        eventType: "region_snapshot",
+        selector,
+        reason: reason || "region_snapshot",
+        html
+      });
+
+      return true;
+    }
+
+    scheduleNavigationSnapshot(reason, delayMs = this.navigationSnapshotDelayMs) {
+      if (!this.isRecording) {
+        return;
+      }
+
+      this.clearPendingNavigationSnapshot();
+      const delay = Math.max(0, Number(delayMs) || 0);
+      this.pendingNavigationSnapshotTimerId = setTimeout(() => {
+        this.pendingNavigationSnapshotTimerId = null;
+        this.flushNavigationSnapshot(reason, 0);
+      }, delay);
+    }
+
+    flushNavigationSnapshot(reason, retryCount) {
+      if (!this.isRecording) {
+        return;
+      }
+
+      const maxRetry = 12;
+      const idleMs = Math.max(0, this.navigationMutationIdleMs);
+      const now = performance.now();
+      const sinceLastMutation = now - Number(this.lastMutationAt || 0);
+      if (idleMs > 0 && sinceLastMutation < idleMs && retryCount < maxRetry) {
+        const waitMs = Math.max(40, Math.ceil(idleMs - sinceLastMutation) + 20);
+        this.pendingNavigationSnapshotTimerId = setTimeout(() => {
+          this.pendingNavigationSnapshotTimerId = null;
+          this.flushNavigationSnapshot(reason, retryCount + 1);
+        }, waitMs);
+        return;
+      }
+
+      this.captureSnapshot(reason || "url_change", false);
+    }
+
+    attachLifecycleSnapshotListeners() {
+      if (document.readyState === "loading") {
+        this.domReadyListener = () => {
+          this.captureSnapshot("mpa_dom_ready", false);
+          this.domReadyListener = null;
+        };
+        document.addEventListener("DOMContentLoaded", this.domReadyListener, { once: true, capture: true });
+      } else {
+        this.captureSnapshot("mpa_dom_ready", false);
+      }
+
+      if (document.readyState !== "complete") {
+        this.windowLoadListener = () => {
+          this.captureSnapshot("mpa_window_load", false);
+          this.windowLoadListener = null;
+        };
+        window.addEventListener("load", this.windowLoadListener, { once: true, capture: true });
+      } else {
+        this.captureSnapshot("mpa_window_load", false);
+      }
+    }
+
+    detachLifecycleSnapshotListeners() {
+      if (this.domReadyListener) {
+        document.removeEventListener("DOMContentLoaded", this.domReadyListener, true);
+        this.domReadyListener = null;
+      }
+
+      if (this.windowLoadListener) {
+        window.removeEventListener("load", this.windowLoadListener, true);
+        this.windowLoadListener = null;
+      }
+    }
+
     attachMutationObserver() {
       this.mutationObserver = new MutationObserver((mutationRecords) => {
+        if (mutationRecords && mutationRecords.length) {
+          this.lastMutationAt = performance.now();
+        }
         mutationRecords.forEach((mutation) => {
           if (this.shouldIgnoreNode(mutation.target)) {
             this.redactionStats.blockedMutations += 1;
@@ -894,6 +1117,11 @@
                 sameOrigin: anchor.origin === window.location.origin
               });
             }
+
+            const regionSelector = getCriticalRegionSelector(event.target);
+            if (regionSelector) {
+              this.scheduleRegionSnapshot(regionSelector, "post_click_region", 700);
+            }
             return;
           }
 
@@ -987,6 +1215,10 @@
             persisted: typeof event.persisted === "boolean" ? event.persisted : undefined,
             state: eventName === "popstate" ? safeJson(event.state) : undefined
           });
+
+          if (eventName === "hashchange" || eventName === "popstate") {
+            this.scheduleNavigationSnapshot(`url_${eventName}`);
+          }
         };
 
         target.addEventListener(eventName, handler, true);
@@ -1018,6 +1250,7 @@
           targetUrl: resolveHistoryUrl(url),
           state: safeJson(state)
         });
+        recorder.scheduleNavigationSnapshot("url_history_pushstate");
         return result;
       };
 
@@ -1029,6 +1262,7 @@
           targetUrl: resolveHistoryUrl(url),
           state: safeJson(state)
         });
+        recorder.scheduleNavigationSnapshot("url_history_replacestate");
         return result;
       };
 
@@ -1097,6 +1331,7 @@
       this.onStatus = options.onStatus || (() => {});
       this.applyMutationEvents = Boolean(options.applyMutationEvents);
       this.executePageScripts = Boolean(options.executePageScripts);
+      this.applySnapshotEvents = Boolean(options.applySnapshotEvents);
       this.payload = null;
       this.isPlaying = false;
       this.timerId = null;
@@ -1152,12 +1387,23 @@
       return this.applyMutationEvents;
     }
 
+    setApplySnapshotEvents(enabled) {
+      this.applySnapshotEvents = Boolean(enabled);
+      return this.applySnapshotEvents;
+    }
+
     applyConfig(config) {
       const replayConfig = config && config.replay ? config.replay : {};
+      const mutationMode = replayConfig.mutationMode === "on";
       const scriptMode = replayConfig.scriptMode === "on";
+      const snapshotMode = replayConfig.snapshotMode === "on";
+      this.setApplyMutationEvents(mutationMode);
       this.setExecutePageScripts(scriptMode);
+      this.setApplySnapshotEvents(snapshotMode);
       return {
-        scriptMode: this.executePageScripts ? "on" : "off"
+        mutationMode: this.applyMutationEvents ? "on" : "off",
+        scriptMode: this.executePageScripts ? "on" : "off",
+        snapshotMode: this.applySnapshotEvents ? "on" : "off"
       };
     }
 
@@ -1228,20 +1474,25 @@
         if (event.type === "event") {
           return true;
         }
+        if (event.type === "snapshot") {
+          return this.applySnapshotEvents;
+        }
         if (event.type === "mutation") {
           return this.applyMutationEvents;
         }
         return false;
       });
-      const timeline = this.buildReplayTimeline(replayEvents);
-      if (!replayEvents.length) {
-        this.onStatus("No replayable events found.");
-        this.isPlaying = false;
-        return;
-      }
+      const timeline = this.buildReplayTimeline(replayEvents)
+        .filter((event) => !(event.type === "snapshot" && event.id === snapshot.id));
 
       this.renderSnapshot(snapshot.data.html, snapshot.data.url, snapshot.data.iframeSummary, () => {
-        this.onStatus(`Replay started. speed=${this.speed}x, scripts=${this.executePageScripts ? "ON" : "OFF"}`);
+        this.onStatus(
+          `Replay started. speed=${this.speed}x, scripts=${this.executePageScripts ? "ON" : "OFF"}, snapshots=${this.applySnapshotEvents ? "ON" : "OFF"}`
+        );
+        if (!timeline.length) {
+          this.isPlaying = false;
+          return;
+        }
         this.runTimeline(timeline);
       });
     }
@@ -1367,6 +1618,19 @@
     }
 
     applyEvent(event, done = () => {}) {
+      if (event && event.type === "snapshot") {
+        const data = event.data || {};
+        if (!data || !data.html) {
+          done();
+          return;
+        }
+        this.setViewport(data.viewport);
+        this.renderSnapshot(data.html, data.url, data.iframeSummary, () => {
+          done();
+        });
+        return;
+      }
+
       const doc = this.iframe && this.iframe.contentDocument;
       if (!doc) {
         done();
@@ -1576,6 +1840,11 @@
       return;
     }
 
+    if (data.eventType === "region_snapshot") {
+      applyRegionSnapshot(doc, data);
+      return;
+    }
+
     if (data.eventType === "mousemove") {
       showMouseMovePath(doc, data);
       return;
@@ -1612,6 +1881,32 @@
       markClicked(target);
       replayNativeClick(doc, target, data);
     }
+  }
+
+  function applyRegionSnapshot(doc, data) {
+    if (!doc || !data) {
+      return;
+    }
+
+    const selector = String(data.selector || "");
+    const html = typeof data.html === "string" ? data.html : "";
+    if (!selector || !html) {
+      return;
+    }
+
+    const current = queryPath(doc, selector);
+    if (!(current instanceof Element)) {
+      return;
+    }
+
+    const template = doc.createElement("template");
+    template.innerHTML = sanitizeFragmentHtml(html, { allowScripts: false });
+    const next = template.content.firstElementChild;
+    if (!(next instanceof Element)) {
+      return;
+    }
+
+    current.replaceWith(next);
   }
 
   function dispatchInputLikeEvent(doc, target, eventType) {
@@ -2280,6 +2575,30 @@
     return path.join(" > ");
   }
 
+  function getCriticalRegionSelector(node) {
+    const element = node instanceof Element ? node : node && node.parentElement;
+    if (!(element instanceof Element)) {
+      return "";
+    }
+
+    const newsstand = element.closest("#newsstand");
+    if (newsstand instanceof Element && newsstand.id) {
+      return `#${newsstand.id}`;
+    }
+
+    const tabPanel = element.closest("[role='tabpanel'][id]");
+    if (tabPanel instanceof Element && tabPanel.id) {
+      return `#${tabPanel.id}`;
+    }
+
+    const region = element.closest("[role='region'][id]");
+    if (region instanceof Element && region.id) {
+      return `#${region.id}`;
+    }
+
+    return "";
+  }
+
   function getStableSelector(node) {
     if (!(node instanceof Element)) {
       return "";
@@ -2697,16 +3016,25 @@
         maskTextSelectors: Array.isArray(privacy.maskTextSelectors) ? privacy.maskTextSelectors.filter(Boolean).map(String) : undefined
       },
       replay: {
+        mutationMode: replay.mutationMode === "on" || replay.mutationMode === "off"
+          ? replay.mutationMode
+          : (replay.mutationMode !== undefined ? (Boolean(replay.mutationMode) ? "on" : "off") : undefined),
         scriptMode: replay.scriptMode === "on" || replay.scriptMode === "off"
           ? replay.scriptMode
-          : (replay.scriptMode !== undefined ? (Boolean(replay.scriptMode) ? "on" : "off") : undefined)
+          : (replay.scriptMode !== undefined ? (Boolean(replay.scriptMode) ? "on" : "off") : undefined),
+        snapshotMode: replay.snapshotMode === "on" || replay.snapshotMode === "off"
+          ? replay.snapshotMode
+          : (replay.snapshotMode !== undefined ? (Boolean(replay.snapshotMode) ? "on" : "off") : undefined)
       },
       limits: {
         maxEvents: Number.isFinite(Number(limits.maxEvents)) ? Number(limits.maxEvents) : undefined,
         maxMutationHtmlBytes: Number.isFinite(Number(limits.maxMutationHtmlBytes)) ? Number(limits.maxMutationHtmlBytes) : undefined,
+        maxRegionSnapshotHtmlBytes: Number.isFinite(Number(limits.maxRegionSnapshotHtmlBytes)) ? Number(limits.maxRegionSnapshotHtmlBytes) : undefined,
         mousemoveSampleMs: Number.isFinite(Number(limits.mousemoveSampleMs)) ? Number(limits.mousemoveSampleMs) : undefined,
         scrollDebounceMs: Number.isFinite(Number(limits.scrollDebounceMs)) ? Number(limits.scrollDebounceMs) : undefined,
-        inputDebounceMs: Number.isFinite(Number(limits.inputDebounceMs)) ? Number(limits.inputDebounceMs) : undefined
+        inputDebounceMs: Number.isFinite(Number(limits.inputDebounceMs)) ? Number(limits.inputDebounceMs) : undefined,
+        navigationSnapshotDelayMs: Number.isFinite(Number(limits.navigationSnapshotDelayMs)) ? Number(limits.navigationSnapshotDelayMs) : undefined,
+        navigationMutationIdleMs: Number.isFinite(Number(limits.navigationMutationIdleMs)) ? Number(limits.navigationMutationIdleMs) : undefined
       }
     };
   }
@@ -2727,8 +3055,16 @@
       }
     }
 
-    if (next.replay && next.replay.scriptMode !== undefined) {
-      base.replay.scriptMode = next.replay.scriptMode === "on" ? "on" : "off";
+    if (next.replay) {
+      if (next.replay.mutationMode !== undefined) {
+        base.replay.mutationMode = next.replay.mutationMode === "on" ? "on" : "off";
+      }
+      if (next.replay.scriptMode !== undefined) {
+        base.replay.scriptMode = next.replay.scriptMode === "on" ? "on" : "off";
+      }
+      if (next.replay.snapshotMode !== undefined) {
+        base.replay.snapshotMode = next.replay.snapshotMode === "on" ? "on" : "off";
+      }
     }
 
     if (next.limits) {
@@ -2738,6 +3074,9 @@
       if (next.limits.maxMutationHtmlBytes !== undefined) {
         base.limits.maxMutationHtmlBytes = Math.max(2000, Math.floor(Number(next.limits.maxMutationHtmlBytes) || base.limits.maxMutationHtmlBytes));
       }
+      if (next.limits.maxRegionSnapshotHtmlBytes !== undefined) {
+        base.limits.maxRegionSnapshotHtmlBytes = Math.max(50000, Math.floor(Number(next.limits.maxRegionSnapshotHtmlBytes) || base.limits.maxRegionSnapshotHtmlBytes));
+      }
       if (next.limits.mousemoveSampleMs !== undefined) {
         base.limits.mousemoveSampleMs = Math.max(1, Math.floor(Number(next.limits.mousemoveSampleMs) || base.limits.mousemoveSampleMs));
       }
@@ -2746,6 +3085,12 @@
       }
       if (next.limits.inputDebounceMs !== undefined) {
         base.limits.inputDebounceMs = Math.max(0, Math.floor(Number(next.limits.inputDebounceMs) || base.limits.inputDebounceMs));
+      }
+      if (next.limits.navigationSnapshotDelayMs !== undefined) {
+        base.limits.navigationSnapshotDelayMs = Math.max(0, Math.floor(Number(next.limits.navigationSnapshotDelayMs) || base.limits.navigationSnapshotDelayMs));
+      }
+      if (next.limits.navigationMutationIdleMs !== undefined) {
+        base.limits.navigationMutationIdleMs = Math.max(0, Math.floor(Number(next.limits.navigationMutationIdleMs) || base.limits.navigationMutationIdleMs));
       }
     }
 

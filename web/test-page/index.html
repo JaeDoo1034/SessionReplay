@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ON Bank Test UI</title>
+    <link rel="stylesheet" href="/web/test-page/styles.css" />
+  </head>
+  <body>
+    <header class="global-nav">
+      <button class="brand" type="button" data-screen="home" aria-label="ON Bank home">
+        <span>ON</span> Bank
+      </button>
+      <nav class="product-nav" aria-label="Primary menu">
+        <button class="nav-chip active" type="button" data-screen="home">홈</button>
+        <button class="nav-chip" type="button" data-screen="accounts">계좌</button>
+        <button class="nav-chip" type="button" data-screen="transfer">이체</button>
+        <button class="nav-chip" type="button" data-screen="products">상품몰</button>
+        <button class="nav-chip" type="button" data-screen="benefits">혜택몰</button>
+        <button class="nav-chip" type="button" data-screen="assets">자산·소비</button>
+        <button class="nav-chip" type="button" data-screen="cards">카드</button>
+        <button class="nav-chip" type="button" data-screen="exchange">환전</button>
+        <button class="nav-chip" type="button" data-screen="support">고객센터</button>
+      </nav>
+    </header>
+
+    <button id="session-popover-toggle" class="session-launcher" type="button" data-sr-block="true" aria-expanded="false" aria-controls="session-popover">
+      <span></span>
+      Session
+    </button>
+
+    <aside id="session-popover" class="session-popover" hidden data-sr-block="true" aria-label="Session activity">
+      <div class="session-popover-head">
+        <div>
+          <p class="eyebrow">Live session</p>
+          <h2>Activity</h2>
+          <p class="session-help">원하는 이벤트를 고른 뒤 원하는 순간에 Start를 누르면 그 시점부터 기록됩니다.</p>
+        </div>
+        <button id="session-popover-close" type="button" aria-label="Close">×</button>
+      </div>
+      <section class="event-picker" aria-label="Tracked events">
+        <div class="event-picker-head">
+          <strong>추적 이벤트 선택</strong>
+          <button id="event-select-default" type="button">기본값</button>
+        </div>
+        <div class="event-options">
+          <label><input type="checkbox" data-event-option="click" checked /> 클릭</label>
+          <label><input type="checkbox" data-event-option="input" checked /> 입력</label>
+          <label><input type="checkbox" data-event-option="change" checked /> 변경</label>
+          <label><input type="checkbox" data-event-option="submit" checked /> 제출</label>
+          <label><input type="checkbox" data-event-option="scroll" checked /> 스크롤</label>
+          <label><input type="checkbox" data-event-option="navigation" checked /> 화면이동</label>
+          <label><input type="checkbox" data-event-option="mutation" checked /> 화면변경</label>
+          <label><input type="checkbox" data-event-option="mousemove" /> 마우스 이동</label>
+        </div>
+      </section>
+      <dl class="session-stats">
+        <div>
+          <dt>Status</dt>
+          <dd id="session-status">Ready</dd>
+        </div>
+        <div>
+          <dt>Started</dt>
+          <dd id="session-started">-</dd>
+        </div>
+        <div>
+          <dt>Session ID</dt>
+          <dd id="session-id">-</dd>
+        </div>
+        <div>
+          <dt>Queue</dt>
+          <dd id="session-queue">0 events</dd>
+        </div>
+        <div>
+          <dt>Saved</dt>
+          <dd id="session-saved">0 sessions</dd>
+        </div>
+      </dl>
+      <div class="session-actions">
+        <button id="session-start" type="button">Start</button>
+        <button id="session-stop" type="button">Stop</button>
+        <button id="session-flush" type="button">Save</button>
+        <a href="/viewer">Open viewer</a>
+      </div>
+      <ol id="activity-feed" class="activity-feed"></ol>
+    </aside>
+
+    <main class="bank-app">
+      <section class="app-surface">
+        <div class="app-header">
+          <div>
+            <div class="home-mode-toggle" aria-label="Home mode">
+              <button class="active" type="button" data-screen="home">일반홈</button>
+              <button type="button" data-action="easy-home">쉬운</button>
+            </div>
+            <h1 id="screen-title">홈</h1>
+          </div>
+          <button class="icon-button" type="button" id="notice-button" aria-label="알림">
+            <span>알림</span>
+            <b>3</b>
+          </button>
+        </div>
+
+        <section class="screen active" data-view="home" aria-label="메인 홈 화면">
+          <button class="notice-card" type="button" data-action="secret-space">
+            <span>선물</span>
+            <strong>유출주의! 나만 몰랐던 비밀공간 전담직원 서비스 가입하기!</strong>
+            <b>×</b>
+          </button>
+
+          <section class="mascot-zone" aria-label="홈 캐릭터 영역">
+            <div class="mascot-row" aria-hidden="true">
+              <i></i><i></i><i></i><i></i><i></i>
+            </div>
+            <div class="mascot-controls">
+              <button type="button" data-action="home-setting">홈계좌설정</button>
+              <label>
+                잔액숨김
+                <input type="checkbox" />
+              </label>
+            </div>
+          </section>
+
+          <article class="connect-card">
+            <button type="button" class="dismiss-button" data-action="dismiss-connect">×</button>
+            <div class="bank-bubbles" aria-hidden="true">
+              <span>B</span><span>국</span><span>하</span><span>···</span>
+            </div>
+            <p>다른 은행 계좌도 홈에서 확인할 수 있어요<br />필요한 계좌를 홈에 추가해 보세요</p>
+            <button type="button" data-action="add-bank">+ 다른 은행 계좌 추가</button>
+          </article>
+
+          <article class="account-hero">
+            <div>
+              <span>가가가가</span>
+              <strong>902,902원</strong>
+              <small>Npay 우리 통장 13,009원</small>
+            </div>
+            <button type="button" class="ghost-button" id="account-detail" data-screen="transfer">이체</button>
+          </article>
+
+          <section class="account-list-card" aria-label="메인 계좌 목록">
+            <button type="button" data-screen="transfer"><span>가가가가</span><strong>902,902원</strong><em>이체</em></button>
+            <button type="button" data-screen="transfer"><span>Npay 우리 통장</span><strong>13,009원</strong><em>이체</em></button>
+            <button type="button" data-screen="accounts"><span>가나</span><strong>25,939,467원</strong><em>입금</em></button>
+            <button type="button" class="all-account-button" data-screen="accounts">전체계좌보기</button>
+          </section>
+
+          <div class="quick-menu-strip">
+            <button type="button" data-screen="accounts"><span>계좌</span><strong>전체 계좌</strong></button>
+            <button type="button" data-screen="transfer"><span>이체</span><strong>빠른 송금</strong></button>
+            <button type="button" data-screen="cards"><span>카드</span><strong>실적 확인</strong></button>
+            <button type="button" data-screen="exchange"><span>환전</span><strong>여행 준비</strong></button>
+            <button type="button" data-screen="support"><span>문의</span><strong>상담 연결</strong></button>
+          </div>
+
+          <div class="menu-grid">
+            <button type="button" data-screen="products">
+              <span>상품몰</span>
+              <strong>예금부터 IRP까지</strong>
+            </button>
+            <button type="button" data-screen="benefits">
+              <span>혜택몰</span>
+              <strong>포인트와 이벤트</strong>
+            </button>
+            <button type="button" data-screen="assets">
+              <span>자산·소비</span>
+              <strong>이번 달 흐름</strong>
+            </button>
+            <button type="button" id="open-card-sheet" data-screen="cards">
+              <span>카드</span>
+              <strong>이번 달 642,800원</strong>
+            </button>
+          </div>
+
+          <button class="promo-carousel" type="button" data-action="home-promo">
+            <span>LCK 선수 포토카드 2팩 받자!</span>
+            <strong>신규가입 이벤트</strong>
+            <em>3 / 10</em>
+          </button>
+
+          <section class="content-band pastel-service">
+            <div class="section-heading">
+              <h2>추천서비스</h2>
+            </div>
+            <div class="service-list">
+              <button type="button" data-action="won-mobile"><span>📱</span><strong>우리WON모바일</strong><small>우리가 만든 알뜰한 통신</small></button>
+              <button type="button" data-category="irp"><span>💸</span><strong>퇴직연금 한눈에</strong><small>수수료없는 퇴직연금 알아보기</small></button>
+              <button type="button" data-action="inclusive-finance"><span>365</span><strong>우리포용금융 36.5도</strong><small>금융 소외없이 든든한 포용금융</small></button>
+            </div>
+          </section>
+
+          <section class="group-services">
+            <h2>우리금융그룹 서비스</h2>
+            <div>
+              <button type="button">꿀머니</button>
+              <button type="button">카드</button>
+              <button type="button">캐피탈</button>
+              <button type="button">증권</button>
+              <button type="button">저축은행</button>
+            </div>
+          </section>
+        </section>
+
+        <section class="screen" data-view="accounts" aria-label="전체 계좌 화면">
+          <div class="screen-toolbar">
+            <button type="button" class="back-button" data-screen="home">←</button>
+            <div>
+              <p class="eyebrow">Accounts</p>
+              <h2>전체 계좌</h2>
+            </div>
+          </div>
+          <article class="total-balance-card">
+            <span>총 보유 잔액</span>
+            <strong>27,768,281원</strong>
+            <small>입출금 3개 · 예적금 2개 · 투자 2개</small>
+          </article>
+          <section class="finance-list">
+            <button type="button" data-screen="transfer"><span>입출금</span><strong>ON 주거래 통장</strong><em>902,902원</em></button>
+            <button type="button" data-screen="transfer"><span>간편결제</span><strong>Npay 우리 통장</strong><em>13,009원</em></button>
+            <button type="button" data-category="deposit"><span>예금</span><strong>ON 플러스 정기예금</strong><em>10,500,000원</em></button>
+            <button type="button" data-category="savings"><span>적금</span><strong>청년 성장 적금</strong><em>1,840,000원</em></button>
+            <button type="button" data-category="fund"><span>투자</span><strong>글로벌 성장주 펀드</strong><em>+4.8%</em></button>
+          </section>
+          <section class="content-band">
+            <div class="section-heading">
+              <h2>계좌 관리</h2>
+              <button type="button" data-action="account-order">순서편집</button>
+            </div>
+            <div class="service-list compact-service-list">
+              <button type="button" data-action="account-hide"><span>숨김</span><strong>잔액 표시 관리</strong><small>민감 정보 표시 방식을 바꿔요</small></button>
+              <button type="button" data-action="auto-transfer"><span>자동</span><strong>자동이체 조회</strong><small>매월 나가는 이체를 확인해요</small></button>
+            </div>
+          </section>
+        </section>
+
+        <section class="screen" data-view="transfer" aria-label="이체 화면">
+          <div class="screen-toolbar">
+            <button type="button" class="back-button" data-screen="home">←</button>
+            <div>
+              <p class="eyebrow">Transfer</p>
+              <h2>빠른 이체</h2>
+            </div>
+          </div>
+          <form class="transfer-form" data-flow-form="transfer">
+            <label>
+              받는 분
+              <input name="receiver" placeholder="계좌번호 또는 연락처" autocomplete="off" />
+            </label>
+            <label>
+              보낼 금액
+              <input name="amount" inputmode="numeric" placeholder="0원" />
+            </label>
+            <label>
+              메모
+              <input name="memo" placeholder="선택 입력" />
+            </label>
+            <button type="submit">이체 확인</button>
+          </form>
+          <section class="recent-receiver-list">
+            <h2>최근 보낸 곳</h2>
+            <button type="button" data-action="receiver-mom"><strong>엄마</strong><span>우리 1002-****-1120</span></button>
+            <button type="button" data-action="receiver-rent"><strong>월세</strong><span>국민 3439-****-8841</span></button>
+            <button type="button" data-action="receiver-saving"><strong>여행통장</strong><span>ON 포켓 생활비 통장</span></button>
+          </section>
+        </section>
+
+        <section class="screen" data-view="cards" aria-label="카드 화면">
+          <div class="screen-toolbar">
+            <button type="button" class="back-button" data-screen="home">←</button>
+            <div>
+              <p class="eyebrow">Cards</p>
+              <h2>카드</h2>
+            </div>
+          </div>
+          <article class="card-visual-card">
+            <span>ON 체크카드</span>
+            <strong>이번 달 642,800원</strong>
+            <small>다음 결제 예정 184,200원</small>
+          </article>
+          <section class="finance-list">
+            <button type="button" data-action="card-benefit"><span>혜택</span><strong>마트·배달 3% 적립</strong><em>이번 달 8,420P</em></button>
+            <button type="button" data-action="card-installment"><span>관리</span><strong>분할납부 가능 결제</strong><em>2건</em></button>
+            <button type="button" data-action="card-limit"><span>한도</span><strong>일 이용한도 설정</strong><em>300만원</em></button>
+          </section>
+          <section class="spending-card">
+            <div class="section-heading">
+              <h2>카드 소비</h2>
+              <button type="button" data-screen="assets">자산·소비</button>
+            </div>
+            <div class="spending-bars card-spending-bars">
+              <div class="spending-item"><div><strong>배달·외식</strong><span>242,300원</span></div><div class="spending-track"><span style="width:68%"></span></div></div>
+              <div class="spending-item"><div><strong>마트·편의점</strong><span>184,800원</span></div><div class="spending-track"><span style="width:52%"></span></div></div>
+            </div>
+          </section>
+        </section>
+
+        <section class="screen" data-view="exchange" aria-label="환전 화면">
+          <div class="screen-toolbar">
+            <button type="button" class="back-button" data-screen="home">←</button>
+            <div>
+              <p class="eyebrow">Exchange</p>
+              <h2>환전</h2>
+            </div>
+          </div>
+          <article class="exchange-hero">
+            <span>여름 환전 우대</span>
+            <strong>USD · JPY · EUR 최대 90%</strong>
+            <small>공항 수령 또는 영업점 수령을 선택할 수 있어요</small>
+          </article>
+          <form class="transfer-form" data-flow-form="exchange">
+            <label>
+              통화
+              <select name="currency">
+                <option>USD 미국 달러</option>
+                <option>JPY 일본 엔</option>
+                <option>EUR 유로</option>
+              </select>
+            </label>
+            <label>
+              환전 금액
+              <input name="exchangeAmount" inputmode="numeric" placeholder="예: 500" />
+            </label>
+            <button type="submit">예상 금액 보기</button>
+          </form>
+          <section class="finance-list">
+            <button type="button" data-action="rate-usd"><span>USD</span><strong>1,385.40원</strong><em>▼ 2.10</em></button>
+            <button type="button" data-action="rate-jpy"><span>JPY</span><strong>9.42원</strong><em>▲ 0.03</em></button>
+            <button type="button" data-action="rate-eur"><span>EUR</span><strong>1,604.22원</strong><em>▼ 1.48</em></button>
+          </section>
+        </section>
+
+        <section class="screen" data-view="support" aria-label="고객센터 화면">
+          <div class="screen-toolbar">
+            <button type="button" class="back-button" data-screen="home">←</button>
+            <div>
+              <p class="eyebrow">Support</p>
+              <h2>고객센터</h2>
+            </div>
+          </div>
+          <form class="search-form" data-flow-form="support-search">
+            <input name="query" placeholder="무엇을 도와드릴까요?" autocomplete="off" />
+            <button type="submit">검색</button>
+          </form>
+          <section class="support-grid">
+            <button type="button" data-action="chatbot"><strong>AI 상담</strong><span>24시간 바로 답변</span></button>
+            <button type="button" data-action="call-center"><strong>전화 상담</strong><span>상담 예약하기</span></button>
+            <button type="button" data-action="branch-search"><strong>영업점 찾기</strong><span>가까운 지점 안내</span></button>
+            <button type="button" data-action="security-center"><strong>보안센터</strong><span>피싱·분실 신고</span></button>
+          </section>
+          <section class="finance-list">
+            <button type="button" data-action="faq-transfer"><span>FAQ</span><strong>이체 한도를 바꾸고 싶어요</strong><em>〉</em></button>
+            <button type="button" data-action="faq-card"><span>FAQ</span><strong>카드 결제 알림이 오지 않아요</strong><em>〉</em></button>
+            <button type="button" data-action="faq-login"><span>FAQ</span><strong>인증서 없이 로그인할 수 있나요?</strong><em>〉</em></button>
+          </section>
+        </section>
+
+        <section class="screen" data-view="products" aria-label="상품몰 화면">
+          <button class="mall-hero" type="button" data-category="savings">
+            <span>청년미래적금 가입신청하기</span>
+            <strong>우리의 미래는 청년<br />최고 연 8.0%</strong>
+            <em>2 / 5</em>
+          </button>
+          <div class="mall-stats">
+            <div><span>이어서 가입하기</span><strong>0개</strong></div>
+            <div><span>최근 본 상품</span><strong>1개</strong></div>
+            <div><span>영업점 추천 상품</span><strong>0개</strong></div>
+          </div>
+          <div class="screen-lead">
+            <p class="eyebrow">Product mall</p>
+            <h2>필요한 금융 상품을 빠르게 찾으세요.</h2>
+          </div>
+          <div id="product-categories" class="category-grid"></div>
+          <section class="content-band">
+            <div class="section-heading">
+              <h2>전문 AI상담원에게 물어보세요</h2>
+              <button type="button" data-category="loan">대출 보기</button>
+            </div>
+            <div class="consult-chips">
+              <button type="button" data-action="deposit-consult">예적금상담</button>
+              <button type="button" data-action="loan-consult">대출상담</button>
+              <button type="button" data-action="subscription-consult">청약상담</button>
+            </div>
+          </section>
+          <section class="pick-section">
+            <h2>WON PICK 추천</h2>
+            <button type="button" data-category="fund"><strong>펀드, 고르기 어려우신가요?</strong><span>우리WON포트폴리오</span></button>
+            <button type="button" data-category="checking"><strong>외국 갈 땐 든든하게 외화 챙기기</strong><span>환전주머니</span></button>
+            <button type="button" data-action="mobile-plan"><strong>은행이 만든 착한 알뜰폰 요금제</strong><span>우리WON모바일</span></button>
+          </section>
+        </section>
+
+        <section class="screen" data-view="product-list" aria-label="상품목록 화면">
+          <div class="screen-toolbar">
+            <button type="button" class="back-button" data-screen="products">←</button>
+            <div>
+              <p class="eyebrow">Product list</p>
+              <h2 id="product-list-title">상품 목록</h2>
+            </div>
+          </div>
+          <section class="recent-products">
+            <div class="section-heading">
+              <h2>최근에 봤던 상품</h2>
+              <button type="button" id="clear-recent">비우기</button>
+            </div>
+            <div id="recent-product-list" class="recent-strip"></div>
+          </section>
+          <div id="product-list" class="product-list"></div>
+        </section>
+
+        <section class="screen" data-view="benefits" aria-label="혜택 몰 화면">
+          <article class="point-card">
+            <div>
+              <span>내 꿀머니</span>
+              <strong>9,789P</strong>
+              <small>출석만 해도 매일매일 꿀머니 드려요!</small>
+            </div>
+            <button type="button" id="use-points">사용하기</button>
+          </article>
+          <button class="benefit-attendance" type="button" data-action="attendance">
+            <span>출석만 해도 매일 꿀머니 드려요!</span>
+            <strong>매일매일 WON PLAY</strong>
+          </button>
+          <div class="screen-lead">
+            <p class="eyebrow">Benefits</p>
+            <h2>진행 중인 이벤트</h2>
+          </div>
+          <div id="event-list" class="event-list"></div>
+          <section class="benefit-stack">
+            <h2>놓치면 아쉬운 혜택</h2>
+            <button type="button" data-category="savings">우리 청년미래적금 가입신청하기</button>
+            <button type="button" data-action="award-event">상반기 결산 우리WON모바일 AWARDS</button>
+            <button type="button" data-category="irp">IRP/DC 신규 입금하면 선착순 꿀머니</button>
+            <button type="button" data-action="icecream">전문가Pick 상품 매수 시 아이스크림 제공</button>
+          </section>
+          <section class="life-services">
+            <h2>LIFE 맞춤형 서비스</h2>
+            <button type="button">7~18세 전용 용돈관리 서비스</button>
+            <button type="button">자녀를 위한 생활 첫 금융서비스</button>
+            <button type="button">직장인을 위한 특별한 혜택</button>
+            <button type="button">인생 후반전을 위한 맞춤형 서비스</button>
+          </section>
+        </section>
+
+        <section class="screen" data-view="event-detail" aria-label="이벤트 상세 안내 페이지">
+          <div class="screen-toolbar">
+            <button type="button" class="back-button" data-screen="benefits">←</button>
+            <div>
+              <p class="eyebrow">Event detail</p>
+              <h2 id="event-title">이벤트 안내</h2>
+            </div>
+          </div>
+          <article id="event-detail-card" class="event-detail-card"></article>
+        </section>
+
+        <section class="screen" data-view="assets" aria-label="자산 소비 화면">
+          <div class="asset-tabs">
+            <button class="active" type="button" data-screen="assets">자산</button>
+            <button type="button" data-action="spending-mode">소비</button>
+          </div>
+          <div class="asset-category-tabs">
+            <button class="active" type="button">전체</button>
+            <button type="button" data-category="checking">입출금/저축</button>
+            <button type="button" data-category="loan">대출</button>
+            <button type="button" data-category="fund">투자</button>
+            <button type="button" data-category="irp">연금/보험</button>
+          </div>
+          <div class="screen-lead">
+            <p class="eyebrow">Assets & spending</p>
+            <h2>자산과 소비 흐름을 한눈에.</h2>
+          </div>
+          <div class="asset-summary">
+            <div><span>총 자산</span><strong>113,568,964원</strong><small>25일 전보다 158만 631원 늘었어요</small></div>
+            <div><span>이번 달 소비</span><strong>2,184,600원</strong><small>예산의 72%</small></div>
+          </div>
+          <section class="asset-structure-card">
+            <div class="asset-bar"><span></span><b></b><i></i></div>
+            <button type="button" data-category="checking"><span>입출금/저축</span><strong>11,320,516원</strong><em>9.97%</em></button>
+            <button type="button" data-category="fund"><span>투자</span><strong>76,552,326원</strong><em>67.41%</em></button>
+            <button type="button" data-category="irp"><span>연금/보험</span><strong>25,696,122원</strong><em>22.63%</em></button>
+            <button type="button" data-category="loan"><span>대출</span><strong>자산연결</strong><em>〉</em></button>
+            <button type="button" data-action="asset-analysis">자산분석</button>
+          </section>
+          <section class="spending-card">
+            <div class="section-heading">
+              <h2>소비 카테고리</h2>
+              <button type="button" id="toggle-spending">상세</button>
+            </div>
+            <div id="spending-bars" class="spending-bars"></div>
+          </section>
+          <section class="content-band">
+            <div class="section-heading">
+              <h2>AI 자산케어</h2>
+              <button type="button" data-category="fund">투자상품</button>
+            </div>
+            <div class="care-list">
+              <button type="button"><strong>재무진단</strong><span>내 결과보기</span></button>
+              <button type="button"><strong>투자진단</strong><span>내 점수보기</span></button>
+              <button type="button"><strong>목표진단</strong><span>목표 만들기</span></button>
+            </div>
+          </section>
+        </section>
+
+        <nav class="bottom-nav" aria-label="Mobile navigation">
+          <button class="active" type="button" data-screen="home">홈</button>
+          <button type="button" data-screen="transfer">이체</button>
+          <button type="button" data-screen="products">상품</button>
+          <button type="button" data-screen="assets">자산</button>
+          <button type="button" data-screen="support">전체</button>
+        </nav>
+      </section>
+
+      <aside class="side-panel">
+        <section>
+          <p class="eyebrow">Financial brief</p>
+          <h2>오늘의 금융 컨디션</h2>
+          <p>생활비 지출은 안정권이고, 여유 자금은 단기 예금과 ISA 포트폴리오로 나눠 운용할 수 있습니다.</p>
+        </section>
+        <section class="test-log">
+          <h3>최근 활동</h3>
+          <ol id="bank-action-log"></ol>
+        </section>
+      </aside>
+    </main>
+
+    <dialog id="product-dialog" class="detail-dialog">
+      <form method="dialog">
+        <button class="close-button" value="close" aria-label="Close">×</button>
+        <p class="eyebrow">Product detail</p>
+        <h2 id="dialog-product-title">상품명</h2>
+        <p id="dialog-product-description">상품 설명</p>
+        <div id="dialog-product-tags" class="tag-row"></div>
+        <div class="dialog-actions">
+          <button type="button" id="favorite-product">관심상품</button>
+          <button type="button" id="apply-product">가입하기</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="card-sheet" class="detail-dialog">
+      <form method="dialog">
+        <button class="close-button" value="close" aria-label="Close">×</button>
+        <p class="eyebrow">Card spending</p>
+        <h2>ON 체크카드</h2>
+        <p>이번 달 결제 642,800원 · 다음 결제 예정 184,200원</p>
+        <div class="mini-list">
+          <button type="button"><strong>생활비 카드</strong><span>마트·배달 3% 적립</span></button>
+          <button type="button"><strong>여행 카드</strong><span>환전 수수료 우대</span></button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="/sdk/session-replay-sdk.js" data-project-id="finance-demo" data-user-id="local-tester" data-auto-start="false"></script>
+    <script src="/web/test-page/app.js"></script>
+  </body>
+</html>

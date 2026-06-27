@@ -116,6 +116,25 @@ export class SessionReplayer {
     this.onStatus(`Replay loaded. events=${payload.events.length}`);
   }
 
+  preview(onReady) {
+    if (!this.payload) {
+      throw new Error("payload is not loaded");
+    }
+
+    const snapshot = this.getSnapshotEvent();
+    if (!snapshot) {
+      throw new Error("snapshot event is missing");
+    }
+
+    this.setViewport(snapshot.data.viewport);
+    this.renderSnapshot(snapshot.data.html, snapshot.data.url, snapshot.data.iframeSummary || [], () => {
+      this.onStatus(`Snapshot ready. events=${this.payload.events.length}`);
+      if (typeof onReady === "function") {
+        onReady();
+      }
+    });
+  }
+
   play(options = {}) {
     if (!this.payload) {
       throw new Error("payload is not loaded");
@@ -129,7 +148,7 @@ export class SessionReplayer {
     this.isPlaying = true;
     this.currentIndex = 0;
 
-    const snapshot = this.payload.events.find((event) => event.type === "snapshot" && event.data && event.data.html);
+    const snapshot = this.getSnapshotEvent();
     if (!snapshot) {
       throw new Error("snapshot event is missing");
     }
@@ -159,6 +178,10 @@ export class SessionReplayer {
       this.onStatus(`Replay started. speed=${this.speed}x, Mutation ${this.applyMutationEvents ? "ON" : "OFF"}, Scripts ${scriptMode}`);
       this.runTimeline(replayEvents);
     });
+  }
+
+  getSnapshotEvent() {
+    return this.payload?.events.find((event) => event.type === "snapshot" && event.data && event.data.html);
   }
 
   stop() {
@@ -205,6 +228,14 @@ export class SessionReplayer {
     this.iframe.style.height = `${viewportHeight}px`;
     this.iframe.style.transformOrigin = "top left";
     this.iframe.style.transform = `scale(${scale})`;
+
+    const overlay = this.canvasEl.querySelector(".replay-heatmap-overlay");
+    if (overlay) {
+      overlay.style.width = `${viewportWidth}px`;
+      overlay.style.height = `${viewportHeight}px`;
+      overlay.style.transformOrigin = "top left";
+      overlay.style.transform = `scale(${scale})`;
+    }
   }
 
   runTimeline(events) {
@@ -285,7 +316,9 @@ export class SessionReplayer {
     }
 
     if (event.type === "event") {
-      applyInteractionEvent(doc, event.data);
+      applyInteractionEvent(doc, event.data, {
+        replayNativeClicks: !this.applyMutationEvents
+      });
       done();
       return;
     }
@@ -294,51 +327,83 @@ export class SessionReplayer {
   }
 }
 
+const MAX_MUTATION_FALLBACK_HTML_BYTES = 20000;
+const MAX_MUTATION_FALLBACK_DESCENDANTS = 80;
+const MUTATION_FALLBACK_BLOCKED_TAGS = new Set(["html", "body", "head", "main", "section", "header", "footer", "nav", "form"]);
+
 function applyMutation(doc, data, options = {}) {
   if (!data) {
     return;
   }
 
-  const target = queryPath(doc, data.target);
+  try {
+    const target = queryPath(doc, data.target);
+    if (!target) {
+      return;
+    }
+
+    if (data.mutationType === "childList") {
+      if (!shouldApplyChildListMutation(target, data)) {
+        return;
+      }
+
+      const patchResult = applyChildListMutationPatch(doc, target, data, options);
+      if (patchResult.changed) {
+        return;
+      }
+
+      if (canUseInnerHtmlMutationFallback(target, data)) {
+        target.innerHTML = sanitizeFragmentHtml(data.targetInnerHTML, options);
+      }
+      return;
+    }
+
+    if (data.mutationType === "attributes") {
+      if (!data.attributeName) {
+        return;
+      }
+
+      if (isBlockedReplayAttribute(data.attributeName, data.newValue, options)) {
+        return;
+      }
+
+      if (data.newValue === null || data.newValue === undefined) {
+        target.removeAttribute(data.attributeName);
+      } else {
+        target.setAttribute(data.attributeName, String(data.newValue));
+      }
+      return;
+    }
+
+    if (data.mutationType === "characterData") {
+      applyCharacterDataMutation(target, data);
+    }
+  } catch {
+    // One malformed mutation should not break the whole replay timeline.
+  }
+}
+
+function applyCharacterDataMutation(target, data) {
   if (!target) {
     return;
   }
 
-  if (data.mutationType === "childList") {
-    if (!shouldApplyChildListMutation(target, data)) {
-      return;
-    }
-
-    const patched = applyChildListMutationPatch(doc, target, data, options);
-    if (patched) {
-      return;
-    }
-
-    if (typeof data.targetInnerHTML === "string" && data.targetInnerHTML && data.targetInnerHTML !== "[redacted]") {
-      target.innerHTML = sanitizeFragmentHtml(data.targetInnerHTML, options);
-    }
+  const text = data && data.newValue !== undefined && data.newValue !== null ? String(data.newValue) : "";
+  if (target.nodeType === Node.TEXT_NODE) {
+    target.textContent = text;
     return;
   }
 
-  if (data.mutationType === "attributes") {
-    if (!data.attributeName) {
-      return;
-    }
-
-    if (isBlockedReplayAttribute(data.attributeName, data.newValue, options)) {
-      return;
-    }
-
-    if (data.newValue === null || data.newValue === undefined) {
-      target.removeAttribute(data.attributeName);
-    } else {
-      target.setAttribute(data.attributeName, String(data.newValue));
-    }
+  if (!isElementNode(target, target.ownerDocument)) {
     return;
   }
 
-  if (data.mutationType === "characterData") {
-    target.textContent = data.newValue || "";
+  const childNodes = Array.from(target.childNodes || []);
+  const textChildren = childNodes.filter((node) => node.nodeType === Node.TEXT_NODE);
+  const elementChildren = childNodes.filter((node) => node.nodeType === Node.ELEMENT_NODE);
+
+  if (!elementChildren.length && textChildren.length <= 1) {
+    target.textContent = text;
   }
 }
 
@@ -352,19 +417,18 @@ function shouldApplyChildListMutation(target, data) {
     return false;
   }
 
-  const selector = String((data && data.target) || "");
   const html = String((data && data.targetInnerHTML) || "");
   const addedCount = Array.isArray(data && data.addedNodes) ? data.addedNodes.length : 0;
   const removedCount = Array.isArray(data && data.removedNodes) ? data.removedNodes.length : 0;
   const hasPatchNodes = addedCount + removedCount > 0;
-
   if (!html && !hasPatchNodes) {
     return false;
   }
 
+  const selector = String((data && data.target) || "");
   const idBasedPath = selector.includes("#");
   const nthBasedPath = selector.includes(":nth-of-type(");
-  const isLargeMutation = html.length > 3500 || target.childElementCount > 20;
+  const isLargeMutation = byteLength(html) > 3500 || target.childElementCount > 20;
   if (!idBasedPath && nthBasedPath && isLargeMutation) {
     return false;
   }
@@ -374,26 +438,40 @@ function shouldApplyChildListMutation(target, data) {
 
 function applyChildListMutationPatch(doc, target, data, options = {}) {
   if (!isElementNode(target, doc)) {
-    return false;
+    return {
+      changed: false,
+      complete: false
+    };
   }
 
   const removedNodes = Array.isArray(data && data.removedNodes) ? data.removedNodes : [];
   const addedNodes = Array.isArray(data && data.addedNodes) ? data.addedNodes : [];
-  let changed = false;
+  let removedAttempted = 0;
+  let removedApplied = 0;
+  let addedAttempted = 0;
+  let addedApplied = 0;
 
   removedNodes.forEach((nodeDesc) => {
+    removedAttempted += 1;
     if (removeSerializedNode(doc, target, nodeDesc)) {
-      changed = true;
+      removedApplied += 1;
     }
   });
 
   addedNodes.forEach((nodeDesc) => {
+    addedAttempted += 1;
     if (appendSerializedNode(doc, target, nodeDesc, options)) {
-      changed = true;
+      addedApplied += 1;
     }
   });
 
-  return changed;
+  const changed = removedApplied + addedApplied > 0;
+  const complete = removedApplied === removedAttempted && addedApplied === addedAttempted;
+
+  return {
+    changed,
+    complete
+  };
 }
 
 function removeSerializedNode(doc, target, nodeDesc) {
@@ -426,6 +504,10 @@ function appendSerializedNode(doc, target, nodeDesc, options = {}) {
     return false;
   }
 
+  if (nodeDesc.path && queryPath(doc, nodeDesc.path)) {
+    return true;
+  }
+
   if (nodeDesc.nodeType === "text") {
     target.appendChild(doc.createTextNode(String(nodeDesc.textContent || "")));
     return true;
@@ -452,6 +534,39 @@ function appendSerializedNode(doc, target, nodeDesc, options = {}) {
   return false;
 }
 
+function canUseInnerHtmlMutationFallback(target, data) {
+  if (!isElementNode(target, target.ownerDocument)) {
+    return false;
+  }
+
+  if (typeof data.targetInnerHTML !== "string" || data.targetInnerHTML === "[redacted]") {
+    return false;
+  }
+
+  const tag = String(target.tagName || "").toLowerCase();
+  if (MUTATION_FALLBACK_BLOCKED_TAGS.has(tag)) {
+    return false;
+  }
+
+  if (byteLength(data.targetInnerHTML) > MAX_MUTATION_FALLBACK_HTML_BYTES) {
+    return false;
+  }
+
+  if (target.querySelectorAll && target.querySelectorAll("*").length > MAX_MUTATION_FALLBACK_DESCENDANTS) {
+    return false;
+  }
+
+  return true;
+}
+
+function byteLength(value) {
+  const text = String(value || "");
+  if (typeof TextEncoder === "function") {
+    return new TextEncoder().encode(text).length;
+  }
+  return text.length;
+}
+
 function isBlockedReplayAttribute(attributeName, value, options = {}) {
   const name = String(attributeName || "").toLowerCase();
   if (!name) {
@@ -469,7 +584,7 @@ function isBlockedReplayAttribute(attributeName, value, options = {}) {
   return false;
 }
 
-function applyInteractionEvent(doc, data) {
+function applyInteractionEvent(doc, data, options = {}) {
   if (!data || !data.eventType) {
     return;
   }
@@ -477,6 +592,11 @@ function applyInteractionEvent(doc, data) {
   const eventType = String(data.eventType).toLowerCase();
 
   if (eventType === "intent_marker") {
+    return;
+  }
+
+  if (eventType === "view_state") {
+    applyViewStateEvent(doc, data);
     return;
   }
 
@@ -516,7 +636,33 @@ function applyInteractionEvent(doc, data) {
   if (eventType === "click") {
     showClickPoint(doc, data);
     markClicked(target);
-    replayNativeClick(doc, target, data);
+    if (options.replayNativeClicks !== false) {
+      replayNativeClick(doc, target, data);
+    }
+  }
+}
+
+function applyViewStateEvent(doc, data) {
+  if (!doc || !data || !data.screenName) {
+    return;
+  }
+
+  const screenName = String(data.screenName);
+  doc.querySelectorAll(".screen[data-view]").forEach((screen) => {
+    screen.classList.toggle("active", screen.getAttribute("data-view") === screenName);
+  });
+
+  doc.querySelectorAll("[data-screen]").forEach((button) => {
+    button.classList.toggle("active", button.getAttribute("data-screen") === screenName);
+  });
+
+  const title = doc.getElementById("screen-title");
+  if (title && data.title) {
+    title.textContent = String(data.title);
+  }
+
+  if (doc.defaultView && typeof doc.defaultView.scrollTo === "function") {
+    doc.defaultView.scrollTo(0, Number(data.scrollTop) || 0);
   }
 }
 

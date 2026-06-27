@@ -679,6 +679,11 @@ function getNodePath(node) {
     return `#${node.id}`;
   }
 
+  const stableSelector = getStableSelector(node);
+  if (stableSelector) {
+    return stableSelector;
+  }
+
   const path = [];
   let current = node;
 
@@ -697,6 +702,67 @@ function getNodePath(node) {
   }
 
   return path.join(" > ");
+}
+
+function getStableSelector(node) {
+  if (!(node instanceof Element)) {
+    return "";
+  }
+
+  const tag = String(node.tagName || "").toLowerCase();
+  if (!tag) {
+    return "";
+  }
+
+  const candidates = [
+    ["data-testid", node.getAttribute("data-testid")],
+    ["data-test", node.getAttribute("data-test")],
+    ["data-qa", node.getAttribute("data-qa")],
+    ["data-cy", node.getAttribute("data-cy")],
+    ["name", node.getAttribute("name")],
+    ["aria-label", node.getAttribute("aria-label")]
+  ];
+
+  for (const [attr, value] of candidates) {
+    if (!value) {
+      continue;
+    }
+    const selector = `${tag}[${attr}="${escapeAttributeValue(value)}"]`;
+    if (isUniqueSelector(node, selector)) {
+      return selector;
+    }
+  }
+
+  const role = node.getAttribute("role");
+  const ariaLabel = node.getAttribute("aria-label");
+  if (role && ariaLabel) {
+    const selector = `${tag}[role="${escapeAttributeValue(role)}"][aria-label="${escapeAttributeValue(ariaLabel)}"]`;
+    if (isUniqueSelector(node, selector)) {
+      return selector;
+    }
+  }
+
+  return "";
+}
+
+function isUniqueSelector(node, selector) {
+  const doc = node && node.ownerDocument;
+  if (!doc || !selector) {
+    return false;
+  }
+
+  try {
+    const matches = doc.querySelectorAll(selector);
+    return matches.length === 1 && matches[0] === node;
+  } catch {
+    return false;
+  }
+}
+
+function escapeAttributeValue(value) {
+  return String(value || "")
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, "\\\"");
 }
 
 function getInputValue(target, maskInputValue, policy) {

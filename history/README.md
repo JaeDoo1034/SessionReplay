@@ -1,6 +1,6 @@
 # Session Replay Snippet History
 
-이 폴더는 `Test/session-replay-snippet*.js` 버전별 개선 이력을 정리한 문서입니다.
+이 폴더는 `Test/session-replay-snippet*.js` 버전별 개선 이력과 SDK/WAS/SQLite 기반 통합 테스트 환경 작업 내용을 정리한 문서입니다.
 
 ## 버전 목록
 
@@ -15,6 +15,7 @@
 ## 운영 문서
 
 - [Replay Validation Checklist (v6)](./replay-validation-checklist-v6.md): 재생 품질 수동 점검 항목
+- [Session Replay Test Environment v1](./session-replay-test-environment-v1.md): SDK/WAS/SQLite/test-ui/viewer 통합 테스트 환경 현재 상태
 
 ## 타임라인
 
@@ -22,3 +23,4 @@
 - 2026-02-18: v5/v5.1 문서화 및 빈 화면 대응(베이스 스냅샷/iframe 복원) 반영
 - 2026-02-18: v6 생성, mutation 재생 안정화(childList patch 우선 + fallback)
 - 2026-02-18: v7 생성, v4 재구성 + 단일 snapshot 유지 + Clarity/rrweb 기반 보안/재현/운영 개선
+- 2026-06-28: SDK/WAS/SQLite/test-ui/viewer 통합 테스트 환경 v1 문서화

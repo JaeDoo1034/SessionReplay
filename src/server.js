@@ -5,6 +5,8 @@ import dotenv from "dotenv";
 import { ChatOpenAI } from "@langchain/openai";
 import { Annotation, StateGraph } from "@langchain/langgraph";
 import { analyzeBehavior } from "./behavior-analyzer.js";
+import { createReplayStore } from "./replay-db.js";
+import { createPostgresReplayStore } from "./replay-postgres-db.js";
 
 dotenv.config();
 
@@ -13,11 +15,13 @@ if (!apiKey) {
   console.warn("[warn] OPENAI_API_KEY is missing. /api/llm-analyze will fail until you set it.");
 }
 
-const llm = new ChatOpenAI({
-  apiKey,
-  model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-  temperature: 0.1
-});
+const llm = apiKey
+  ? new ChatOpenAI({
+      apiKey,
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      temperature: 0.1
+    })
+  : null;
 
 const LLMGraphState = Annotation.Root({
   summary: Annotation(),
@@ -39,6 +43,9 @@ const llmGraph = new StateGraph(LLMGraphState)
     };
   })
   .addNode("call_model", async (state) => {
+    if (!llm) {
+      throw new Error("OPENAI_API_KEY is required for /api/llm-analyze");
+    }
     const response = await llm.invoke(state.prompt);
     const content = normalizeLLMContent(response.content);
     return {
@@ -78,9 +85,142 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
+const replayStore = createReplayDataStore();
 
-app.use(express.json({ limit: "5mb" }));
-app.use(express.static(projectRoot));
+app.use(express.json({ limit: "25mb" }));
+
+app.get("/", (_req, res) => {
+  res.redirect("/test-ui");
+});
+
+app.get("/test-ui", (_req, res) => {
+  res.sendFile(path.join(projectRoot, "web", "test-page", "index.html"));
+});
+
+app.get("/viewer", (_req, res) => {
+  res.sendFile(path.join(projectRoot, "web", "replay-viewer", "index.html"));
+});
+
+app.get("/sdk/:file", (req, res) => {
+  sendProjectFile(res, ["sdk", req.params.file]);
+});
+
+app.get("/src/:file", (req, res) => {
+  const allowedBrowserModules = new Set(["behavior-analyzer.js", "replayer.js"]);
+  if (!allowedBrowserModules.has(req.params.file)) {
+    return res.status(404).send("Not found");
+  }
+  return sendProjectFile(res, ["src", req.params.file]);
+});
+
+app.get("/web/:section/:file", (req, res) => {
+  const allowedSections = new Set(["test-page", "replay-viewer"]);
+  if (!allowedSections.has(req.params.section)) {
+    return res.status(404).send("Not found");
+  }
+  return sendProjectFile(res, ["web", req.params.section, req.params.file]);
+});
+
+app.post("/api/replay/sessions/start", async (req, res) => {
+  try {
+    const session = await replayStore.insertSession(req.body || {});
+    return res.json({ ok: true, session });
+  } catch (error) {
+    return res.status(400).json({ ok: false, error: error.message || "session start failed" });
+  }
+});
+
+app.post("/api/replay/events/batch", async (req, res) => {
+  try {
+    const result = await replayStore.insertEvents(req.body || {});
+    return res.json({ ok: true, ...result });
+  } catch (error) {
+    return res.status(400).json({ ok: false, error: error.message || "event batch insert failed" });
+  }
+});
+
+app.post("/api/replay/sessions/end", async (req, res) => {
+  try {
+    const session = await replayStore.endSession(req.body?.sessionId, req.body || {});
+    return res.json({ ok: true, session });
+  } catch (error) {
+    return res.status(400).json({ ok: false, error: error.message || "session end failed" });
+  }
+});
+
+app.get("/api/replay/sessions", async (req, res) => {
+  try {
+    const sessions = await replayStore.listSessions(req.query.limit);
+    return res.json({ ok: true, sessions });
+  } catch (error) {
+    return res.status(500).json({ ok: false, error: error.message || "session list failed" });
+  }
+});
+
+app.get("/api/replay/sessions/:sessionId", async (req, res) => {
+  try {
+    const session = await replayStore.getSession(req.params.sessionId);
+    if (!session) {
+      return res.status(404).json({ ok: false, error: "session was not found" });
+    }
+    return res.json({ ok: true, session });
+  } catch (error) {
+    return res.status(500).json({ ok: false, error: error.message || "session read failed" });
+  }
+});
+
+app.get("/api/replay/sessions/:sessionId/events", async (req, res) => {
+  try {
+    const session = await replayStore.getSession(req.params.sessionId);
+    if (!session) {
+      return res.status(404).json({ ok: false, error: "session was not found" });
+    }
+    return res.json({ ok: true, events: await replayStore.getEvents(req.params.sessionId) });
+  } catch (error) {
+    return res.status(500).json({ ok: false, error: error.message || "event read failed" });
+  }
+});
+
+app.get("/api/replay/sessions/:sessionId/payload", async (req, res) => {
+  try {
+    const payload = await replayStore.getPayload(req.params.sessionId);
+    if (!payload) {
+      return res.status(404).json({ ok: false, error: "session was not found" });
+    }
+    return res.json({ ok: true, payload });
+  } catch (error) {
+    return res.status(500).json({ ok: false, error: error.message || "payload read failed" });
+  }
+});
+
+app.post("/api/replay/sessions/delete-all", (_req, res) => {
+  deleteAllReplaySessions(res);
+});
+
+app.delete("/api/replay/sessions/:sessionId", async (req, res) => {
+  try {
+    const deleted = await replayStore.deleteSession(req.params.sessionId);
+    if (!deleted) {
+      return res.status(404).json({ ok: false, error: "session was not found" });
+    }
+    return res.json({ ok: true, deleted: true, sessionId: req.params.sessionId });
+  } catch (error) {
+    return res.status(500).json({ ok: false, error: error.message || "session delete failed" });
+  }
+});
+
+app.delete("/api/replay/sessions", (_req, res) => {
+  deleteAllReplaySessions(res);
+});
+
+async function deleteAllReplaySessions(res) {
+  try {
+    const deletedCount = await replayStore.deleteAllSessions();
+    return res.json({ ok: true, deleted: true, deletedCount });
+  } catch (error) {
+    return res.status(500).json({ ok: false, error: error.message || "all sessions delete failed" });
+  }
+}
 
 app.post("/api/llm-analyze", async (req, res) => {
   try {
@@ -89,6 +229,7 @@ app.post("/api/llm-analyze", async (req, res) => {
 
     let summary = req.body.summary;
     let prompt = req.body.prompt;
+    const analysisInstructions = sanitizeAnalysisInstructions(req.body.analysisInstructions);
 
     if (!hasSummary && hasPayload) {
       const local = analyzeBehavior(req.body.payload);
@@ -102,10 +243,14 @@ app.post("/api/llm-analyze", async (req, res) => {
       });
     }
 
-    const result = await llmGraph.invoke({ summary, prompt });
+    const result = await llmGraph.invoke({
+      summary,
+      prompt: applyAnalysisInstructions(prompt || buildPromptFromSummary(summary), analysisInstructions)
+    });
 
     return res.json({
       ok: true,
+      analysisInstructions,
       result: result.result,
       raw: result.llmOutput,
       customerResultKo: result.customerResultKo,
@@ -124,16 +269,70 @@ app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });
 
+function getReplayDatabasePath() {
+  if (process.env.SESSION_REPLAY_DB_PATH) {
+    return process.env.SESSION_REPLAY_DB_PATH;
+  }
+
+  if (process.env.VERCEL) {
+    return path.join("/tmp", "session-replay.sqlite");
+  }
+
+  return path.join(projectRoot, "data", "session-replay.sqlite");
+}
+
+function createReplayDataStore() {
+  if (process.env.DATABASE_URL) {
+    console.log("[replay-store] using Postgres database from DATABASE_URL");
+    return createPostgresReplayStore(process.env.DATABASE_URL);
+  }
+
+  const databasePath = getReplayDatabasePath();
+  console.log(`[replay-store] using SQLite database at ${databasePath}`);
+  return createReplayStore(databasePath);
+}
+
+function sendProjectFile(res, parts) {
+  const filePath = path.resolve(projectRoot, ...parts);
+  if (!filePath.startsWith(projectRoot + path.sep)) {
+    return res.status(403).send("Forbidden");
+  }
+  return res.sendFile(filePath);
+}
+
 function buildPromptFromSummary(summary) {
   return [
     "You are a UX behavior analyst.",
-    "Classify the user session into one primary behavior type and up to two secondary types.",
-    "Then provide evidence-based reasoning and 3 actionable UX recommendations.",
+    "Define a precise customer type from this session. Do not choose only from predefined categories.",
+    "Create a concise customer type name that best describes this user's behavior pattern.",
+    "Then explain what kind of customer this is, why this type fits, and what signals support it.",
     "Output valid JSON only (no markdown fences).",
     "Schema:",
-    '{"primary_type":"...","secondary_types":["..."],"confidence":0-1,"evidence":["..."],"recommendations":["..."]}',
+    '{"customer_type_name":"...","customer_type_description":"...","secondary_traits":["..."],"confidence":0-1,"why_this_type":["..."],"evidence":["..."]}',
     "Session summary:",
     JSON.stringify(summary, null, 2)
+  ].join("\n");
+}
+
+function sanitizeAnalysisInstructions(value) {
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 1200);
+}
+
+function applyAnalysisInstructions(prompt, analysisInstructions) {
+  if (!analysisInstructions) {
+    return prompt;
+  }
+
+  return [
+    prompt,
+    "",
+    "Additional analysis instructions from the analyst:",
+    analysisInstructions,
+    "",
+    "Apply these instructions as analysis criteria, but do not ignore the telemetry evidence."
   ].join("\n");
 }
 
@@ -180,31 +379,34 @@ function buildCustomerSummaryPrompt(analysisResult, sessionSummary) {
     "You are a UX behavior analyst.",
     "",
     "Task:",
-    "1) First, translate and present the previously generated classification result in Korean (same meaning, natural Korean).",
-    "2) Then, add a short Korean summary of the session behavior (1–3 sentences).",
+    "1) First, interpret the previously generated customer type in natural Korean.",
+    "2) Then, define what kind of customer this is in Korean, based on the telemetry.",
     "3) Then, output the final structured JSON only (Korean values) using the schema below.",
     "",
     "Important:",
     "- The final answer MUST be valid JSON only (no markdown, no extra text).",
     "- Put steps (1) and (2) inside JSON fields so the output remains JSON-only.",
-    "- Keep recommendations actionable and specific.",
+    "- Do NOT focus on recommendations. Focus on defining the customer type.",
+    "- You may use the local metric candidates as evidence, but create your own customer type name if needed.",
     "",
     "Schema (JSON-only):",
     "{",
     '  "previous_result_ko": {',
-    '    "primary_type": "...",',
-    '    "secondary_types": ["..."],',
+    '    "customer_type_name": "...",',
+    '    "customer_type_description": "...",',
+    '    "secondary_traits": ["..."],',
     '    "confidence": 0-1,',
-    '    "evidence": ["..."],',
-    '    "recommendations": ["..."]',
+    '    "why_this_type": ["..."],',
+    '    "evidence": ["..."]',
     "  },",
     '  "session_summary_ko": "...",',
     '  "final_result_ko": {',
-    '    "primary_type": "...",',
-    '    "secondary_types": ["..."],',
+    '    "customer_type_name": "...",',
+    '    "customer_type_description": "...",',
+    '    "secondary_traits": ["..."],',
     '    "confidence": 0-1,',
-    '    "evidence": ["..."],',
-    '    "recommendations": ["..."]',
+    '    "why_this_type": ["..."],',
+    '    "evidence": ["..."]',
     "  }",
     "}",
     "",
@@ -229,13 +431,21 @@ function sanitizeSingleLine(text) {
 
 function normalizePrimaryResult(value) {
   const source = value && typeof value === "object" ? value : {};
+  const legacyPrimary = toText(source.primary_type, "");
+  const legacySecondary = toTextArray(source.secondary_types, 2);
+  const legacyRecommendations = toTextArray(source.recommendations, 5);
 
   return {
-    primary_type: toText(source.primary_type, "unknown"),
-    secondary_types: toTextArray(source.secondary_types, 2),
+    customer_type_name: toText(source.customer_type_name, legacyPrimary || "unknown"),
+    customer_type_description: toText(source.customer_type_description, legacyPrimary || "고객 유형을 정의하지 못했습니다."),
+    secondary_traits: toTextArray(source.secondary_traits, 3).length
+      ? toTextArray(source.secondary_traits, 3)
+      : legacySecondary,
     confidence: toConfidence(source.confidence),
-    evidence: toTextArray(source.evidence, 5),
-    recommendations: toTextArray(source.recommendations, 5)
+    why_this_type: toTextArray(source.why_this_type, 5).length
+      ? toTextArray(source.why_this_type, 5)
+      : legacyRecommendations,
+    evidence: toTextArray(source.evidence, 5)
   };
 }
 

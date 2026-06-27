@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Session Replay Viewer</title>
+    <link rel="stylesheet" href="/web/replay-viewer/styles.css" />
+  </head>
+  <body>
+    <main class="viewer-layout session-drawer-closed">
+      <header class="viewer-topbar">
+        <button id="session-drawer-toggle" class="drawer-trigger" type="button" aria-expanded="false" aria-controls="session-sidebar">
+          <span aria-hidden="true">☰</span>
+          세션 목록
+        </button>
+        <div class="viewer-title">
+          <p class="eyebrow">Session Replay</p>
+          <h1>Replay Viewer</h1>
+        </div>
+        <a class="topbar-link" href="/test-ui">Test UI</a>
+      </header>
+
+      <button id="session-drawer-backdrop" class="session-drawer-backdrop" type="button" aria-label="Close sessions" hidden></button>
+
+      <aside id="session-sidebar" class="session-sidebar" aria-label="SQLite sessions">
+        <div class="sidebar-header">
+          <div>
+            <p class="eyebrow">SQLite Sessions</p>
+            <h1>Replay Viewer</h1>
+          </div>
+          <div class="sidebar-actions">
+            <a href="/test-ui">Test UI</a>
+            <button id="refresh-sessions">새로고침</button>
+            <button id="delete-all-sessions" class="danger-action" disabled>전체 삭제</button>
+            <button id="session-drawer-close" class="drawer-close" type="button" aria-label="Close sessions">×</button>
+          </div>
+        </div>
+        <div id="session-list" class="session-list"></div>
+      </aside>
+
+      <section class="replay-workspace">
+        <section class="insight-card" aria-label="Customer behavior insight">
+          <div class="insight-main">
+            <p class="eyebrow">Customer Pattern</p>
+            <h2 id="insight-title">고객 행동 유형 분석</h2>
+            <p id="insight-summary">세션을 선택하면 행동 요약을 만들고, LLM으로 고객 유형을 해석할 수 있습니다.</p>
+          </div>
+          <div class="insight-actions">
+            <button id="local-analyze" disabled>Local summary</button>
+            <button id="llm-analyze" disabled>Analyze with LLM</button>
+          </div>
+          <div id="insight-result" class="insight-result">
+            <div>
+              <span>Primary type</span>
+              <strong id="insight-primary">-</strong>
+            </div>
+            <div>
+              <span>Confidence</span>
+              <strong id="insight-confidence">-</strong>
+            </div>
+            <div class="insight-wide">
+              <span>Behavior metrics</span>
+              <div id="metric-grid" class="metric-grid"></div>
+            </div>
+            <div class="insight-wide">
+              <span>LLM-defined customer type</span>
+              <div id="customer-ranking" class="customer-ranking"></div>
+            </div>
+            <div class="insight-wide">
+              <span>Evidence</span>
+              <ul id="insight-evidence"></ul>
+            </div>
+            <div class="insight-wide">
+              <span>Customer definition</span>
+              <ul id="insight-recommendations"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="replay-card" aria-label="Session replay playback">
+          <div class="replay-card-head">
+            <div>
+              <p class="eyebrow">Session Replay</p>
+              <h2 id="selected-title">세션을 선택하세요</h2>
+              <p id="selected-meta">왼쪽 목록에서 수집된 세션을 선택하면 replay를 로드합니다.</p>
+              <div id="selected-badges" class="selected-badges"></div>
+            </div>
+            <div class="control-row">
+              <select id="speed-select" aria-label="Replay speed">
+                <option value="0.5">0.5x</option>
+                <option value="1" selected>1x</option>
+                <option value="2">2x</option>
+                <option value="4">4x</option>
+              </select>
+              <button id="mutation-toggle">Mutation OFF</button>
+              <button id="play-replay" disabled>Play</button>
+              <button id="stop-replay" disabled>Stop</button>
+            </div>
+          </div>
+          <div id="viewer-status" class="status-line">Idle</div>
+          <div class="replay-frame-shell">
+            <iframe id="replay-frame" title="Replay frame"></iframe>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <dialog id="llm-prompt-dialog" class="prompt-dialog">
+      <form id="llm-prompt-form">
+        <div class="prompt-dialog-head">
+          <div>
+            <p class="eyebrow">LLM Criteria</p>
+            <h2>분석 기준 추가</h2>
+          </div>
+          <button id="llm-prompt-close" class="prompt-close" type="button" aria-label="Close">×</button>
+        </div>
+        <label>
+          LLM에게 추가로 지시할 분석 기준
+          <textarea id="llm-analysis-instructions" rows="7" placeholder="예: 금융 앱 고객 관점에서 상품 탐색 의도, 혜택 민감도, 자산관리 관심도, 이탈 위험 신호를 우선 고려해서 고객 유형을 정의해줘."></textarea>
+        </label>
+        <div class="prompt-dialog-actions">
+          <button id="llm-prompt-skip" type="button">기준 없이 분석</button>
+          <button type="submit">이 기준으로 분석</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script type="module" src="/web/replay-viewer/viewer.js"></script>
+  </body>
+</html>

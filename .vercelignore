@@ -1,0 +1,25 @@
+# Local dependencies
+node_modules/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Local SQLite runtime data
+data/
+
+# Local replay samples and screenshots
+샘플/
+*.png
+*.jpg
+*.jpeg
+
+# Reference and documentation not needed at runtime
+Reference/
+history/
+workflow/
+work_concept/
+
+# OS files
+.DS_Store
