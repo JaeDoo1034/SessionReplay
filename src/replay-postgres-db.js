@@ -1,6 +1,8 @@
 import pg from "pg";
 
 const { Pool } = pg;
+const DB_RETRY_ATTEMPTS = 3;
+const DB_RETRY_BASE_DELAY_MS = 250;
 
 export function createPostgresReplayStore(connectionString) {
   if (!connectionString) {
@@ -12,7 +14,7 @@ export function createPostgresReplayStore(connectionString) {
     ssl: process.env.DATABASE_SSL === "false" ? false : { rejectUnauthorized: false },
     max: Math.max(1, toInteger(process.env.DATABASE_POOL_MAX, 3)),
     idleTimeoutMillis: 10000,
-    connectionTimeoutMillis: 10000
+    connectionTimeoutMillis: Math.max(10000, toInteger(process.env.DATABASE_CONNECTION_TIMEOUT_MS, 15000))
   });
 
   const readyPromise = ensureSchema(pool);
@@ -29,7 +31,7 @@ export function createPostgresReplayStore(connectionString) {
     }
 
     const viewport = meta.viewport || {};
-    await pool.query(
+    await queryWithRetry(pool,
       `
         INSERT INTO replay_sessions (
           id, project_id, user_id, page_url, user_agent,
@@ -105,9 +107,7 @@ export function createPostgresReplayStore(connectionString) {
       droppedEventCount: batch.droppedEventCount
     });
 
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
+    await transactionWithRetry(pool, async (client) => {
       for (const [index, event] of batch.events.entries()) {
         const sequence = toInteger(event.sequence ?? event.id, index + 1);
         const offset = toNumber(event.timeOffsetMs, 0);
@@ -123,13 +123,7 @@ export function createPostgresReplayStore(connectionString) {
           [sessionId, eventType, eventTime, sequence, JSON.stringify(event), Date.now()]
         );
       }
-      await client.query("COMMIT");
-    } catch (error) {
-      await client.query("ROLLBACK");
-      throw error;
-    } finally {
-      client.release();
-    }
+    });
 
     return {
       inserted: batch.events.length,
@@ -144,7 +138,7 @@ export function createPostgresReplayStore(connectionString) {
       throw new Error("sessionId is required");
     }
 
-    const result = await pool.query(
+    const result = await queryWithRetry(pool,
       `
         UPDATE replay_sessions
         SET ended_at = $1,
@@ -171,7 +165,7 @@ export function createPostgresReplayStore(connectionString) {
 
   async function listSessions(limit = 50) {
     await ready();
-    const result = await pool.query(
+    const result = await queryWithRetry(pool,
       `
         SELECT
           s.*,
@@ -192,13 +186,13 @@ export function createPostgresReplayStore(connectionString) {
 
   async function getSession(id) {
     await ready();
-    const result = await pool.query("SELECT * FROM replay_sessions WHERE id = $1", [id]);
+    const result = await queryWithRetry(pool, "SELECT * FROM replay_sessions WHERE id = $1", [id]);
     return result.rows[0] ? normalizeSession(result.rows[0]) : null;
   }
 
   async function getEvents(sessionId) {
     await ready();
-    const result = await pool.query(
+    const result = await queryWithRetry(pool,
       `
         SELECT * FROM replay_events
         WHERE session_id = $1
@@ -247,15 +241,15 @@ export function createPostgresReplayStore(connectionString) {
       throw new Error("sessionId is required");
     }
 
-    const result = await pool.query("DELETE FROM replay_sessions WHERE id = $1 RETURNING id", [id]);
+    const result = await queryWithRetry(pool, "DELETE FROM replay_sessions WHERE id = $1 RETURNING id", [id]);
     return Boolean(result.rows[0]);
   }
 
   async function deleteAllSessions() {
     await ready();
-    const before = await pool.query("SELECT COUNT(*)::integer AS count FROM replay_sessions");
+    const before = await queryWithRetry(pool, "SELECT COUNT(*)::integer AS count FROM replay_sessions");
     const count = Number(before.rows[0]?.count) || 0;
-    await pool.query("DELETE FROM replay_sessions");
+    await queryWithRetry(pool, "DELETE FROM replay_sessions");
     return count;
   }
 
@@ -274,7 +268,7 @@ export function createPostgresReplayStore(connectionString) {
 }
 
 async function ensureSchema(pool) {
-  await pool.query(`
+  await queryWithRetry(pool, `
     CREATE TABLE IF NOT EXISTS replay_sessions (
       id TEXT PRIMARY KEY,
       project_id TEXT NOT NULL,
@@ -310,6 +304,67 @@ async function ensureSchema(pool) {
     ALTER TABLE replay_sessions ENABLE ROW LEVEL SECURITY;
     ALTER TABLE replay_events ENABLE ROW LEVEL SECURITY;
   `);
+}
+
+async function queryWithRetry(pool, text, params) {
+  return retryDatabaseOperation(() => pool.query(text, params));
+}
+
+async function transactionWithRetry(pool, callback) {
+  return retryDatabaseOperation(async () => {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const result = await callback(client);
+      await client.query("COMMIT");
+      return result;
+    } catch (error) {
+      try {
+        await client.query("ROLLBACK");
+      } catch {
+        // The connection may already be closed after a transient pooler error.
+      }
+      throw error;
+    } finally {
+      client.release();
+    }
+  });
+}
+
+async function retryDatabaseOperation(operation) {
+  let lastError;
+  for (let attempt = 1; attempt <= DB_RETRY_ATTEMPTS; attempt += 1) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      if (attempt >= DB_RETRY_ATTEMPTS || !isTransientDatabaseError(error)) {
+        throw error;
+      }
+      await delay(DB_RETRY_BASE_DELAY_MS * attempt);
+    }
+  }
+  throw lastError;
+}
+
+function isTransientDatabaseError(error) {
+  const message = String(error?.message || "").toLowerCase();
+  const code = String(error?.code || "");
+  return (
+    message.includes("connection terminated") ||
+    message.includes("timeout") ||
+    message.includes("terminating connection") ||
+    code === "ETIMEDOUT" ||
+    code === "ECONNRESET" ||
+    code === "ECONNREFUSED" ||
+    code === "53300"
+  );
+}
+
+function delay(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 function normalizeSession(row) {

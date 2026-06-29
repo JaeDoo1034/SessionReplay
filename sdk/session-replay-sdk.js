@@ -822,19 +822,34 @@
   }
 
   function postJson(pathname, body) {
+    var payload = JSON.stringify(body);
     return fetch(resolveEndpoint(pathname), {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(body),
-      keepalive: JSON.stringify(body).length < 60000
+      body: payload,
+      keepalive: payload.length < 60000
     }).then(function parseResponse(response) {
-      if (!response.ok) {
-        throw new Error("HTTP " + response.status);
-      }
-      return response.json();
+      return response.text().then(function parseBody(text) {
+        var json = parseJsonResponse(text);
+        if (!response.ok) {
+          throw new Error((json && json.error) || text || ("HTTP " + response.status));
+        }
+        return json || {};
+      });
     });
+  }
+
+  function parseJsonResponse(text) {
+    if (!text) {
+      return null;
+    }
+    try {
+      return JSON.parse(text);
+    } catch (error) {
+      return null;
+    }
   }
 
   function resolveEndpoint(pathname) {
