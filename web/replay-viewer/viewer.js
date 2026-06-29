@@ -197,11 +197,13 @@ async function loadSessions() {
       const item = document.createElement("article");
       item.className = "session-item";
       item.dataset.sessionId = session.id;
+      const displayName = getSessionDisplayName(session);
       const durationLabel = formatDuration((session.lastEventAt || session.endedAt || session.startedAt) - session.startedAt);
       item.innerHTML = `
         <button type="button" class="session-select">
-          <strong>${escapeHtml(session.projectId)} / ${escapeHtml(session.status)}</strong>
+          <strong>${escapeHtml(displayName)}</strong>
           <span>${new Date(session.startedAt).toLocaleString()}</span>
+          <span>${escapeHtml(session.projectId)} · ${escapeHtml(shortSessionId(session.id))}</span>
           <span>${escapeHtml(session.pageUrl || "")}</span>
           <div class="session-badges">
             <b>${session.eventCount || 0} events</b>
@@ -239,8 +241,8 @@ async function selectSession(session) {
     item.classList.toggle("active", item.dataset.sessionId === selectedSessionId);
   });
 
-  selectedTitle.textContent = session.id;
-  selectedMeta.textContent = `${session.pageUrl || "unknown page"} · ${session.eventCount || 0} events`;
+  selectedTitle.textContent = getSessionDisplayName(session);
+  selectedMeta.textContent = `${shortSessionId(session.id)} · ${session.pageUrl || "unknown page"} · ${session.eventCount || 0} events`;
   renderSelectedBadges(session, null);
   setStatus("payload를 불러오는 중...");
 
@@ -277,7 +279,7 @@ function setSessionDrawerOpen(open) {
 }
 
 async function deleteSession(session) {
-  const ok = window.confirm(`이 세션을 삭제할까요?\n\n${session.id}`);
+  const ok = window.confirm(`이 세션을 삭제할까요?\n\n${getSessionDisplayName(session)}\n${session.id}`);
   if (!ok) {
     return;
   }
@@ -830,6 +832,22 @@ function renderCustomerTypeDefinition(definition) {
     ${traits.length ? `<span>${traits.map((item) => escapeHtml(item)).join(" · ")}</span>` : ""}
   `;
   customerRanking.appendChild(card);
+}
+
+function getSessionDisplayName(session) {
+  const name = String(session?.sessionName || "").trim();
+  if (name) {
+    return name;
+  }
+  return `세션 ${shortSessionId(session?.id || "")}`;
+}
+
+function shortSessionId(sessionId) {
+  const value = String(sessionId || "");
+  if (!value) {
+    return "-";
+  }
+  return value.length > 13 ? `${value.slice(0, 8)}...${value.slice(-4)}` : value;
 }
 
 function formatDuration(ms) {

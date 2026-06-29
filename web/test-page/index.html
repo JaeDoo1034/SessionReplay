@@ -55,6 +55,10 @@
           <label><input type="checkbox" data-event-option="mousemove" /> 마우스 이동</label>
         </div>
       </section>
+      <label class="session-name-field" for="session-name-input">
+        <span>세션 이름</span>
+        <input id="session-name-input" type="text" maxlength="80" placeholder="예: 이체 화면 계좌번호 입력 테스트" autocomplete="off" />
+      </label>
       <dl class="session-stats">
         <div>
           <dt>Status</dt>
@@ -103,34 +107,6 @@
         </div>
 
         <section class="screen active" data-view="home" aria-label="메인 홈 화면">
-          <button class="notice-card" type="button" data-action="secret-space">
-            <span>선물</span>
-            <strong>유출주의! 나만 몰랐던 비밀공간 전담직원 서비스 가입하기!</strong>
-            <b>×</b>
-          </button>
-
-          <section class="mascot-zone" aria-label="홈 캐릭터 영역">
-            <div class="mascot-row" aria-hidden="true">
-              <i></i><i></i><i></i><i></i><i></i>
-            </div>
-            <div class="mascot-controls">
-              <button type="button" data-action="home-setting">홈계좌설정</button>
-              <label>
-                잔액숨김
-                <input type="checkbox" />
-              </label>
-            </div>
-          </section>
-
-          <article class="connect-card">
-            <button type="button" class="dismiss-button" data-action="dismiss-connect">×</button>
-            <div class="bank-bubbles" aria-hidden="true">
-              <span>B</span><span>국</span><span>하</span><span>···</span>
-            </div>
-            <p>다른 은행 계좌도 홈에서 확인할 수 있어요<br />필요한 계좌를 홈에 추가해 보세요</p>
-            <button type="button" data-action="add-bank">+ 다른 은행 계좌 추가</button>
-          </article>
-
           <article class="account-hero">
             <div>
               <span>가가가가</span>
@@ -140,20 +116,20 @@
             <button type="button" class="ghost-button" id="account-detail" data-screen="transfer">이체</button>
           </article>
 
+          <div class="quick-menu-strip">
+            <button type="button" data-screen="accounts"><span>계좌</span><strong>전체 계좌</strong></button>
+            <button type="button" data-screen="transfer"><span>이체</span><strong>빠른 송금</strong></button>
+            <button type="button" data-screen="products"><span>상품</span><strong>상품몰</strong></button>
+            <button type="button" data-screen="benefits"><span>혜택</span><strong>이벤트</strong></button>
+            <button type="button" data-screen="assets"><span>자산</span><strong>소비 분석</strong></button>
+          </div>
+
           <section class="account-list-card" aria-label="메인 계좌 목록">
             <button type="button" data-screen="transfer"><span>가가가가</span><strong>902,902원</strong><em>이체</em></button>
             <button type="button" data-screen="transfer"><span>Npay 우리 통장</span><strong>13,009원</strong><em>이체</em></button>
             <button type="button" data-screen="accounts"><span>가나</span><strong>25,939,467원</strong><em>입금</em></button>
             <button type="button" class="all-account-button" data-screen="accounts">전체계좌보기</button>
           </section>
-
-          <div class="quick-menu-strip">
-            <button type="button" data-screen="accounts"><span>계좌</span><strong>전체 계좌</strong></button>
-            <button type="button" data-screen="transfer"><span>이체</span><strong>빠른 송금</strong></button>
-            <button type="button" data-screen="cards"><span>카드</span><strong>실적 확인</strong></button>
-            <button type="button" data-screen="exchange"><span>환전</span><strong>여행 준비</strong></button>
-            <button type="button" data-screen="support"><span>문의</span><strong>상담 연결</strong></button>
-          </div>
 
           <div class="menu-grid">
             <button type="button" data-screen="products">

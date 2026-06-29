@@ -1,6 +1,41 @@
-# Session Replay Snippet History
+# Session Replay History
 
-이 폴더는 `Test/session-replay-snippet*.js` 버전별 개선 이력과 SDK/WAS/SQLite 기반 통합 테스트 환경 작업 내용을 정리한 문서입니다.
+이 폴더는 세션 리플레이 프로젝트의 업무 히스토리, 버전별 개선 이력, 운영 구조 변경 내용을 정리하는 공간입니다.
+
+## 폴더 이용 규칙
+
+### `history/`
+
+`history/` 폴더 자체는 업무 히스토리 이력을 남기는 공간입니다.
+
+아래와 같은 내용은 `history/` 바로 아래에 날짜 또는 버전 기준 문서로 정리합니다.
+
+- 기능 추가 및 구조 변경 이력
+- SDK, WAS, DB, viewer, test-ui 등 주요 업무 단위 진행 내용
+- 배포 준비, 운영 구조 변경, 화면 개선 등 프로젝트 진행 기록
+- 추후 이 폴더만 봐도 "언제, 왜, 무엇을 바꿨는지" 알 수 있어야 하는 내용
+
+권장 파일명:
+
+```text
+YYYY-MM-DD-업무-주제.md
+session-replay-기능명-vN.md
+```
+
+### `history/lession learned/`
+
+`history/lession learned/` 폴더는 오류 해결 방식을 정리하는 공간입니다.
+
+아래와 같은 내용은 이 폴더에 정리합니다.
+
+- 장애 또는 버그의 원인 분석
+- 문제 재현 조건
+- 해결 방향과 실제 수정 위치
+- 기존 흐름과 개선 흐름 비교
+- 같은 문제를 다시 겪지 않기 위한 개념 설명
+
+현재 폴더명은 프로젝트 내 실제 경로 기준으로 `lession learned`를 사용합니다.
+추후 폴더명을 정리할 경우 기존 문서 링크도 함께 수정해야 합니다.
 
 ## 버전 목록
 
@@ -16,6 +51,15 @@
 
 - [Replay Validation Checklist (v6)](./replay-validation-checklist-v6.md): 재생 품질 수동 점검 항목
 - [Session Replay Test Environment v1](./session-replay-test-environment-v1.md): SDK/WAS/SQLite/test-ui/viewer 통합 테스트 환경 현재 상태
+- [2026-06-29 세션 이름 저장 및 Test UI 시인성 개선](./2026-06-29-session-name-and-test-ui-ux-refresh.md): 세션 이름 저장, viewer 표시, 금융 앱형 test-ui 개선
+- [2026-06-29 배포용 SDK 및 원격 제어 화면](./2026-06-29-deploy-sdk-and-control-console.md): 외부 사이트 삽입용 SDK 분리, 원격 녹화 제어 화면, SDK 제어 API/DB 구조
+
+## Lesson Learned
+
+- [Stop failed / Save failed DB Timeout](./lession%20learned/stop-save-failed-db-timeout.md): Vercel/Supabase DB timeout과 저장 실패 해결
+- [Dialog Popup Replay Tracking Gap](./lession%20learned/dialog-popup-replay-tracking-gap.md): dialog popup 재생 누락 원인과 해결 방향
+- [Customer Behavior Labeling Improvement](./lession%20learned/customer-behavior-labeling-improvement.md): 고객 행동 유형 라벨링 개선
+- [Mobile Replay CSS Broken by Localhost Base URL](./lession%20learned/mobile-replay-css-localhost-base-url.md): 모바일 replay CSS 깨짐과 localhost base URL 보정
 
 ## 타임라인
 
@@ -24,3 +68,6 @@
 - 2026-02-18: v6 생성, mutation 재생 안정화(childList patch 우선 + fallback)
 - 2026-02-18: v7 생성, v4 재구성 + 단일 snapshot 유지 + Clarity/rrweb 기반 보안/재현/운영 개선
 - 2026-06-28: SDK/WAS/SQLite/test-ui/viewer 통합 테스트 환경 v1 문서화
+- 2026-06-29: 세션 이름 저장 기능과 test-ui UX 개선 내용 문서화
+- 2026-06-29: 기존 테스트용 SDK와 분리된 배포용 SDK 및 원격 제어 화면 구조 문서화
+- 2026-06-29: 모바일 replay CSS 깨짐 원인(localhost base URL) 및 해결 방식 문서화

@@ -276,14 +276,15 @@ export class SessionReplayer {
     }
 
     this.updateIframeSandbox();
-    const sanitized = sanitizeDocumentHtml(rawHtml, baseUrl || window.location.href, {
+    const replayBaseUrl = resolveReplayBaseUrl(baseUrl || window.location.href);
+    const sanitized = sanitizeDocumentHtml(rawHtml, replayBaseUrl, {
       allowScripts: this.executePageScripts
     });
 
     this.iframe.onload = () => {
       const doc = this.iframe && this.iframe.contentDocument;
       if (doc) {
-        restoreIframeSources(doc, iframeSummary, baseUrl || window.location.href);
+        restoreIframeSources(doc, iframeSummary, replayBaseUrl);
       }
       this.updateViewportScale();
       if (typeof onReady === "function") {
@@ -330,6 +331,12 @@ export class SessionReplayer {
 const MAX_MUTATION_FALLBACK_HTML_BYTES = 20000;
 const MAX_MUTATION_FALLBACK_DESCENDANTS = 80;
 const MUTATION_FALLBACK_BLOCKED_TAGS = new Set(["html", "body", "head", "main", "section", "header", "footer", "nav", "form"]);
+const REPLAY_ONLY_HIDDEN_SELECTORS = [
+  ".session-launcher",
+  ".session-popover",
+  "#session-popover-toggle",
+  "#session-popover"
+];
 
 function applyMutation(doc, data, options = {}) {
   if (!data) {
@@ -1084,6 +1091,7 @@ function sanitizeDomTree(root, options = {}) {
 
   const allowScripts = Boolean(options.allowScripts);
   root.querySelectorAll("[autofocus]").forEach((node) => node.removeAttribute("autofocus"));
+  hideReplayOnlyChrome(root);
 
   if (!allowScripts) {
     root.querySelectorAll("script").forEach((node) => node.remove());
@@ -1104,6 +1112,38 @@ function sanitizeDomTree(root, options = {}) {
   }
 }
 
+function hideReplayOnlyChrome(root) {
+  const selector = REPLAY_ONLY_HIDDEN_SELECTORS.join(",");
+  root.querySelectorAll(selector).forEach((node) => {
+    if (!node || typeof node.setAttribute !== "function") {
+      return;
+    }
+    node.setAttribute("hidden", "");
+    node.setAttribute("aria-hidden", "true");
+    node.setAttribute("data-sr-replay-hidden", "true");
+    node.style.setProperty("display", "none", "important");
+    node.style.setProperty("visibility", "hidden", "important");
+    node.style.setProperty("pointer-events", "none", "important");
+  });
+
+  const doc = root.nodeType === Node.DOCUMENT_NODE ? root : root.ownerDocument;
+  if (!doc || !doc.head || doc.getElementById("sr-replay-hidden-chrome-style")) {
+    return;
+  }
+
+  const style = doc.createElement("style");
+  style.id = "sr-replay-hidden-chrome-style";
+  style.textContent = [
+    REPLAY_ONLY_HIDDEN_SELECTORS.join(","),
+    "{",
+    "display:none!important;",
+    "visibility:hidden!important;",
+    "pointer-events:none!important;",
+    "}"
+  ].join("");
+  doc.head.appendChild(style);
+}
+
 function ensureBaseHref(doc, baseUrl) {
   if (!doc || !doc.head || !baseUrl) {
     return;
@@ -1115,6 +1155,23 @@ function ensureBaseHref(doc, baseUrl) {
     doc.head.prepend(base);
   }
   base.setAttribute("href", String(baseUrl));
+}
+
+function resolveReplayBaseUrl(baseUrl) {
+  try {
+    const parsed = new URL(String(baseUrl || ""), window.location.href);
+    if (isLocalDevelopmentOrigin(parsed)) {
+      return new URL(parsed.pathname + parsed.search + parsed.hash, window.location.origin).href;
+    }
+    return parsed.href;
+  } catch {
+    return window.location.href;
+  }
+}
+
+function isLocalDevelopmentOrigin(url) {
+  const hostname = String(url.hostname || "").toLowerCase();
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0" || hostname === "::1";
 }
 
 function isJavascriptUrlAttribute(name, value) {

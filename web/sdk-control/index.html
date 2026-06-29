@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Session Replay SDK Control</title>
+    <link rel="stylesheet" href="/web/sdk-control/styles.css" />
+  </head>
+  <body>
+    <main class="control-shell">
+      <header class="control-header">
+        <div>
+          <p class="eyebrow">Deployment SDK Control</p>
+          <h1>외부 삽입 SDK 제어 화면</h1>
+        </div>
+        <a class="viewer-link" href="/viewer">Viewer</a>
+      </header>
+
+      <section class="setup-panel" aria-label="SDK 삽입 스니펫">
+        <div>
+          <h2>외부 사이트 삽입 코드</h2>
+          <p>아래 스크립트를 대상 화면에 추가하면 이 화면에서 녹화 시작, 중지, 저장을 제어할 수 있습니다.</p>
+        </div>
+        <pre id="embedSnippet"></pre>
+      </section>
+
+      <section class="toolbar" aria-label="제어 필터">
+        <label>
+          프로젝트 ID
+          <input id="projectIdInput" type="text" value="external-demo" autocomplete="off" />
+        </label>
+        <label>
+          저장할 세션 이름
+          <input id="sessionNameInput" type="text" placeholder="예: 모바일 이체 테스트" autocomplete="off" />
+        </label>
+        <button id="refreshButton" type="button">새로고침</button>
+      </section>
+
+      <section class="summary-strip" aria-label="클라이언트 요약">
+        <div>
+          <span id="activeCount">0</span>
+          <p>활성 클라이언트</p>
+        </div>
+        <div>
+          <span id="recordingCount">0</span>
+          <p>녹화 중</p>
+        </div>
+        <div>
+          <span id="lastUpdated">-</span>
+          <p>최근 동기화</p>
+        </div>
+      </section>
+
+      <section class="client-section" aria-label="SDK 클라이언트 목록">
+        <div class="section-title">
+          <h2>연결된 화면</h2>
+          <p>외부 사이트에서 SDK가 로드되면 이 목록에 나타납니다.</p>
+        </div>
+        <div id="clientList" class="client-list"></div>
+      </section>
+    </main>
+
+    <script src="/web/sdk-control/control.js"></script>
+  </body>
+</html>

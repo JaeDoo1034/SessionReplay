@@ -34,13 +34,14 @@ export function createPostgresReplayStore(connectionString) {
     await queryWithRetry(pool,
       `
         INSERT INTO replay_sessions (
-          id, project_id, user_id, page_url, user_agent,
+          id, project_id, user_id, session_name, page_url, user_agent,
           viewport_width, viewport_height, started_at, ended_at, status,
           recording_config_json, redaction_stats_json, dropped_event_count
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULL, $9, $10::jsonb, $11::jsonb, $12)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NULL, $10, $11::jsonb, $12::jsonb, $13)
         ON CONFLICT(id) DO UPDATE SET
           project_id = EXCLUDED.project_id,
           user_id = EXCLUDED.user_id,
+          session_name = COALESCE(EXCLUDED.session_name, replay_sessions.session_name),
           page_url = EXCLUDED.page_url,
           user_agent = EXCLUDED.user_agent,
           viewport_width = EXCLUDED.viewport_width,
@@ -55,6 +56,7 @@ export function createPostgresReplayStore(connectionString) {
         id,
         toText(meta.projectId, "default"),
         toNullableText(meta.userId),
+        toNullableText(meta.sessionName || meta.session_name),
         toNullableText(meta.pageUrl || meta.href),
         toNullableText(meta.userAgent),
         toNullableInteger(viewport.width),
@@ -98,6 +100,7 @@ export function createPostgresReplayStore(connectionString) {
       sessionId,
       projectId: batch.projectId,
       userId: batch.userId,
+      sessionName: batch.sessionName || batch.session_name,
       pageUrl: batch.pageUrl,
       userAgent: batch.userAgent,
       viewport: batch.viewport,
@@ -151,14 +154,16 @@ export function createPostgresReplayStore(connectionString) {
         UPDATE replay_sessions
         SET ended_at = $1,
             status = $2,
-            redaction_stats_json = COALESCE($3::jsonb, redaction_stats_json),
-            dropped_event_count = COALESCE($4, dropped_event_count)
-        WHERE id = $5
+            session_name = COALESCE($3, session_name),
+            redaction_stats_json = COALESCE($4::jsonb, redaction_stats_json),
+            dropped_event_count = COALESCE($5, dropped_event_count)
+        WHERE id = $6
         RETURNING *
       `,
       [
         toInteger(meta.endedAt, Date.now()),
         toText(meta.status, "ended"),
+        toNullableText(meta.sessionName || meta.session_name),
         meta.redactionStats ? JSON.stringify(meta.redactionStats) : null,
         meta.droppedEventCount === undefined ? null : toInteger(meta.droppedEventCount, 0),
         id
@@ -234,6 +239,13 @@ export function createPostgresReplayStore(connectionString) {
         href: session.pageUrl,
         userAgent: session.userAgent
       },
+      session: {
+        id: session.id,
+        name: session.sessionName,
+        status: session.status,
+        startedAt: session.startedAt,
+        endedAt: session.endedAt
+      },
       recordingConfig: session.recordingConfig || {},
       droppedEventCount: session.droppedEventCount || 0,
       redactionStats: session.redactionStats || {},
@@ -261,6 +273,160 @@ export function createPostgresReplayStore(connectionString) {
     return count;
   }
 
+  async function upsertSdkClient(meta = {}) {
+    await ready();
+    const clientId = toText(meta.clientId || meta.client_id, "");
+    if (!clientId) {
+      throw new Error("clientId is required");
+    }
+
+    const now = Date.now();
+    const result = await queryWithRetry(pool,
+      `
+        INSERT INTO replay_sdk_clients (
+          client_id, project_id, user_id, page_url, origin, user_agent,
+          sdk_version, recording_state, session_id, last_seen_at, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        ON CONFLICT(client_id) DO UPDATE SET
+          project_id = EXCLUDED.project_id,
+          user_id = EXCLUDED.user_id,
+          page_url = EXCLUDED.page_url,
+          origin = EXCLUDED.origin,
+          user_agent = EXCLUDED.user_agent,
+          sdk_version = EXCLUDED.sdk_version,
+          recording_state = EXCLUDED.recording_state,
+          session_id = EXCLUDED.session_id,
+          last_seen_at = EXCLUDED.last_seen_at,
+          updated_at = EXCLUDED.updated_at
+        RETURNING *
+      `,
+      [
+        clientId,
+        toText(meta.projectId || meta.project_id, "default"),
+        toNullableText(meta.userId || meta.user_id),
+        toNullableText(meta.pageUrl || meta.page_url || meta.href),
+        toNullableText(meta.origin),
+        toNullableText(meta.userAgent || meta.user_agent),
+        toNullableText(meta.sdkVersion || meta.sdk_version),
+        toNullableText(meta.recordingState || meta.recording_state),
+        toNullableText(meta.sessionId || meta.session_id),
+        toInteger(meta.lastSeenAt || meta.last_seen_at, now),
+        toInteger(meta.createdAt || meta.created_at, now),
+        now
+      ]
+    );
+
+    return normalizeSdkClient(result.rows[0]);
+  }
+
+  async function listSdkClients(limit = 100) {
+    await ready();
+    const result = await queryWithRetry(pool,
+      `
+        SELECT * FROM replay_sdk_clients
+        ORDER BY last_seen_at DESC
+        LIMIT $1
+      `,
+      [Math.min(Math.max(toInteger(limit, 100), 1), 300)]
+    );
+    return result.rows.map(normalizeSdkClient);
+  }
+
+  async function createControlCommand(command = {}) {
+    await ready();
+    const action = normalizeControlAction(command.action);
+    const id = toText(command.id, createControlCommandId());
+    const now = Date.now();
+
+    const result = await queryWithRetry(pool,
+      `
+        INSERT INTO replay_control_commands (
+          id, project_id, client_id, action, session_name, payload_json,
+          status, created_at, delivered_at, completed_at, error
+        ) VALUES ($1, $2, $3, $4, $5, $6::jsonb, 'pending', $7, NULL, NULL, NULL)
+        RETURNING *
+      `,
+      [
+        id,
+        toText(command.projectId || command.project_id, "default"),
+        toNullableText(command.clientId || command.client_id),
+        action,
+        toNullableText(command.sessionName || command.session_name),
+        toJson(command.payload || {}),
+        now
+      ]
+    );
+
+    return normalizeControlCommand(result.rows[0]);
+  }
+
+  async function listPendingControlCommands(query = {}) {
+    await ready();
+    const projectId = toText(query.projectId || query.project_id, "default");
+    const clientId = toText(query.clientId || query.client_id, "");
+    if (!clientId) {
+      throw new Error("clientId is required");
+    }
+
+    const result = await queryWithRetry(pool,
+      `
+        SELECT * FROM replay_control_commands
+        WHERE project_id = $1
+          AND status = 'pending'
+          AND (client_id IS NULL OR client_id = $2)
+        ORDER BY created_at ASC
+        LIMIT $3
+      `,
+      [projectId, clientId, Math.min(Math.max(toInteger(query.limit, 20), 1), 50)]
+    );
+
+    const rows = result.rows;
+    if (rows.length) {
+      await queryWithRetry(pool,
+        `
+          UPDATE replay_control_commands
+          SET delivered_at = COALESCE(delivered_at, $1)
+          WHERE id = ANY($2::text[])
+        `,
+        [Date.now(), rows.map((row) => row.id)]
+      );
+    }
+
+    return rows.map(normalizeControlCommand);
+  }
+
+  async function acknowledgeControlCommand(commandId, meta = {}) {
+    await ready();
+    const id = toText(commandId || meta.commandId || meta.command_id, "");
+    if (!id) {
+      throw new Error("commandId is required");
+    }
+
+    const now = Date.now();
+    const result = await queryWithRetry(pool,
+      `
+        UPDATE replay_control_commands
+        SET status = $1,
+            completed_at = $2,
+            delivered_at = COALESCE(delivered_at, $2),
+            error = $3
+        WHERE id = $4
+        RETURNING *
+      `,
+      [
+        normalizeCommandStatus(meta.status || "completed"),
+        now,
+        toNullableText(meta.error),
+        id
+      ]
+    );
+
+    if (!result.rows[0]) {
+      throw new Error("command was not found");
+    }
+    return normalizeControlCommand(result.rows[0]);
+  }
+
   return {
     type: "postgres",
     insertSession,
@@ -271,7 +437,12 @@ export function createPostgresReplayStore(connectionString) {
     getEvents,
     getPayload,
     deleteSession,
-    deleteAllSessions
+    deleteAllSessions,
+    upsertSdkClient,
+    listSdkClients,
+    createControlCommand,
+    listPendingControlCommands,
+    acknowledgeControlCommand
   };
 }
 
@@ -281,6 +452,7 @@ async function ensureSchema(pool) {
       id TEXT PRIMARY KEY,
       project_id TEXT NOT NULL,
       user_id TEXT,
+      session_name TEXT,
       page_url TEXT,
       user_agent TEXT,
       viewport_width INTEGER,
@@ -309,8 +481,48 @@ async function ensureSchema(pool) {
     CREATE INDEX IF NOT EXISTS idx_replay_sessions_started_at
     ON replay_sessions(started_at DESC);
 
+    CREATE TABLE IF NOT EXISTS replay_sdk_clients (
+      client_id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL,
+      user_id TEXT,
+      page_url TEXT,
+      origin TEXT,
+      user_agent TEXT,
+      sdk_version TEXT,
+      recording_state TEXT,
+      session_id TEXT,
+      last_seen_at BIGINT NOT NULL,
+      created_at BIGINT NOT NULL,
+      updated_at BIGINT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS replay_control_commands (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL,
+      client_id TEXT,
+      action TEXT NOT NULL,
+      session_name TEXT,
+      payload_json JSONB,
+      status TEXT NOT NULL,
+      created_at BIGINT NOT NULL,
+      delivered_at BIGINT,
+      completed_at BIGINT,
+      error TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_replay_sdk_clients_project_seen
+    ON replay_sdk_clients(project_id, last_seen_at DESC);
+
+    CREATE INDEX IF NOT EXISTS idx_replay_control_commands_pending
+    ON replay_control_commands(project_id, client_id, status, created_at ASC);
+
+    ALTER TABLE replay_sessions
+    ADD COLUMN IF NOT EXISTS session_name TEXT;
+
     ALTER TABLE replay_sessions ENABLE ROW LEVEL SECURITY;
     ALTER TABLE replay_events ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE replay_sdk_clients ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE replay_control_commands ENABLE ROW LEVEL SECURITY;
   `);
 }
 
@@ -380,6 +592,7 @@ function normalizeSession(row) {
     id: row.id,
     projectId: row.project_id,
     userId: row.user_id,
+    sessionName: row.session_name || "",
     pageUrl: row.page_url,
     userAgent: row.user_agent,
     viewport: {
@@ -396,6 +609,58 @@ function normalizeSession(row) {
     firstEventAt: row.first_event_at === null || row.first_event_at === undefined ? null : toInteger(row.first_event_at, 0),
     lastEventAt: row.last_event_at === null || row.last_event_at === undefined ? null : toInteger(row.last_event_at, 0)
   };
+}
+
+function normalizeSdkClient(row) {
+  return {
+    clientId: row.client_id,
+    projectId: row.project_id,
+    userId: row.user_id,
+    pageUrl: row.page_url,
+    origin: row.origin,
+    userAgent: row.user_agent,
+    sdkVersion: row.sdk_version,
+    recordingState: row.recording_state,
+    sessionId: row.session_id,
+    lastSeenAt: toInteger(row.last_seen_at, 0),
+    createdAt: toInteger(row.created_at, 0),
+    updatedAt: toInteger(row.updated_at, 0)
+  };
+}
+
+function normalizeControlCommand(row) {
+  return {
+    id: row.id,
+    projectId: row.project_id,
+    clientId: row.client_id,
+    action: row.action,
+    sessionName: row.session_name || "",
+    payload: parseJson(row.payload_json, {}),
+    status: row.status,
+    createdAt: toInteger(row.created_at, 0),
+    deliveredAt: row.delivered_at === null || row.delivered_at === undefined ? null : toInteger(row.delivered_at, 0),
+    completedAt: row.completed_at === null || row.completed_at === undefined ? null : toInteger(row.completed_at, 0),
+    error: row.error || ""
+  };
+}
+
+function normalizeControlAction(action) {
+  const value = toText(action, "");
+  const allowed = new Set(["start", "pause", "stop", "save", "configure"]);
+  if (!allowed.has(value)) {
+    throw new Error("unsupported control action");
+  }
+  return value;
+}
+
+function normalizeCommandStatus(status) {
+  const value = toText(status, "completed");
+  const allowed = new Set(["completed", "failed", "ignored"]);
+  return allowed.has(value) ? value : "completed";
+}
+
+function createControlCommandId() {
+  return `cmd_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function parseJson(value, fallback) {

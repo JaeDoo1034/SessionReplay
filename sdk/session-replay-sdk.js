@@ -22,6 +22,7 @@
     collectIntervalMs: Number(readData("collectIntervalMs", 5000)) || 5000,
     maxBatchSize: Number(readData("maxBatchSize", 80)) || 80,
     maxEvents: Number(readData("maxEvents", 20000)) || 20000,
+    sessionName: readData("sessionName", ""),
     maskAllInputs: readData("maskAllInputs", "true") !== "false",
     enabledEvents: parseEnabledEvents(readData("enabledEvents", "click,input,change,submit,scroll,navigation,dialog,mutation")),
     blockSelectors: [".sr-block", "[data-sr-block='true']", "[data-private='true']", "[data-sensitive='true']"],
@@ -128,6 +129,7 @@
     config.collectIntervalMs = Math.max(1000, Number(config.collectIntervalMs) || defaults.collectIntervalMs);
     config.maxBatchSize = Math.max(1, Number(config.maxBatchSize) || defaults.maxBatchSize);
     config.maxEvents = Math.max(1000, Number(config.maxEvents) || defaults.maxEvents);
+    config.sessionName = normalizeSessionName(config.sessionName);
     config.blockSelectors = toSelectorArray(config.blockSelectors, defaults.blockSelectors);
     config.maskTextSelectors = toSelectorArray(config.maskTextSelectors, defaults.maskTextSelectors);
     config.maskAllInputs = config.maskAllInputs !== false;
@@ -199,7 +201,12 @@
     return flushAll();
   }
 
-  function save() {
+  function save(options) {
+    var sessionName = normalizeSessionName(options && options.sessionName);
+    if (options && Object.prototype.hasOwnProperty.call(options, "sessionName")) {
+      config.sessionName = sessionName;
+    }
+
     var pausePromise = state.isRecording ? pause() : Promise.resolve();
 
     if (!state.sessionId) {
@@ -218,6 +225,7 @@
     }).then(function afterFlush() {
       return postJson("/api/replay/sessions/end", {
         sessionId: state.sessionId,
+        sessionName: config.sessionName,
         endedAt: Date.now(),
         status: "ended",
         redactionStats: state.redactionStats,
@@ -243,6 +251,7 @@
       sessionId: state.sessionId,
       projectId: config.projectId,
       userId: config.userId,
+      sessionName: config.sessionName,
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       viewport: getViewport(),
@@ -897,6 +906,7 @@
       sessionId: state.sessionId,
       projectId: config.projectId,
       userId: config.userId,
+      sessionName: config.sessionName,
       pageUrl: location.href,
       userAgent: navigator.userAgent,
       viewport: getViewport(),
@@ -1025,6 +1035,10 @@
       return fallback;
     }
     return currentScript.dataset[name] === undefined ? fallback : currentScript.dataset[name];
+  }
+
+  function normalizeSessionName(value) {
+    return String(value || "").trim().slice(0, 80);
   }
 
   function merge(base, next) {

@@ -114,6 +114,7 @@ const sessionStarted = document.getElementById("session-started");
 const sessionId = document.getElementById("session-id");
 const sessionQueue = document.getElementById("session-queue");
 const sessionSaved = document.getElementById("session-saved");
+const sessionNameInput = document.getElementById("session-name-input");
 const sessionStart = document.getElementById("session-start");
 const sessionStop = document.getElementById("session-stop");
 const sessionFlush = document.getElementById("session-flush");
@@ -232,9 +233,10 @@ sessionFlush.addEventListener("click", async () => {
   refreshSessionPanel();
 
   try {
-    await sdk.save();
+    const sessionName = getSessionName();
+    await sdk.save({ sessionName });
     sessionStatusText = "Saved";
-    logActivity("Session saved", sdk.getSessionId ? sdk.getSessionId() : "");
+    logActivity("Session saved", sessionName || (sdk.getSessionId ? sdk.getSessionId() : ""));
     await refreshSavedSessions();
   } catch (error) {
     sessionStatusText = "Save failed";
@@ -279,6 +281,7 @@ function startRecording() {
   }
 
   applyEventSelection();
+  applySessionName();
   sdk.start();
   sessionStatusText = "Recording";
   logActivity("Recording started", `${sdk.getSessionId ? sdk.getSessionId() : ""} · ${getSelectedEventNames().join(", ")}`);
@@ -554,6 +557,21 @@ function applyEventSelection() {
   sdk.configure({
     enabledEvents: getSelectedEventMap()
   });
+}
+
+function applySessionName() {
+  const sdk = window.SessionReplaySDK;
+  if (!sdk || typeof sdk.configure !== "function") {
+    return;
+  }
+
+  sdk.configure({
+    sessionName: getSessionName()
+  });
+}
+
+function getSessionName() {
+  return String(sessionNameInput?.value || "").trim().slice(0, 80);
 }
 
 function setEventOptionsDisabled(disabled) {

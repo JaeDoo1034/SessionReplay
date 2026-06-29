@@ -87,6 +87,7 @@ const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
 const replayStore = createReplayDataStore();
 
+app.use(applyCors);
 app.use(express.json({ limit: "25mb" }));
 
 app.get("/", (_req, res) => {
@@ -99,6 +100,10 @@ app.get("/test-ui", (_req, res) => {
 
 app.get("/viewer", (_req, res) => {
   res.sendFile(path.join(projectRoot, "web", "replay-viewer", "index.html"));
+});
+
+app.get("/sdk-control", (_req, res) => {
+  res.sendFile(path.join(projectRoot, "web", "sdk-control", "index.html"));
 });
 
 app.get("/sdk/:file", (req, res) => {
@@ -114,11 +119,15 @@ app.get("/src/:file", (req, res) => {
 });
 
 app.get("/web/:section/:file", (req, res) => {
-  const allowedSections = new Set(["test-page", "replay-viewer"]);
+  const allowedSections = new Set(["test-page", "replay-viewer", "sdk-control"]);
   if (!allowedSections.has(req.params.section)) {
     return res.status(404).send("Not found");
   }
   return sendProjectFile(res, ["web", req.params.section, req.params.file]);
+});
+
+app.options("/api/*", (_req, res) => {
+  res.status(204).end();
 });
 
 app.post("/api/replay/sessions/start", async (req, res) => {
@@ -213,6 +222,65 @@ app.delete("/api/replay/sessions", (_req, res) => {
   deleteAllReplaySessions(res);
 });
 
+app.post("/api/sdk-control/clients/heartbeat", async (req, res) => {
+  try {
+    const client = await replayStore.upsertSdkClient(req.body || {});
+    const commands = await replayStore.listPendingControlCommands({
+      projectId: client.projectId,
+      clientId: client.clientId
+    });
+
+    return res.json({
+      ok: true,
+      client,
+      commands,
+      serverTime: Date.now()
+    });
+  } catch (error) {
+    return res.status(400).json({ ok: false, error: error.message || "sdk client heartbeat failed" });
+  }
+});
+
+app.get("/api/sdk-control/clients", async (req, res) => {
+  try {
+    const clients = await replayStore.listSdkClients(req.query.limit);
+    return res.json({ ok: true, clients, serverTime: Date.now() });
+  } catch (error) {
+    return res.status(500).json({ ok: false, error: error.message || "sdk client list failed" });
+  }
+});
+
+app.get("/api/sdk-control/commands", async (req, res) => {
+  try {
+    const commands = await replayStore.listPendingControlCommands({
+      projectId: req.query.projectId,
+      clientId: req.query.clientId,
+      limit: req.query.limit
+    });
+    return res.json({ ok: true, commands, serverTime: Date.now() });
+  } catch (error) {
+    return res.status(400).json({ ok: false, error: error.message || "sdk command poll failed" });
+  }
+});
+
+app.post("/api/sdk-control/commands", async (req, res) => {
+  try {
+    const command = await replayStore.createControlCommand(req.body || {});
+    return res.json({ ok: true, command });
+  } catch (error) {
+    return res.status(400).json({ ok: false, error: error.message || "sdk command create failed" });
+  }
+});
+
+app.post("/api/sdk-control/commands/:commandId/ack", async (req, res) => {
+  try {
+    const command = await replayStore.acknowledgeControlCommand(req.params.commandId, req.body || {});
+    return res.json({ ok: true, command });
+  } catch (error) {
+    return res.status(400).json({ ok: false, error: error.message || "sdk command acknowledge failed" });
+  }
+});
+
 async function deleteAllReplaySessions(res) {
   try {
     const deletedCount = await replayStore.deleteAllSessions();
@@ -290,6 +358,34 @@ function createReplayDataStore() {
   const databasePath = getReplayDatabasePath();
   console.log(`[replay-store] using SQLite database at ${databasePath}`);
   return createReplayStore(databasePath);
+}
+
+function applyCors(req, res, next) {
+  const origin = req.headers.origin;
+  if (origin && isSdkApiPath(req.path) && isAllowedSdkOrigin(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Max-Age", "86400");
+  }
+  return next();
+}
+
+function isSdkApiPath(pathname) {
+  return pathname.startsWith("/api/replay/") || pathname.startsWith("/api/sdk-control/");
+}
+
+function isAllowedSdkOrigin(origin) {
+  const raw = String(process.env.SDK_ALLOWED_ORIGINS || "*").trim();
+  if (!raw || raw === "*") {
+    return true;
+  }
+  return raw
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .includes(origin);
 }
 
 function sendProjectFile(res, parts) {
