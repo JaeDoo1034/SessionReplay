@@ -600,6 +600,11 @@ function applyInteractionEvent(doc, data, options = {}) {
     return;
   }
 
+  if (eventType === "dialog_open" || eventType === "dialog_close") {
+    applyDialogEvent(doc, data, eventType);
+    return;
+  }
+
   if (eventType === "mousemove") {
     showMouseMovePath(doc, data);
     return;
@@ -640,6 +645,64 @@ function applyInteractionEvent(doc, data, options = {}) {
       replayNativeClick(doc, target, data);
     }
   }
+}
+
+function applyDialogEvent(doc, data, eventType) {
+  const target = queryPath(doc, data && data.target);
+  if (!target || !isDialogNode(target, doc)) {
+    return;
+  }
+
+  if (eventType === "dialog_open") {
+    openReplayDialog(target, data);
+    return;
+  }
+
+  closeReplayDialog(target, data);
+}
+
+function openReplayDialog(target, data = {}) {
+  if (target.open) {
+    return;
+  }
+
+  try {
+    if (data.modal !== false && typeof target.showModal === "function") {
+      target.showModal();
+      return;
+    }
+    if (typeof target.show === "function") {
+      target.show();
+      return;
+    }
+  } catch {
+    // Fall through to the attribute fallback below.
+  }
+
+  target.setAttribute("open", "");
+}
+
+function closeReplayDialog(target, data = {}) {
+  if (!target.open) {
+    target.removeAttribute("open");
+    return;
+  }
+
+  try {
+    if (typeof target.close === "function") {
+      target.close(String(data.returnValue || ""));
+      return;
+    }
+  } catch {
+    // Fall through to the attribute fallback below.
+  }
+
+  target.removeAttribute("open");
+}
+
+function isDialogNode(node, doc) {
+  const win = doc && doc.defaultView;
+  return Boolean(win && win.HTMLDialogElement && node instanceof win.HTMLDialogElement);
 }
 
 function applyViewStateEvent(doc, data) {

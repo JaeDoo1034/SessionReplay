@@ -432,7 +432,7 @@ function runLocalAnalysis() {
     insightSummary.textContent = [
       `총 ${summary.totalEvents}개 이벤트`,
       `${summary.durationSec}초`,
-      `근거: ${summary.customerType.reasonCodes.join(", ")}`
+      `판단 근거: ${summary.customerType.reasonCodes.map(formatReasonCode).join(", ")}`
     ].join(" · ");
     insightPrimary.textContent = summary.customerType.primaryLabelKo || summary.customerType.primaryType || "neutral";
     insightConfidence.textContent = `${Math.round((summary.customerType.confidence || 0) * 100)}%`;
@@ -446,7 +446,7 @@ function runLocalAnalysis() {
       `로컬 참고 후보: ${(summary.customerType?.candidates || []).slice(0, 3).map((item) => `${item.labelKo} ${Math.round(item.score * 100)}%`).join(", ")}`,
       `상호작용 이벤트 ${summary.interactionEvents}개, DOM 변경 ${summary.mutationEvents}개`,
       `고유 타겟 ${summary.uniqueTargets}개, 최대 스크롤 ${summary.maxScrollTop}px`,
-      `submit ${summary.submits}회, 빠른 클릭 burst ${summary.rapidClickBursts}회, 반복 클릭 타겟 ${summary.repeatedClickTargets}개`
+      `완료 버튼 제출 ${summary.submits}회, 빠른 반복 클릭 ${summary.rapidClickBursts}회, 같은 위치 반복 클릭 ${summary.repeatedClickTargets}개`
     ]);
     renderList(insightRecommendations, buildLocalCustomerDefinition(summary));
   } catch (error) {
@@ -526,12 +526,12 @@ function renderList(target, items) {
 
 function renderMetrics(metrics) {
   const labels = [
-    ["engagementScore", "Engagement"],
-    ["explorationScore", "Exploration"],
-    ["goalIntentScore", "Goal intent"],
-    ["frictionScore", "Friction"],
-    ["formIntentScore", "Form intent"],
-    ["conversionScore", "Conversion"]
+    ["engagementScore", "관심도"],
+    ["explorationScore", "탐색 적극성"],
+    ["goalIntentScore", "이체·가입 등 실행 의지"],
+    ["frictionScore", "불편 신호"],
+    ["formIntentScore", "입력 진행도"],
+    ["conversionScore", "완료 가능성"]
   ];
 
   metricGrid.innerHTML = "";
@@ -556,12 +556,12 @@ function renderSelectedBadges(session, payload) {
   const mutations = events.filter((event) => event.type === "mutation").length;
   const durationMs = Math.max(0, ...events.map((event) => Number(event.timeOffsetMs) || 0));
   const badges = [
-    ["Duration", durationMs ? formatDuration(durationMs) : "-"],
-    ["Events", payload?.eventCount ?? session?.eventCount ?? "-"],
-    ["Clicks", clicks],
-    ["Submit", submits],
-    ["Mutation", mutations],
-    ["Status", session?.status || "-"]
+    ["체류 시간", durationMs ? formatDuration(durationMs) : "-"],
+    ["기록 이벤트", payload?.eventCount ?? session?.eventCount ?? "-"],
+    ["클릭", clicks],
+    ["제출", submits],
+    ["화면 변화", mutations],
+    ["상태", formatSessionStatus(session?.status)]
   ];
 
   selectedBadges.innerHTML = badges.map(([label, value]) => `
@@ -615,7 +615,7 @@ function renderTimelineTab() {
       ${keyEvents.map((event) => `
         <li>
           <span>${formatDuration(event.timeOffsetMs || 0)}</span>
-          <strong>${escapeHtml(event.data?.eventType || event.type)}</strong>
+          <strong>${escapeHtml(formatEventType(event.data?.eventType || event.type))}</strong>
           <em>${escapeHtml(event.data?.target || event.data?.reason || "")}</em>
         </li>
       `).join("")}
@@ -629,8 +629,8 @@ function renderEventsTab() {
   detailContent.innerHTML = `
     <div class="event-count-grid">
       ${rows.length ? rows.map(([type, count]) => `
-        <div><strong>${escapeHtml(type)}</strong><span>${count}</span></div>
-      `).join("") : "<div><strong>No events</strong><span>0</span></div>"}
+        <div><strong>${escapeHtml(formatEventType(type))}</strong><span>${count}</span></div>
+      `).join("") : "<div><strong>이벤트 없음</strong><span>0</span></div>"}
     </div>
   `;
 }
@@ -644,10 +644,10 @@ function renderMetricsTab() {
 
   detailContent.innerHTML = `
     <div class="metric-summary-grid">
-      <div><span>Unique targets</span><strong>${summary.uniqueTargets}</strong></div>
-      <div><span>Max scroll</span><strong>${summary.maxScrollTop}px</strong></div>
-      <div><span>Rapid bursts</span><strong>${summary.rapidClickBursts}</strong></div>
-      <div><span>Reason codes</span><strong>${escapeHtml(summary.customerType.reasonCodes.join(", "))}</strong></div>
+      <div><span>방문한 화면 요소</span><strong>${summary.uniqueTargets}</strong></div>
+      <div><span>가장 깊게 본 위치</span><strong>${summary.maxScrollTop}px</strong></div>
+      <div><span>빠른 반복 클릭</span><strong>${summary.rapidClickBursts}</strong></div>
+      <div><span>판단 근거</span><strong>${escapeHtml(summary.customerType.reasonCodes.map(formatReasonCode).join(", "))}</strong></div>
     </div>
   `;
 }
@@ -841,6 +841,56 @@ function formatDuration(ms) {
     return `${(num / 1000).toFixed(1)}s`;
   }
   return `${Math.floor(num / 60000)}m ${Math.round((num % 60000) / 1000)}s`;
+}
+
+function formatSessionStatus(status) {
+  const map = {
+    recording: "기록 중",
+    ended: "저장 완료",
+    stopped: "중지됨"
+  };
+  return map[status] || status || "-";
+}
+
+function formatEventType(type) {
+  const map = {
+    snapshot: "초기 화면 저장",
+    meta: "기록 상태 변경",
+    click: "클릭",
+    input: "입력",
+    change: "입력 변경",
+    submit: "제출",
+    scroll: "스크롤",
+    view_state: "화면 이동",
+    navigation_intent: "페이지 이동 시도",
+    dialog_open: "팝업 열림",
+    dialog_close: "팝업 닫힘",
+    mousemove: "마우스 이동",
+    mutation_childList: "화면 요소 변경",
+    mutation_attributes: "화면 속성 변경",
+    mutation_characterData: "화면 문구 변경"
+  };
+  return map[type] || type || "-";
+}
+
+function formatReasonCode(code) {
+  const map = {
+    goal_intent_high: "실행 의지 높음",
+    exploration_high: "탐색 활동 많음",
+    friction_detected: "불편 신호 있음",
+    bounce_risk_high: "이탈 가능성 높음",
+    goal_completed: "완료 행동 있음",
+    form_started_without_submit: "입력 후 미완료",
+    transfer_flow: "이체 화면 이용",
+    product_flow: "상품 화면 이용",
+    exchange_flow: "환전 화면 이용",
+    support_flow: "고객센터 이용",
+    benefit_flow: "혜택/이벤트 이용",
+    card_flow: "카드 화면 이용",
+    asset_flow: "자산·소비 화면 이용",
+    neutral_behavior: "특이 신호 적음"
+  };
+  return map[code] || code || "-";
 }
 
 function setStatus(message) {

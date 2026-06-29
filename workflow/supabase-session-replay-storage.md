@@ -6,15 +6,63 @@ Vercel serverless functions do not share a durable local SQLite file across all 
 
 For shared mobile and desktop testing, replay sessions should be stored in an external database. This project now supports Supabase Postgres when `DATABASE_URL` is set.
 
+Current production URL:
+
+- `https://session-replay-poc.vercel.app/test-ui`
+- `https://session-replay-poc.vercel.app/viewer`
+
 ## Runtime Behavior
 
 ```mermaid
 flowchart LR
   A[Test UI / SDK] -->|start, batch, end| B[Express API on Vercel]
   B --> C{DATABASE_URL exists?}
-  C -->|yes| D[Supabase Postgres]
+  C -->|yes| P[src/replay-postgres-db.js]
+  P --> R{Transient DB error?}
+  R -->|yes| W[wait and retry<br/>max 3 attempts]
+  W --> P
+  R -->|no| D[Supabase Postgres]
   C -->|no| E[Local SQLite]
   F[Viewer] -->|list, payload, delete| B
+
+  classDef retry fill:#dcfce7,stroke:#16a34a,color:#14532d;
+  class P,R,W retry;
+```
+
+## Production Save Flow
+
+```mermaid
+sequenceDiagram
+  participant UI as test_ui
+  participant SDK as SessionReplaySDK
+  participant API as Express API
+  participant Store as Postgres Replay Store
+  participant DB as Supabase Postgres
+  participant Viewer as viewer
+
+  UI->>SDK: Start
+  SDK->>API: POST /api/replay/sessions/start
+  API->>Store: insertSession()
+  Store->>DB: insert replay_sessions
+
+  UI->>SDK: User actions
+  SDK->>API: POST /api/replay/events/batch
+  API->>Store: insertEvents()
+  Store->>DB: insert replay_events
+
+  UI->>SDK: Stop
+  SDK->>API: flush remaining events
+  API->>Store: insertEvents()
+
+  UI->>SDK: Save
+  SDK->>API: POST /api/replay/sessions/end
+  API->>Store: endSession()
+  Store->>DB: update replay_sessions.status = ended
+
+  Viewer->>API: GET /api/replay/sessions
+  API->>Store: listSessions()
+  Store->>DB: select sessions
+  DB-->>Viewer: saved session is visible
 ```
 
 ## Supabase Connection
@@ -87,6 +135,86 @@ alter table replay_sessions enable row level security;
 alter table replay_events enable row level security;
 ```
 
+## DB Timeout Lesson
+
+Observed issue:
+
+```text
+Stop failed
+Save failed
+GET /api/replay/sessions?limit=1 -> 500
+Connection terminated due to connection timeout
+```
+
+Root cause:
+
+- Vercel Production function could not reliably connect to Supabase Postgres.
+- The original server code did not retry transient pooler/connection errors.
+- The SDK only showed generic HTTP status errors, which made the real DB cause harder to see.
+
+Fix:
+
+- Re-applied Vercel Production DB env values:
+  - `DATABASE_URL`
+  - `DATABASE_SSL`
+  - `DATABASE_POOL_MAX`
+- Redeployed Vercel Production so functions could read the new values.
+- Added retry handling in `src/replay-postgres-db.js`.
+- Improved SDK error parsing in `sdk/session-replay-sdk.js`.
+
+Detailed lesson learned:
+
+- `history/lession learned/stop-save-failed-db-timeout.md`
+
+## Timeout Diagnosis Flow
+
+```mermaid
+flowchart TD
+  Symptom[Stop failed / Save failed] --> CheckAPI[Check production API<br/>GET /api/replay/sessions?limit=1]
+  CheckAPI --> APIResult{API result}
+  APIResult -->|200 OK| CheckPayload[Check selected session payload]
+  APIResult -->|500 DB timeout| CheckLocalDB[Check local .env DATABASE_URL<br/>select now]
+
+  CheckLocalDB --> LocalResult{Local DB works?}
+  LocalResult -->|no| FixSupabase[Fix Supabase connection string or DB status]
+  LocalResult -->|yes| CheckVercelEnv[Check Vercel Production env]
+
+  CheckVercelEnv --> ReapplyEnv[Re-apply DATABASE_URL / SSL / POOL_MAX]
+  ReapplyEnv --> Redeploy[Vercel production redeploy]
+  Redeploy --> VerifyFlow[Verify start -> batch -> end -> payload]
+
+  VerifyFlow --> Stable{Still intermittent?}
+  Stable -->|yes| RetryLogic[Check retry logic and pooler status]
+  Stable -->|no| Done[Resolved]
+```
+
+## Retry Policy in Current Source
+
+`src/replay-postgres-db.js` treats the following as transient DB errors:
+
+- message contains `connection terminated`
+- message contains `timeout`
+- message contains `terminating connection`
+- code is `ETIMEDOUT`
+- code is `ECONNRESET`
+- code is `ECONNREFUSED`
+- code is `53300`
+
+Retry behavior:
+
+```mermaid
+flowchart LR
+  Query[DB query or transaction] --> Run[Run operation]
+  Run --> Result{Success?}
+  Result -->|yes| OK[Return result]
+  Result -->|no| Transient{Transient error?}
+  Transient -->|no| Throw[Throw original error]
+  Transient -->|yes| Attempt{attempt < 3?}
+  Attempt -->|yes| Wait[Wait 250ms * attempt]
+  Wait --> Run
+  Attempt -->|no| Throw
+```
+
 ## Test Checklist
 
 1. Deploy after setting `DATABASE_URL`.
@@ -96,3 +224,5 @@ alter table replay_events enable row level security;
 5. Stop and save.
 6. Open `/viewer` on desktop.
 7. Confirm the saved mobile session appears in the left session list.
+8. Confirm `GET /api/replay/sessions?limit=1` returns `200`.
+9. Confirm `GET /api/replay/sessions/:id/payload` returns the saved events.

@@ -75,7 +75,12 @@ export function createReplayStore(databasePath) {
     insertEvent: db.prepare(`
       INSERT INTO replay_events (
         session_id, event_type, event_time, sequence, payload_json, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?)
+      )
+      SELECT ?, ?, ?, ?, ?, ?
+      WHERE NOT EXISTS (
+        SELECT 1 FROM replay_events
+        WHERE session_id = ? AND sequence = ?
+      )
     `),
     listSessions: db.prepare(`
       SELECT
@@ -102,6 +107,7 @@ export function createReplayStore(databasePath) {
   };
 
   function insertEventsTransaction(sessionId, startedAt, events) {
+    let insertedCount = 0;
     db.exec("BEGIN");
     try {
       events.forEach((event, index) => {
@@ -110,20 +116,24 @@ export function createReplayStore(databasePath) {
         const eventTime = Math.round(startedAt + offset);
         const eventType = String(event.type || event.data?.eventType || "unknown");
 
-        statements.insertEvent.run(
+        const result = statements.insertEvent.run(
           sessionId,
           eventType,
           eventTime,
           sequence,
           JSON.stringify(event),
-          Date.now()
+          Date.now(),
+          sessionId,
+          sequence
         );
+        insertedCount += Number(result?.changes || 0);
       });
       db.exec("COMMIT");
     } catch (error) {
       db.exec("ROLLBACK");
       throw error;
     }
+    return insertedCount;
   }
 
   function ensureSession(meta = {}) {
@@ -206,10 +216,10 @@ export function createReplayStore(databasePath) {
       droppedEventCount: batch.droppedEventCount
     });
 
-    insertEventsTransaction(sessionId, session.startedAt, batch.events);
+    const inserted = insertEventsTransaction(sessionId, session.startedAt, batch.events);
 
     return {
-      inserted: batch.events.length,
+      inserted,
       session: normalizeSession(statements.getSession.get(sessionId))
     };
   }

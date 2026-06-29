@@ -107,26 +107,34 @@ export function createPostgresReplayStore(connectionString) {
       droppedEventCount: batch.droppedEventCount
     });
 
-    await transactionWithRetry(pool, async (client) => {
+    const inserted = await transactionWithRetry(pool, async (client) => {
+      let insertedCount = 0;
       for (const [index, event] of batch.events.entries()) {
         const sequence = toInteger(event.sequence ?? event.id, index + 1);
         const offset = toNumber(event.timeOffsetMs, 0);
         const eventTime = Math.round(session.startedAt + offset);
         const eventType = String(event.type || event.data?.eventType || "unknown");
 
-        await client.query(
+        const result = await client.query(
           `
             INSERT INTO replay_events (
               session_id, event_type, event_time, sequence, payload_json, created_at
-            ) VALUES ($1, $2, $3, $4, $5::jsonb, $6)
+            )
+            SELECT $1, $2, $3, $4, $5::jsonb, $6
+            WHERE NOT EXISTS (
+              SELECT 1 FROM replay_events
+              WHERE session_id = $1 AND sequence = $4
+            )
           `,
           [sessionId, eventType, eventTime, sequence, JSON.stringify(event), Date.now()]
         );
+        insertedCount += Number(result.rowCount || 0);
       }
+      return insertedCount;
     });
 
     return {
-      inserted: batch.events.length,
+      inserted,
       session: await getSession(sessionId)
     };
   }

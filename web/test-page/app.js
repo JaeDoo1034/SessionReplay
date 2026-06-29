@@ -253,7 +253,7 @@ eventOptions.forEach((input) => {
 });
 
 eventSelectDefault.addEventListener("click", () => {
-  const defaultEvents = ["click", "input", "change", "submit", "scroll", "navigation", "mutation"];
+  const defaultEvents = ["click", "input", "change", "submit", "scroll", "navigation", "dialog", "mutation"];
   eventOptions.forEach((input) => {
     input.checked = defaultEvents.includes(input.dataset.eventOption);
   });

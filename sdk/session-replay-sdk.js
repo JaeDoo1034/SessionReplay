@@ -1,6 +1,8 @@
 (function sessionReplaySdkFactory(global) {
   "use strict";
 
+  var POST_RETRY_ATTEMPTS = 3;
+  var POST_RETRY_BASE_DELAY_MS = 350;
   var currentScript = document.currentScript;
   var DEFAULT_ENABLED_EVENTS = {
     click: true,
@@ -9,6 +11,7 @@
     submit: true,
     scroll: true,
     navigation: true,
+    dialog: true,
     mutation: true,
     mousemove: false
   };
@@ -20,7 +23,7 @@
     maxBatchSize: Number(readData("maxBatchSize", 80)) || 80,
     maxEvents: Number(readData("maxEvents", 20000)) || 20000,
     maskAllInputs: readData("maskAllInputs", "true") !== "false",
-    enabledEvents: parseEnabledEvents(readData("enabledEvents", "click,input,change,submit,scroll,navigation,mutation")),
+    enabledEvents: parseEnabledEvents(readData("enabledEvents", "click,input,change,submit,scroll,navigation,dialog,mutation")),
     blockSelectors: [".sr-block", "[data-sr-block='true']", "[data-private='true']", "[data-sensitive='true']"],
     maskTextSelectors: [".sr-mask", "[data-sr-mask='true']", "[data-clarity-mask='true']", "[data-rr-mask='true']"]
   };
@@ -38,6 +41,9 @@
     listeners: [],
     originalPushState: null,
     originalReplaceState: null,
+    originalDialogShow: null,
+    originalDialogShowModal: null,
+    dialogPatched: false,
     historyPatched: false,
     droppedEventCount: 0,
     redactionStats: {
@@ -330,6 +336,8 @@
     add(global, "popstate", handleNavigation, true);
     add(document, "visibilitychange", handleNavigation, true);
     add(global, "pagehide", handlePageHide, true);
+    add(document, "close", handleDialogClose, true);
+    patchDialogMethods();
   }
 
   function detachListeners() {
@@ -337,6 +345,7 @@
       item.target.removeEventListener(item.type, item.handler, item.options);
     });
     state.listeners = [];
+    unpatchDialogMethods();
   }
 
   function add(target, type, handler, capture) {
@@ -414,6 +423,16 @@
       eventType: "submit",
       target: getNodePath(event.target),
       prevented: event.defaultPrevented
+    });
+  }
+
+  function handleDialogClose(event) {
+    var target = event && event.target;
+    if (!isDialogElement(target) || !isEventEnabled("dialog")) {
+      return;
+    }
+    recordDialogEvent(target, "dialog_close", {
+      modal: false
     });
   }
 
@@ -609,6 +628,79 @@
     } else {
       detachMutationObserver();
     }
+  }
+
+  function patchDialogMethods() {
+    var proto = global.HTMLDialogElement && global.HTMLDialogElement.prototype;
+    if (!proto || state.dialogPatched) {
+      return;
+    }
+
+    state.originalDialogShow = typeof proto.show === "function" ? proto.show : null;
+    state.originalDialogShowModal = typeof proto.showModal === "function" ? proto.showModal : null;
+
+    if (state.originalDialogShow) {
+      proto.show = function patchedDialogShow() {
+        var result = state.originalDialogShow.apply(this, arguments);
+        recordDialogEvent(this, "dialog_open", {
+          modal: false
+        });
+        return result;
+      };
+    }
+
+    if (state.originalDialogShowModal) {
+      proto.showModal = function patchedDialogShowModal() {
+        var result = state.originalDialogShowModal.apply(this, arguments);
+        recordDialogEvent(this, "dialog_open", {
+          modal: true
+        });
+        return result;
+      };
+    }
+
+    state.dialogPatched = true;
+  }
+
+  function unpatchDialogMethods() {
+    var proto = global.HTMLDialogElement && global.HTMLDialogElement.prototype;
+    if (!proto || !state.dialogPatched) {
+      return;
+    }
+
+    if (state.originalDialogShow) {
+      proto.show = state.originalDialogShow;
+    }
+    if (state.originalDialogShowModal) {
+      proto.showModal = state.originalDialogShowModal;
+    }
+
+    state.originalDialogShow = null;
+    state.originalDialogShowModal = null;
+    state.dialogPatched = false;
+  }
+
+  function recordDialogEvent(dialog, eventType, extra) {
+    if (!state.isRecording || !isEventEnabled("dialog") || !isDialogElement(dialog)) {
+      return;
+    }
+    if (shouldSkipNode(dialog)) {
+      state.redactionStats.blockedNodeEvents += 1;
+      return;
+    }
+
+    record("event", merge({
+      eventType: eventType,
+      target: getNodePath(dialog),
+      dialogId: dialog.id || "",
+      open: Boolean(dialog.open),
+      returnValue: dialog.returnValue || "",
+      text: getMaskedText(dialog)
+    }, extra || {}));
+  }
+
+  function isDialogElement(node) {
+    return Boolean(global.HTMLDialogElement && node instanceof global.HTMLDialogElement);
   }
 
   function getSnapshotHtml() {
@@ -823,6 +915,10 @@
 
   function postJson(pathname, body) {
     var payload = JSON.stringify(body);
+    return postJsonAttempt(pathname, payload, 1);
+  }
+
+  function postJsonAttempt(pathname, payload, attempt) {
     return fetch(resolveEndpoint(pathname), {
       method: "POST",
       headers: {
@@ -834,11 +930,49 @@
       return response.text().then(function parseBody(text) {
         var json = parseJsonResponse(text);
         if (!response.ok) {
-          throw new Error((json && json.error) || text || ("HTTP " + response.status));
+          throw createHttpError(response, json, text);
         }
         return json || {};
       });
+    }).catch(function onPostFailed(error) {
+      if (attempt < POST_RETRY_ATTEMPTS && isTransientPostError(error)) {
+        return delay(POST_RETRY_BASE_DELAY_MS * attempt).then(function retryPost() {
+          return postJsonAttempt(pathname, payload, attempt + 1);
+        });
+      }
+      throw error;
     });
+  }
+
+  function createHttpError(response, json, text) {
+    var message = (json && json.error) || text || ("HTTP " + response.status);
+    var error = new Error(message);
+    error.status = response.status;
+    error.retryable = isRetryableStatus(response.status) || isTransientMessage(message);
+    return error;
+  }
+
+  function isRetryableStatus(status) {
+    return status === 408 || status === 429 || status === 500 || status === 502 || status === 503 || status === 504;
+  }
+
+  function isTransientPostError(error) {
+    if (!error) {
+      return false;
+    }
+    return Boolean(error.retryable) || isTransientMessage(error.message);
+  }
+
+  function isTransientMessage(message) {
+    var text = String(message || "").toLowerCase();
+    return (
+      text.indexOf("failed to fetch") >= 0 ||
+      text.indexOf("networkerror") >= 0 ||
+      text.indexOf("network error") >= 0 ||
+      text.indexOf("timeout") >= 0 ||
+      text.indexOf("connection terminated") >= 0 ||
+      text.indexOf("temporarily unavailable") >= 0
+    );
   }
 
   function parseJsonResponse(text) {
@@ -878,6 +1012,12 @@
     } catch (_error) {
       return null;
     }
+  }
+
+  function delay(ms) {
+    return new Promise(function delayResolve(resolve) {
+      global.setTimeout(resolve, ms);
+    });
   }
 
   function readData(name, fallback) {
@@ -950,6 +1090,9 @@
   function isReplayEventEnabled(eventType) {
     if (["view_state", "navigation_intent", "hashchange", "popstate", "visibilitychange", "pagehide", "history_pushstate", "history_replacestate"].indexOf(eventType) >= 0) {
       return isEventEnabled("navigation");
+    }
+    if (["dialog_open", "dialog_close"].indexOf(eventType) >= 0) {
+      return isEventEnabled("dialog");
     }
     return isEventEnabled(eventType);
   }
