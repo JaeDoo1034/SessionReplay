@@ -130,8 +130,8 @@ export function createReplayStore(databasePath) {
       FROM replay_sessions s
       LEFT JOIN replay_events e ON e.session_id = s.id
       GROUP BY s.id
-      ORDER BY s.started_at DESC
-      LIMIT ?
+      ORDER BY s.started_at DESC, s.id DESC
+      LIMIT ? OFFSET ?
     `),
     listEvents: db.prepare(`
       SELECT * FROM replay_events
@@ -336,8 +336,8 @@ export function createReplayStore(databasePath) {
     return normalizeSession(session);
   }
 
-  function listSessions(limit = 50) {
-    return statements.listSessions.all(Math.min(Math.max(toInteger(limit, 50), 1), 200)).map(normalizeSession);
+  function listSessions(limit = 50, offset = 0) {
+    return statements.listSessions.all(Math.min(Math.max(toInteger(limit, 50), 1), 200), Math.max(0, toInteger(offset, 0))).map(normalizeSession);
   }
 
   function getSession(id) {

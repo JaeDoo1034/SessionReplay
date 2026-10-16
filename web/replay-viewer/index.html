@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Session Replay Viewer</title>
     <link rel="stylesheet" href="/web/replay-viewer/styles.css" />
+    <link rel="stylesheet" href="/web/replay-viewer/detail-flow.css" />
   </head>
   <body>
     <main class="viewer-layout session-drawer-closed">
@@ -22,10 +23,10 @@
 
       <button id="session-drawer-backdrop" class="session-drawer-backdrop" type="button" aria-label="Close sessions" hidden></button>
 
-      <aside id="session-sidebar" class="session-sidebar" aria-label="SQLite sessions">
+      <aside id="session-sidebar" class="session-sidebar" aria-label="저장된 세션">
         <div class="sidebar-header">
           <div>
-            <p class="eyebrow">SQLite Sessions</p>
+            <p class="eyebrow">Saved Sessions</p>
             <h1>Replay Viewer</h1>
           </div>
           <div class="sidebar-actions">
@@ -39,17 +40,53 @@
       </aside>
 
       <section class="replay-workspace">
-        <section class="insight-card" aria-label="Customer behavior insight">
+        <section id="workflow-overview-root" class="workflow-overview" aria-label="업무 진행 사항"></section>
+        <div class="viewer-columns">
+        <section class="replay-card" aria-label="Session replay playback">
+          <div class="replay-card-head">
+            <div class="replay-title-block">
+              <p class="eyebrow">01 · SESSION REPLAY</p>
+              <h2 id="selected-title">세션을 선택하세요</h2>
+              <p id="selected-meta" hidden></p>
+              <div id="selected-badges" class="selected-badges" hidden></div>
+            </div>
+            <div class="control-row replay-corner-controls">
+              <button id="mutation-toggle" type="button" aria-pressed="false">Mutation OFF</button>
+              <button id="play-replay" type="button" aria-pressed="false" disabled>Play ON</button>
+            </div>
+          </div>
+          <div class="replay-timeline">
+            <select id="speed-select" aria-label="Replay speed">
+              <option value="0.5">0.5x</option>
+              <option value="1" selected>1x</option>
+              <option value="2">2x</option>
+              <option value="4">4x</option>
+            </select>
+            <button id="pause-replay" disabled type="button" hidden>일시정지</button>
+            <button id="stop-replay" disabled type="button" hidden>Stop</button>
+            <input id="replay-position" type="range" min="0" max="1" value="0" aria-label="리플레이 재생 위치" disabled />
+            <output id="replay-time">0:00 / 0:00</output>
+          </div>
+          <div id="viewer-status" class="status-line" role="status">Idle</div>
+          <div class="replay-frame-shell">
+            <iframe id="replay-frame" title="Replay frame"></iframe>
+          </div>
+        </section>
+        <section class="criteria-panel" aria-label="분석 조건 및 로그 수집 구조">
+          <div id="detail-analysis-root"></div>
+        </section>
+        <section class="insight-card" aria-label="분석 결과">
           <div class="insight-main">
-            <p class="eyebrow">고객 행동 분석</p>
+            <p class="eyebrow">03 · ANALYSIS RESULT</p>
             <h2 id="insight-title">고객 행동 유형 분석</h2>
             <p id="insight-summary">세션을 선택하면 행동 요약을 만들고, LLM으로 고객 유형을 해석할 수 있습니다.</p>
           </div>
-          <div class="insight-actions">
+          <div class="insight-actions" hidden>
             <button id="local-analyze" disabled>간단 분석</button>
             <button id="llm-analyze" disabled>LLM 정밀 분석</button>
           </div>
           <div id="insight-result" class="insight-result">
+            <div id="cohort-result" class="insight-wide" hidden></div>
             <div>
               <span>대표 고객 유형</span>
               <strong id="insight-primary">-</strong>
@@ -77,31 +114,7 @@
           </div>
         </section>
 
-        <section class="replay-card" aria-label="Session replay playback">
-          <div class="replay-card-head">
-            <div>
-              <p class="eyebrow">Session Replay</p>
-              <h2 id="selected-title">세션을 선택하세요</h2>
-              <p id="selected-meta">왼쪽 목록에서 수집된 세션을 선택하면 replay를 로드합니다.</p>
-              <div id="selected-badges" class="selected-badges"></div>
-            </div>
-            <div class="control-row">
-              <select id="speed-select" aria-label="Replay speed">
-                <option value="0.5">0.5x</option>
-                <option value="1" selected>1x</option>
-                <option value="2">2x</option>
-                <option value="4">4x</option>
-              </select>
-              <button id="mutation-toggle">Mutation OFF</button>
-              <button id="play-replay" disabled>Play</button>
-              <button id="stop-replay" disabled>Stop</button>
-            </div>
-          </div>
-          <div id="viewer-status" class="status-line">Idle</div>
-          <div class="replay-frame-shell">
-            <iframe id="replay-frame" title="Replay frame"></iframe>
-          </div>
-        </section>
+        </div>
       </section>
     </main>
 
@@ -125,6 +138,8 @@
       </form>
     </dialog>
 
+    <script src="/sdk/session-replay-sdk.js" data-auto-start="false"></script>
     <script type="module" src="/web/replay-viewer/viewer.js"></script>
+    <script type="module" src="/web/replay-viewer/detail-flow.js"></script>
   </body>
 </html>

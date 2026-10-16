@@ -43,14 +43,65 @@ let currentDetailTab = "timeline";
 let heatmapOverlay = null;
 let loadedSessionCount = 0;
 let loadedSessions = [];
+const pauseButton = document.getElementById("pause-replay");
+const positionInput = document.getElementById("replay-position");
+const timeOutput = document.getElementById("replay-time");
+const clock = ms => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, "0")}`;
+function updatePosition(ms = 0) {
+  positionInput.value = ms;
+  timeOutput.textContent = `${clock(ms)} / ${clock(Number(positionInput.max))}`;
+  pauseButton.textContent = replayer.isPlaying ? "일시정지" : "계속 재생";
+  playButton.textContent = replayer.isPlaying ? "Play OFF" : "Play ON";
+  playButton.setAttribute("aria-pressed", String(replayer.isPlaying));
+  window.dispatchEvent(new CustomEvent("replay:position", { detail: ms }));
+}
 
 const replayer = new SessionReplayer({
   iframe: replayFrame,
   stageEl: replayFrame.parentElement,
   applyMutationEvents: false,
   executePageScripts: false,
-  onStatus: setStatus
+  onStatus: setStatus,
+  onProgress: updatePosition
 });
+
+window.ReplayDetailBridge = {
+  getContext: () => ({ payload: loadedPayload, sessionId: selectedSessionId, frame: replayFrame }),
+  pause: () => { replayer.pause(); updatePosition(replayer.currentTime); },
+  seek: async ms => { await replayer.seek(ms); updatePosition(ms); }
+};
+pauseButton.addEventListener("click", () => {
+  if (replayer.isPlaying) replayer.pause();
+  else if (replayer.currentIndex === 0 || replayer.currentIndex >= replayer.timeline.length) replayer.play({ speed: Number(speedSelect.value || 1) });
+  else replayer.resume();
+  updatePosition(replayer.currentTime);
+});
+positionInput.addEventListener("change", async () => {
+  positionInput.disabled = true;
+  try { await replayer.seek(Number(positionInput.value)); }
+  finally { positionInput.disabled = !loadedPayload; }
+});
+window.addEventListener("replay:cohort-result", event => {
+  const { result, llm } = event.detail;
+  const summary = result.summary;
+  renderMetrics(summary.metrics);
+  renderLlmInsight(llm);
+  insightTitle.textContent = result.criteria.mode === "session" ? "선택한 세션 행동 분석" : "조건별 고객 행동 분석";
+  const card = document.getElementById("cohort-result");
+  card.hidden = false;
+  card.replaceChildren();
+  const text = document.createElement("p");
+  const conditions = result.criteria.conditions || [];
+  const criteriaLabel = result.criteria.mode === "session" ? "세션 전체 행동" : conditions.map(row => `${row.screenLabel || row.pagePath}${row.buttons.length ? ` → ${row.buttons.map(button => button.label).join(", ")} 클릭` : " 방문"}`).join(" / ");
+  text.textContent = `${result.criteria.scope === "all" ? "전체 세션" : "현재 세션"} · ${criteriaLabel} · ${summary.scannedSessions}개 중 ${summary.matchedSessions}개 세션 · 분석 대상 로그 ${summary.matchedEvents}건`;
+  card.append(text);
+  const note = document.createElement("small");
+  note.textContent = "조건에 맞는 세션 전체의 행동을 분석했습니다. 세션 수는 고유 고객 수와 다를 수 있습니다.";
+  card.append(note);
+  lastBehaviorAnalysis = null;
+  document.querySelector(".insight-card").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+window.addEventListener("replay:single-mode", () => { if (loadedPayload) runLocalAnalysis(); });
 
 ensureHeatmapOverlay();
 
@@ -70,6 +121,7 @@ deleteAllSessionsButton.addEventListener("click", deleteAllSessions);
 mutationToggle.addEventListener("click", () => {
   const enabled = replayer.setApplyMutationEvents(!replayer.applyMutationEvents);
   mutationToggle.textContent = enabled ? "Mutation ON" : "Mutation OFF";
+  mutationToggle.setAttribute("aria-pressed", String(enabled));
   setStatus(`Mutation apply is now ${enabled ? "ON" : "OFF"}.`);
 });
 
@@ -79,8 +131,16 @@ playButton.addEventListener("click", () => {
     return;
   }
   try {
-    replayer.load(loadedPayload);
-    replayer.play({ speed: Number(speedSelect.value || 1) });
+    if (replayer.isPlaying) {
+      replayer.pause();
+    } else if (replayer.currentIndex > 0 && replayer.currentIndex < replayer.timeline.length) {
+      replayer.speed = Number(speedSelect.value || 1);
+      replayer.resume();
+    } else {
+      replayer.load(loadedPayload);
+      replayer.play({ speed: Number(speedSelect.value || 1) });
+    }
+    updatePosition(replayer.currentTime);
     stopButton.disabled = false;
   } catch (error) {
     setStatus(`Replay failed: ${error.message}`);
@@ -89,6 +149,7 @@ playButton.addEventListener("click", () => {
 
 stopButton.addEventListener("click", () => {
   replayer.stop();
+  updatePosition(replayer.currentTime);
 });
 
 detailTabs.forEach((button) => {
@@ -140,6 +201,7 @@ async function runLlmAnalysis(analysisInstructions = "") {
   }
 
   llmPromptDialog.close();
+  const analysisSessionId = selectedSessionId;
   llmAnalyzeButton.disabled = true;
   setInsightMessage("LLM이 고객 행동 유형을 분석하는 중...");
 
@@ -160,6 +222,7 @@ async function runLlmAnalysis(analysisInstructions = "") {
       throw new Error(json.error || "LLM 분석 API 호출 실패");
     }
 
+    if (analysisSessionId !== selectedSessionId) return;
     renderLlmInsight(json);
     setStatus("LLM 고객 행동 유형 분석을 완료했습니다.");
   } catch (error) {
@@ -220,6 +283,7 @@ async function loadSessions() {
     });
 
     setStatus(`세션 ${json.sessions.length}개를 불러왔습니다.`);
+    if (!selectedSessionId) await selectSession(loadedSessions[0]);
   } catch (error) {
     loadedSessions = [];
     loadedSessionCount = 0;
@@ -229,6 +293,8 @@ async function loadSessions() {
 }
 
 async function selectSession(session) {
+  replayer.stop();
+  window.dispatchEvent(new CustomEvent("replay:session", { detail: { payload: null, sessionId: session.id } }));
   selectedSessionId = session.id;
   loadedPayload = null;
   lastBehaviorAnalysis = null;
@@ -252,12 +318,20 @@ async function selectSession(session) {
     if (!response.ok) {
       throw new Error(json.error || "payload 조회 실패");
     }
+    if (selectedSessionId !== session.id) return;
 
     loadedPayload = json.payload;
     replayer.load(loadedPayload);
     replayer.preview(() => {
       syncHeatmapOverlay();
+      window.dispatchEvent(new CustomEvent("replay:session", { detail: { payload: loadedPayload, sessionId: selectedSessionId } }));
+      setStatus("재생 준비 완료 · Play 버튼을 누르면 시작됩니다.");
     });
+    positionInput.max = Math.max(1, ...loadedPayload.events.map(event => Number(event.timeOffsetMs) || 0));
+    positionInput.disabled = false;
+    pauseButton.disabled = false;
+    updatePosition(0);
+    document.getElementById("cohort-result").hidden = true;
     playButton.disabled = false;
     stopButton.disabled = false;
     localAnalyzeButton.disabled = false;
@@ -409,9 +483,14 @@ async function fetchJson(url, options = {}) {
 }
 
 function resetSelectedSession() {
+  replayer.stop();
+  pauseButton.disabled = true;
+  positionInput.disabled = true;
   selectedSessionId = "";
   loadedPayload = null;
   lastBehaviorAnalysis = null;
+  window.dispatchEvent(new CustomEvent("replay:session", { detail: { payload: null, sessionId: "" } }));
+  document.getElementById("cohort-result").hidden = true;
   playButton.disabled = true;
   stopButton.disabled = true;
   localAnalyzeButton.disabled = true;
@@ -427,10 +506,11 @@ function resetSelectedSession() {
 }
 
 function runLocalAnalysis() {
+  document.getElementById("cohort-result").hidden = true;
   try {
     lastBehaviorAnalysis = analyzeBehavior(loadedPayload);
     const summary = lastBehaviorAnalysis.summary;
-    insightTitle.textContent = "로컬 행동 요약";
+    insightTitle.textContent = "현재 세션 행동 요약";
     insightSummary.textContent = [
       `총 ${summary.totalEvents}개 이벤트`,
       `${summary.durationSec}초`,
@@ -440,8 +520,8 @@ function runLocalAnalysis() {
     insightConfidence.textContent = `${Math.round((summary.customerType.confidence || 0) * 100)}%`;
     renderMetrics(summary.metrics || {});
     renderCustomerTypeDefinition({
-      name: "LLM 분석 전",
-      description: "아래 로컬 지표는 참고용입니다. Analyze with LLM을 누르면 LLM이 고정 범주가 아닌 세션 맞춤 고객 유형을 직접 정의합니다.",
+      name: "정밀 분석 전",
+      description: "현재 세션의 행동을 간단히 요약했습니다. 가운데에서 화면과 버튼 조건을 설정하고 분석을 실행하면 해당 고객군의 결과가 표시됩니다.",
       traits: (summary.customerType?.candidates || []).slice(0, 3).map((item) => `${item.labelKo} ${Math.round(item.score * 100)}%`)
     });
     renderList(insightEvidence, [

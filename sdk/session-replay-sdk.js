@@ -72,6 +72,7 @@
     flush: flush,
     configure: configure,
     track: track,
+    previewCollection: previewCollection,
     setEnabledEvents: function setEnabledEvents(events) {
       return configure({ enabledEvents: events }).enabledEvents;
     },
@@ -296,9 +297,7 @@
   }
 
   function track(eventType, data) {
-    record("event", merge({
-      eventType: String(eventType || "custom")
-    }, data || {}));
+    record("event", buildTrackData(eventType, data));
     return api;
   }
 
@@ -321,13 +320,7 @@
     }
 
     var now = Date.now();
-    state.queue.push({
-      id: ++state.sequence,
-      type: type,
-      at: now,
-      timeOffsetMs: now - state.startedAt,
-      data: data || {}
-    });
+    state.queue.push(buildRecord(type, data, ++state.sequence, now, now - state.startedAt));
 
     if (state.queue.length >= config.maxBatchSize) {
       flush().catch(noop);
@@ -373,16 +366,7 @@
       return;
     }
 
-    record("event", {
-      eventType: "click",
-      target: getNodePath(event.target),
-      x: event.clientX,
-      y: event.clientY,
-      viewportWidth: global.innerWidth,
-      viewportHeight: global.innerHeight,
-      button: event.button,
-      text: getMaskedText(event.target)
-    });
+    record("event", buildClickData(event));
 
     var anchor = event.target && event.target.closest ? event.target.closest("a[href]") : null;
     if (anchor && isEventEnabled("navigation")) {
@@ -395,6 +379,42 @@
         sameOrigin: anchor.origin === location.origin
       });
     }
+  }
+
+  function buildClickData(event) {
+    var view = event.view || global;
+    return {
+      eventType: "click",
+      target: getNodePath(event.target),
+      x: event.clientX,
+      y: event.clientY,
+      viewportWidth: view.innerWidth,
+      viewportHeight: view.innerHeight,
+      button: event.button,
+      text: getMaskedText(event.target)
+    };
+  }
+
+  function buildTrackData(eventType, data) {
+    return merge({ eventType: String(eventType || "custom") }, data || {});
+  }
+
+  function buildRecord(type, data, id, at, timeOffsetMs) {
+    return { id: id, type: type, at: at, timeOffsetMs: timeOffsetMs, data: data || {} };
+  }
+
+  // Read-only preview: shares builders with handleClick/track/record, but never
+  // starts recording, increments sequence, queues events or sends a request.
+  function previewCollection(options) {
+    options = options || {};
+    var eventType = options.eventType || "click";
+    if (!isReplayEventEnabled(eventType)) return { collectible: false, reason: "이 세션의 수집 설정에서 해당 이벤트가 비활성화되어 있습니다." };
+    if (options.target && shouldSkipNode(options.target)) return { collectible: false, reason: "개인정보 보호 정책으로 수집이 제외된 요소입니다." };
+    var data = eventType === "click" ? buildClickData({
+      target: options.target, view: options.target && options.target.ownerDocument.defaultView,
+      clientX: "<클릭 시 X 좌표>", clientY: "<클릭 시 Y 좌표>", button: 0
+    }) : buildTrackData(eventType, options.data);
+    return { collectible: true, log: buildRecord("event", data, "<수집 시 이벤트 순번>", "<수집 시각: epoch ms>", "<세션 시작 후 경과 ms>") };
   }
 
   function handleInputLike(event) {
@@ -849,13 +869,14 @@
   }
 
   function getNodePath(node) {
-    if (!node || node === document) {
+    var doc = node && node.ownerDocument || document;
+    if (!node || node === doc) {
       return "document";
     }
-    if (node === document.documentElement) {
+    if (node === doc.documentElement) {
       return "html";
     }
-    if (node === document.body) {
+    if (node === doc.body) {
       return "html > body";
     }
     if (node.nodeType !== Node.ELEMENT_NODE) {
@@ -867,7 +888,7 @@
 
     var parts = [];
     var current = node;
-    while (current && current.nodeType === Node.ELEMENT_NODE && current !== document.documentElement) {
+    while (current && current.nodeType === Node.ELEMENT_NODE && current !== doc.documentElement) {
       var name = current.tagName.toLowerCase();
       var parent = current.parentElement;
       if (parent) {

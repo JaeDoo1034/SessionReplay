@@ -1,0 +1,32 @@
+{
+  "name": "session-replay-llm-analyzer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "build": "vite build",
+    "test": "node --test Test/cohort-analysis.test.js",
+    "preview:detail": "node Test/preview-detail.js",
+    "test:viewer": "node Test/detail-viewer-browser.mjs"
+  },
+  "dependencies": {
+    "@langchain/langgraph": "^0.2.46",
+    "@langchain/openai": "^0.3.17",
+    "@xyflow/react": "^12.8.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "linkedom": "^0.18.13",
+    "pg": "^8.22.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "vite": "^6.4.4"
+  }
+}

@@ -176,7 +176,7 @@ export function createPostgresReplayStore(connectionString) {
     return normalizeSession(result.rows[0]);
   }
 
-  async function listSessions(limit = 50) {
+  async function listSessions(limit = 50, offset = 0) {
     await ready();
     const result = await queryWithRetry(pool,
       `
@@ -188,10 +188,10 @@ export function createPostgresReplayStore(connectionString) {
         FROM replay_sessions s
         LEFT JOIN replay_events e ON e.session_id = s.id
         GROUP BY s.id
-        ORDER BY s.started_at DESC
-        LIMIT $1
+        ORDER BY s.started_at DESC, s.id DESC
+        LIMIT $1 OFFSET $2
       `,
-      [Math.min(Math.max(toInteger(limit, 50), 1), 200)]
+      [Math.min(Math.max(toInteger(limit, 50), 1), 200), Math.max(0, toInteger(offset, 0))]
     );
 
     return result.rows.map(normalizeSession);

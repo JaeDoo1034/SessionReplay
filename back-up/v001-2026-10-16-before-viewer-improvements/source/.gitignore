@@ -1,0 +1,31 @@
+# Env files
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local SQLite data
+data/*.sqlite*
+
+# OS files
+.DS_Store
+
+# Local recording exports and screenshots
+샘플/
+*.png
+*.jpg
+*.jpeg
+*.webp
+Reference/image/
+
+# Vercel local project metadata
+.vercel/
+.vercel

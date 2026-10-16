@@ -7,6 +7,7 @@ import { Annotation, StateGraph } from "@langchain/langgraph";
 import { analyzeBehavior } from "./behavior-analyzer.js";
 import { createReplayStore } from "./replay-db.js";
 import { createPostgresReplayStore } from "./replay-postgres-db.js";
+import { analyzeCohort, validateCriteria } from "./cohort-analysis.js";
 
 dotenv.config();
 
@@ -159,7 +160,7 @@ app.post("/api/replay/sessions/end", async (req, res) => {
 
 app.get("/api/replay/sessions", async (req, res) => {
   try {
-    const sessions = await replayStore.listSessions(req.query.limit);
+    const sessions = await replayStore.listSessions(req.query.limit, req.query.offset);
     return res.json({ ok: true, sessions });
   } catch (error) {
     return res.status(500).json({ ok: false, error: error.message || "session list failed" });
@@ -289,6 +290,20 @@ async function deleteAllReplaySessions(res) {
     return res.status(500).json({ ok: false, error: error.message || "all sessions delete failed" });
   }
 }
+
+app.post("/api/replay/analyze-cohort", async (req, res) => {
+  let criteria;
+  try { criteria = validateCriteria(req.body); }
+  catch (error) { return res.status(400).json({ ok: false, error: error.message }); }
+  res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache");
+  const send = data => { if (!res.destroyed) res.write(JSON.stringify(data) + "\n"); };
+  try {
+    const result = await analyzeCohort(replayStore, criteria, (scanned, total) => send({ type: "progress", scanned, total }));
+    send({ type: "result", ...result });
+  } catch (error) { send({ type: "error", error: error.message || "로그 분석 실패" }); }
+  res.end();
+});
 
 app.post("/api/llm-analyze", async (req, res) => {
   try {

@@ -1,0 +1,145 @@
+import { chromium, expect } from '@playwright/test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' });
+const page = await browser.newPage({ viewport: { width: 1600, height: 1100 } });
+const liveLlm = process.env.RUN_LIVE_LLM === '1' || process.argv.includes('--live');
+const errors = [];
+let scans = 0;
+page.on('pageerror', error => errors.push(error.message));
+page.on('request', request => { if (request.url().endsWith('/api/replay/analyze-cohort')) scans++; });
+const base = process.env.PREVIEW_URL || 'http://127.0.0.1:4174';
+const screenshotDir = process.env.SCREENSHOT_DIR || '/tmp/session-replay-four-panel-shots';
+await fs.mkdir(screenshotDir, { recursive: true });
+const details = () => page.getByRole('button', { name: '상세보기 ↗', exact: true }).click();
+async function assertReplayFits() {
+  await expect.poll(async () => page.evaluate(() => {
+    const frame = document.getElementById('replay-frame');
+    const stage = frame.closest('.replay-frame-shell');
+    const canvas = frame.closest('.sr-replay-canvas');
+    const css = getComputedStyle(stage);
+    const width = stage.clientWidth - parseFloat(css.paddingLeft) - parseFloat(css.paddingRight);
+    const height = stage.clientHeight - parseFloat(css.paddingTop) - parseFloat(css.paddingBottom);
+    const matrix = new DOMMatrix(getComputedStyle(frame).transform);
+    const expected = Math.min(width / frame.clientWidth, height / frame.clientHeight, 1);
+    return Math.abs(matrix.a - expected) < .001 && matrix.a <= 1 && matrix.a === matrix.d && matrix.e === 0 && matrix.f === 0 && canvas.clientWidth <= width + 1 && canvas.clientHeight <= height + 1;
+  }), { message: 'Original viewport should fit both dimensions without enlargement or cropping' }).toBe(true);
+}
+
+try {
+  await page.goto(`${base}/viewer`);
+  await expect(page.locator('#play-replay')).toBeEnabled();
+  await expect(page.locator('#viewer-status')).toContainText('재생 준비 완료');
+  await page.waitForTimeout(700); // Longer than the first recorded event: autoplay would have advanced.
+  assert.equal(await page.locator('#replay-position').inputValue(), '0');
+  assert.equal(await page.locator('#play-replay').getAttribute('aria-pressed'), 'false');
+  await page.getByRole('button', { name: 'Play ON', exact: true }).click();
+  await expect.poll(async () => Number(await page.locator('#replay-position').inputValue())).toBeGreaterThan(0);
+  await page.getByRole('button', { name: 'Play OFF', exact: true }).click();
+  const pausedAt = await page.locator('#replay-position').inputValue();
+  await page.waitForTimeout(700);
+  assert.equal(await page.locator('#replay-position').inputValue(), pausedAt);
+  await page.getByRole('button', { name: 'Play ON', exact: true }).click();
+  await expect.poll(async () => Number(await page.locator('#replay-position').inputValue())).toBeGreaterThan(Number(pausedAt));
+  await page.getByRole('button', { name: 'Play OFF', exact: true }).click();
+  await page.getByRole('heading', { name: '업무 진행 사항', exact: true }).waitFor();
+  assert.equal(await page.locator('#selected-meta').isVisible(), false);
+  assert.equal(await page.locator('#selected-badges').isVisible(), false);
+  await assertReplayFits();
+  assert.equal(await page.evaluate(() => document.getElementById('replay-frame').clientWidth), 1440, 'Recorded viewport must remain unchanged');
+
+  const boxes = await page.evaluate(() => ['.workflow-overview', '.replay-card', '.criteria-panel', '.insight-card'].map(selector => {
+    const r = document.querySelector(selector).getBoundingClientRect(); return { x: r.x, y: r.y, right: r.right, bottom: r.bottom };
+  }));
+  assert.ok(boxes[0].bottom <= boxes[1].y && boxes[1].right < boxes[2].x && boxes[2].right < boxes[3].x);
+  assert.equal(boxes[1].y, boxes[2].y); assert.equal(boxes[2].y, boxes[3].y);
+  await page.getByRole('region', { name: '선택한 세션 행동 요약', exact: true }).waitFor();
+  assert.match(await page.locator('.single-session-analysis').innerText(), /상품몰 예적금 상담/);
+  await page.screenshot({ path: `${screenshotDir}/default.png`, fullPage: false });
+  await details();
+  await page.getByRole('dialog', { name: '조건에서 고객 이해까지' }).waitFor();
+  await page.getByRole('button', { name: '분석 팝업 닫기' }).click();
+  await page.getByRole('switch', { name: '상세 분석' }).check();
+  await page.getByRole('checkbox', { name: '상품몰 화면 조건', exact: true }).check();
+  await page.getByRole('button', { name: '화면에서 버튼 복수 선택', exact: true }).click();
+  await page.frameLocator('#replay-frame').getByRole('button', { name: '예적금상담', exact: true }).click();
+  const preview = page.getByTestId('collection-log-structure');
+  await preview.waitFor();
+  const shape = JSON.parse(await preview.innerText());
+  assert.equal(shape.data.eventType, 'click'); assert.match(shape.at, /수집 시각/); assert.match(shape.data.x, /클릭 시/);
+  assert.equal(shape.data.text, '예적금상담');
+  assert.equal(scans, 0, 'Choosing criteria must not query saved event logs');
+  assert.equal(await page.evaluate(() => window.SessionReplaySDK.getQueueSize()), 0);
+  assert.equal(await page.evaluate(() => window.SessionReplaySDK.isRecording()), false);
+  await page.frameLocator('#replay-frame').getByRole('button', { name: '대출상담', exact: true }).click();
+  await expect(page.locator('.selected-condition-section')).toContainText('1개 화면 · 2개 버튼');
+  await expect(page.frameLocator('#replay-frame').locator('[data-analysis-selected]')).toHaveCount(2);
+  await page.frameLocator('#replay-frame').getByRole('button', { name: '대출상담', exact: true }).click();
+  await expect(page.locator('.selected-condition-section')).toContainText('1개 화면 · 1개 버튼');
+  await expect(page.frameLocator('#replay-frame').locator('[data-analysis-selected]')).toHaveCount(1);
+  await page.frameLocator('#replay-frame').getByRole('button', { name: '대출상담', exact: true }).click();
+  await expect(page.locator('.selected-condition-section')).toContainText('1개 화면 · 2개 버튼');
+
+  await page.getByRole('button', { name: '버튼 선택 완료', exact: true }).click();
+  await page.screenshot({ path: `${screenshotDir}/criteria.png`, fullPage: false });
+  await page.getByRole('button', { name: '조건 일치 확인', exact: true }).click();
+  await page.locator('.workflow-sequence li.completed').nth(1).waitFor();
+  assert.equal(await page.locator('.analysis-dialog').isVisible(), false);
+  assert.match(await page.locator('.workflow-sequence').innerText(), /3개 중 1개 세션/);
+  await details();
+  assert.match(await page.locator('.analysis-log-preview').innerText(), /3개 중 1개 세션/);
+  await page.screenshot({ path: `${screenshotDir}/workflow-logs.png`, fullPage: false });
+  await page.getByRole('button', { name: '닫기', exact: true }).click();
+  await page.getByRole('checkbox', { name: '이체 화면 조건', exact: true }).check();
+  await expect(page.locator('.selected-condition-section')).toContainText('2개 화면 · 2개 버튼');
+  await page.getByRole('button', { name: '조건 일치 확인', exact: true }).click();
+  await page.locator('.workflow-sequence li.completed').nth(1).waitFor();
+  assert.match(await page.locator('.workflow-sequence').innerText(), /3개 중 3개 세션/);
+  await page.screenshot({ path: `${screenshotDir}/multi-screens.png`, fullPage: false });
+  await page.getByRole('checkbox', { name: '이체 화면 조건', exact: true }).uncheck();
+  await expect(page.locator('.selected-condition-section')).toContainText('1개 화면 · 2개 버튼');
+  await page.getByRole('button', { name: '현재 선택한 세션', exact: true }).click();
+  await page.getByRole('button', { name: '조건 일치 확인', exact: true }).click();
+  await page.locator('.workflow-sequence li.completed').nth(1).waitFor();
+  assert.match(await page.locator('.workflow-sequence').innerText(), /1개 중 1개 세션/);
+  await page.getByRole('button', { name: '전체 세션', exact: true }).click();
+  if (!liveLlm) {
+    await page.route('**/api/llm-analyze', route => route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: '검증용 LLM 오류' }) }));
+    await page.getByRole('button', { name: '분석 실행 ↗', exact: true }).click();
+    await page.locator('.workflow-sequence li.failed').waitFor();
+    assert.match(await page.locator('.detail-message').innerText(), /검증용 LLM 오류/);
+    await page.unroute('**/api/llm-analyze');
+    await page.route('**/api/llm-analyze', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ result: { customer_type_name: '검증용 고객 유형', confidence: .8, evidence: ['검증용 응답'] } }) }));
+  }
+  await page.getByRole('button', { name: '분석 실행 ↗', exact: true }).click();
+  await page.locator('.workflow-sequence li.completed').nth(2).waitFor({ timeout: 120000 });
+  assert.match(await page.locator('#cohort-result').innerText(), /3개 중 1개 세션/);
+  assert.equal(await page.locator('.analysis-dialog').isVisible(), false);
+  await page.screenshot({ path: `${screenshotDir}/result.png`, fullPage: false });
+  await details();
+  await page.locator('.analysis-node.completed').nth(2).waitFor();
+  await page.screenshot({ path: `${screenshotDir}/workflow-complete.png`, fullPage: false });
+  await page.getByRole('button', { name: '분석 결과 보기', exact: true }).click();
+  await page.getByRole('switch', { name: '상세 분석' }).uncheck();
+  await page.getByRole('region', { name: '선택한 세션 행동 요약', exact: true }).waitFor();
+  await expect(page.locator('#cohort-result')).toBeHidden();
+  const singleScan = page.waitForRequest(request => request.url().endsWith('/api/replay/analyze-cohort'));
+  await page.getByRole('button', { name: '선택 세션 정밀 분석 ↗', exact: true }).click();
+  const singleRequest = await singleScan;
+  assert.equal(singleRequest.postDataJSON().mode, 'session');
+  assert.equal(singleRequest.postDataJSON().scope, 'current');
+  await page.locator('.workflow-sequence li.completed').nth(2).waitFor({ timeout: 120000 });
+  assert.match(await page.locator('#cohort-result').innerText(), /현재 세션.*1개 중 1개 세션/);
+  await expect(page.locator('#insight-title')).toHaveText('선택한 세션 행동 분석');
+  await page.screenshot({ path: `${screenshotDir}/single-session-result.png`, fullPage: false });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await assertReplayFits();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+  await page.screenshot({ path: `${screenshotDir}/mobile.png`, fullPage: true });
+  assert.deepEqual(errors, []);
+  console.log(JSON.stringify({ passed: true, liveLlm, screenshots: screenshotDir }));
+} catch (error) {
+  await page.screenshot({ path: `${screenshotDir}/failure.png`, fullPage: true });
+  console.error('Browser test failed:', error.message);
+  throw error;
+} finally { await browser.close(); }

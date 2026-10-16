@@ -2,6 +2,9 @@ export class SessionReplayer {
   constructor(options = {}) {
     this.iframe = options.iframe;
     this.onStatus = options.onStatus || (() => {});
+    this.onProgress = options.onProgress || (() => {});
+    this.currentTime = 0;
+    this.timeline = [];
     this.applyMutationEvents = Boolean(options.applyMutationEvents);
     this.executePageScripts = Boolean(options.executePageScripts);
 
@@ -31,7 +34,7 @@ export class SessionReplayer {
       this.stageEl.style.overflow = this.stageEl.style.overflow || "auto";
       this.stageEl.style.display = this.stageEl.style.display || "flex";
       this.stageEl.style.justifyContent = this.stageEl.style.justifyContent || "center";
-      this.stageEl.style.alignItems = this.stageEl.style.alignItems || "flex-start";
+      this.stageEl.style.alignItems = this.stageEl.style.alignItems || "center";
       this.stageEl.style.padding = this.stageEl.style.padding || "12px";
       this.stageEl.style.background = this.stageEl.style.background || "#f8fafc";
     }
@@ -61,10 +64,15 @@ export class SessionReplayer {
     this.updateIframeSandbox();
 
     window.addEventListener("resize", this.handleWindowResize);
+    if (typeof ResizeObserver !== "undefined" && this.stageEl) {
+      this.stageResizeObserver = new ResizeObserver(this.handleWindowResize);
+      this.stageResizeObserver.observe(this.stageEl);
+    }
   }
 
   destroy() {
     this.stop();
+    this.stageResizeObserver?.disconnect();
     window.removeEventListener("resize", this.handleWindowResize);
   }
 
@@ -111,7 +119,9 @@ export class SessionReplayer {
       throw new Error("invalid payload format");
     }
 
+    this.stop();
     this.payload = payload;
+    this.currentTime = 0;
     this.currentIndex = 0;
     this.onStatus(`Replay loaded. events=${payload.events.length}`);
   }
@@ -164,6 +174,7 @@ export class SessionReplayer {
       }
       return false;
     });
+    this.timeline = replayEvents;
 
     if (!replayEvents.length) {
       this.renderSnapshot(snapshot.data.html, snapshot.data.url, snapshot.data.iframeSummary || [], () => {
@@ -182,6 +193,44 @@ export class SessionReplayer {
 
   getSnapshotEvent() {
     return this.payload?.events.find((event) => event.type === "snapshot" && event.data && event.data.html);
+  }
+
+  pause() {
+    this.isPlaying = false;
+    clearTimeout(this.timerId);
+    this.timerId = null;
+    this.onStatus("일시정지 · 화면을 선택할 수 있습니다.");
+  }
+
+  resume() {
+    if (this.isPlaying || !this.timeline.length) return;
+    this.isPlaying = true;
+    this.runTimeline(this.timeline);
+  }
+
+  seek(timeOffsetMs) {
+    this.pause();
+    const snapshot = this.getSnapshotEvent();
+    if (!snapshot) return Promise.reject(new Error("재생할 스냅샷이 없습니다."));
+    this.timeline = this.payload.events.filter(event => event.type === "event" || event.type === "mutation");
+    this.setViewport(snapshot.data.viewport);
+    return new Promise(resolve => {
+      this.renderSnapshot(snapshot.data.html, snapshot.data.url, snapshot.data.iframeSummary || [], () => {
+        this.currentIndex = 0;
+        const next = () => {
+          const event = this.timeline[this.currentIndex];
+          if (!event || Number(event.timeOffsetMs) > timeOffsetMs) {
+            this.currentTime = timeOffsetMs;
+            this.onProgress(timeOffsetMs);
+            resolve();
+            return;
+          }
+          this.currentIndex += 1;
+          this.applyEvent(event, () => queueMicrotask(next));
+        };
+        next();
+      });
+    });
   }
 
   stop() {
@@ -214,15 +263,20 @@ export class SessionReplayer {
 
     const viewportWidth = Math.max(1, Number(this.viewport.width) || 1);
     const viewportHeight = Math.max(1, Number(this.viewport.height) || 1);
-    const stageWidth = this.stageEl.clientWidth || viewportWidth;
-    const stageHeight = this.stageEl.clientHeight || viewportHeight;
+    const stageStyle = window.getComputedStyle(this.stageEl);
+    const stageWidth = Math.max(1, (this.stageEl.clientWidth || viewportWidth) - (parseFloat(stageStyle.paddingLeft) || 0) - (parseFloat(stageStyle.paddingRight) || 0));
+    const stageHeight = Math.max(1, (this.stageEl.clientHeight || viewportHeight) - (parseFloat(stageStyle.paddingTop) || 0) - (parseFloat(stageStyle.paddingBottom) || 0));
 
+    // Keep the iframe at the recorded viewport. Uniformly shrink its display
+    // to fit both dimensions, never enlarge, crop, or change responsive layout.
     const scale = Math.min(stageWidth / viewportWidth, stageHeight / viewportHeight, 1);
     const scaledWidth = Math.max(1, Math.floor(viewportWidth * scale));
     const scaledHeight = Math.max(1, Math.floor(viewportHeight * scale));
 
     this.canvasEl.style.width = `${scaledWidth}px`;
     this.canvasEl.style.height = `${scaledHeight}px`;
+    this.canvasEl.style.flexShrink = "0";
+    this.canvasEl.style.overflow = "hidden";
 
     this.iframe.style.width = `${viewportWidth}px`;
     this.iframe.style.height = `${viewportHeight}px`;
@@ -234,7 +288,7 @@ export class SessionReplayer {
       overlay.style.width = `${viewportWidth}px`;
       overlay.style.height = `${viewportHeight}px`;
       overlay.style.transformOrigin = "top left";
-      overlay.style.transform = `scale(${scale})`;
+      overlay.style.transform = this.iframe.style.transform;
     }
   }
 
@@ -247,12 +301,15 @@ export class SessionReplayer {
       if (this.currentIndex >= events.length) {
         this.isPlaying = false;
         this.timerId = null;
+        this.onProgress(this.currentTime);
         this.onStatus("Replay completed.");
         return;
       }
 
       const current = events[this.currentIndex];
       this.applyEvent(current, () => {
+        this.currentTime = Number(current.timeOffsetMs) || 0;
+        this.onProgress(this.currentTime);
         const next = events[this.currentIndex + 1];
         this.currentIndex += 1;
 
@@ -287,10 +344,10 @@ export class SessionReplayer {
         restoreIframeSources(doc, iframeSummary, replayBaseUrl);
       }
       this.updateViewportScale();
+      this.iframe.onload = null;
       if (typeof onReady === "function") {
         onReady();
       }
-      this.iframe.onload = null;
     };
 
     this.iframe.srcdoc = sanitized;
